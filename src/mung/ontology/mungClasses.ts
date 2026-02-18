@@ -791,6 +791,78 @@ const DEFINITIONS: { [className: string]: MungClassDefinition } = {
   numeral7: { uc: "7", mpp: true, notSmufl: true },
   numeral8: { uc: "8", mpp: true, notSmufl: true },
   numeral9: { uc: "9", mpp: true, notSmufl: true },
+
+  //// SCHENKERIAN NOTATION ////
+
+  stemStructural: { uc: "\u{E210}", mpp: false, notSmufl: true },
+  stemStructuralPartial: { uc: "\u{E210}", mpp: false, notSmufl: true },
+  stemStructuralBridgeLeft: { uc: "\u{2282}", mpp: false, notSmufl: true },
+  stemStructuralBridgeRight: { uc: "\u{2283}", mpp: false, notSmufl: true },
+  flagStructuralUp: { uc: "\u{E1D7}", mpp: false, notSmufl: true },
+  flagStructuralDown: { uc: "\u{E1D8}", mpp: false, notSmufl: true },
+
+  slurStructuralDown: { uc: "\u{E4BB}", mpp: false, notSmufl: true },
+  slurStructuralUp: { uc: "\u{E4BA}", mpp: false, notSmufl: true },
+
+  beamStructural: { uc: "\u{E1F0}\u{E1F2}", mpp: false, notSmufl: true },
+  beamStructuralPartialLeft: {
+    uc: "\u{E1F0}\u{E1F7}",
+    mpp: false,
+    notSmufl: true,
+  },
+  beamStructuralPartialRight: { uc: "\u{E1F2}", mpp: false, notSmufl: true },
+  beamStructuralPartialMiddle: {
+    uc: "\u{E1F2}\u{E1F7}",
+    mpp: false,
+    notSmufl: true,
+  },
+  beamStructuralBridgeUp: { uc: "\u{2229}", mpp: false, notSmufl: true },
+  beamStructuralBridgeDown: { uc: "\u{222A}", mpp: false, notSmufl: true },
+
+  beamStructuralUnfoldingDown: { uc: "\u{2571}", mpp: false, notSmufl: true },
+  beamStructuralUnfoldingUp: { uc: "\u{2572}", mpp: false, notSmufl: true },
+  voiceExchangeDown: { uc: "\u{2571}", mpp: false, notSmufl: true },
+  voiceExchangeUp: { uc: "\u{2572}", mpp: false, notSmufl: true },
+
+  parensImpliedLeft: { uc: "(", mpp: false, notSmufl: true },
+  parensImpliedRight: { uc: ")", mpp: false, notSmufl: true },
+  noteheadImplied: { uc: "(\u{E0A4})", mpp: false, notSmufl: true },
+  noteheadOpenImplied: { uc: "(\u{E0A3})", mpp: false, notSmufl: true },
+
+  scaleDegreeMark: { uc: "^", mpp: false, notSmufl: true },
+  characterColonDotUpper: { uc: "\u{00B7}", mpp: false, notSmufl: true },
+  characterColonDotLower: { uc: "\u{00B7}", mpp: false, notSmufl: true },
+  characterExclamation: { uc: "!", mpp: false, notSmufl: true },
+  characterHyphen: { uc: "\u{E090}", mpp: false, notSmufl: true },
+  characterEqual: { uc: "\u{E08F}", mpp: false, notSmufl: true },
+  braceAnalytical: { uc: "\u{007B}", mpp: false, notSmufl: true },
+
+  barlineStructuralDotted: { uc: "\u{250A}", mpp: false, notSmufl: true },
+  barlineStructuralDottedPartial: { uc: "\u{2502}", mpp: false, notSmufl: true },
+
+  keyAnalysis: { uc: "Gm:", mpp: false, notSmufl: true },
+
+  analyticalI: { uc: "\u{2160}", mpp: false, notSmufl: true },
+  analyticalII: { uc: "\u{2161}", mpp: false, notSmufl: true },
+  analyticalIII: { uc: "\u{2162}", mpp: false, notSmufl: true },
+  analyticalIV: { uc: "\u{2163}", mpp: false, notSmufl: true },
+  analyticalV: { uc: "\u{2164}", mpp: false, notSmufl: true },
+  analyticalVI: { uc: "\u{2165}", mpp: false, notSmufl: true },
+  analyticalVII: { uc: "\u{2166}", mpp: false, notSmufl: true },
+
+  numeralRomanI: { uc: "\u{2160}", mpp: false, notSmufl: true },
+  numeralRomanII: { uc: "\u{2161}", mpp: false, notSmufl: true },
+  numeralRomanIII: { uc: "\u{2162}", mpp: false, notSmufl: true },
+  numeralRomanIV: { uc: "\u{2163}", mpp: false, notSmufl: true },
+  numeralRomanV: { uc: "\u{2164}", mpp: false, notSmufl: true },
+  numeralRomanVI: { uc: "\u{2165}", mpp: false, notSmufl: true },
+  numeralRomanVII: { uc: "\u{2166}", mpp: false, notSmufl: true },
+
+  secondaryHarmonyArrowRight: { uc: "\u{21BA}", mpp: false, notSmufl: true },
+  secondaryHarmonyArrowLeft: { uc: "\u{21BB}", mpp: false, notSmufl: true },
+
+  circleEmphasis: { uc: "\u{25EF}", mpp: false, notSmufl: true },
+  circleMeasureNumber: { uc: "\u{25CB}", mpp: false, notSmufl: true },
 };
 
 ////////////////////////////////////////////////////////////////////////////////
