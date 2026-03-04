@@ -794,41 +794,41 @@ const DEFINITIONS: { [className: string]: MungClassDefinition } = {
 
   //// SCHENKERIAN NOTATION ////
 
+  // Stems
   stemStructural: { uc: "\u{E210}", mpp: false, notSmufl: true },
   stemStructuralPartial: { uc: "\u{E210}", mpp: false, notSmufl: true },
   stemStructuralBridgeLeft: { uc: "\u{2282}", mpp: false, notSmufl: true },
   stemStructuralBridgeRight: { uc: "\u{2283}", mpp: false, notSmufl: true },
+
+  // Flags
   flagStructuralUp: { uc: "\u{E1D7}", mpp: false, notSmufl: true },
   flagStructuralDown: { uc: "\u{E1D8}", mpp: false, notSmufl: true },
 
+  // Slurs
   slurStructuralDown: { uc: "\u{E4BB}", mpp: false, notSmufl: true },
   slurStructuralUp: { uc: "\u{E4BA}", mpp: false, notSmufl: true },
 
+  // Beams
   beamStructural: { uc: "\u{E1F0}\u{E1F2}", mpp: false, notSmufl: true },
-  beamStructuralPartialLeft: {
-    uc: "\u{E1F0}\u{E1F7}",
-    mpp: false,
-    notSmufl: true,
-  },
+  beamStructuralPartialLeft: { uc: "\u{E1F0}\u{E1F7}", mpp: false, notSmufl: true, },
   beamStructuralPartialRight: { uc: "\u{E1F2}", mpp: false, notSmufl: true },
-  beamStructuralPartialMiddle: {
-    uc: "\u{E1F2}\u{E1F7}",
-    mpp: false,
-    notSmufl: true,
-  },
+  beamStructuralPartialMiddle: { uc: "\u{E1F2}\u{E1F7}", mpp: false, notSmufl: true, },
   beamStructuralBridgeUp: { uc: "\u{2229}", mpp: false, notSmufl: true },
   beamStructuralBridgeDown: { uc: "\u{222A}", mpp: false, notSmufl: true },
 
+  // Cross-Voice
   beamStructuralUnfoldingDown: { uc: "\u{2571}", mpp: false, notSmufl: true },
   beamStructuralUnfoldingUp: { uc: "\u{2572}", mpp: false, notSmufl: true },
   voiceExchangeDown: { uc: "\u{2571}", mpp: false, notSmufl: true },
   voiceExchangeUp: { uc: "\u{2572}", mpp: false, notSmufl: true },
 
+  // Implied
   parensImpliedLeft: { uc: "(", mpp: false, notSmufl: true },
   parensImpliedRight: { uc: ")", mpp: false, notSmufl: true },
   noteheadImplied: { uc: "(\u{E0A4})", mpp: false, notSmufl: true },
   noteheadOpenImplied: { uc: "(\u{E0A3})", mpp: false, notSmufl: true },
 
+  // Text
   scaleDegreeMark: { uc: "^", mpp: false, notSmufl: true },
   characterColonDotUpper: { uc: "\u{00B7}", mpp: false, notSmufl: true },
   characterColonDotLower: { uc: "\u{00B7}", mpp: false, notSmufl: true },
@@ -837,9 +837,11 @@ const DEFINITIONS: { [className: string]: MungClassDefinition } = {
   characterEqual: { uc: "\u{E08F}", mpp: false, notSmufl: true },
   braceAnalytical: { uc: "\u{007B}", mpp: false, notSmufl: true },
 
+  // Barlines
   barlineStructuralDotted: { uc: "\u{250A}", mpp: false, notSmufl: true },
   barlineStructuralDottedPartial: { uc: "\u{2502}", mpp: false, notSmufl: true },
 
+  // Harmonic Analysis
   keyAnalysis: { uc: "Gm:", mpp: false, notSmufl: true },
 
   analyticalI: { uc: "\u{2160}", mpp: false, notSmufl: true },
@@ -861,6 +863,7 @@ const DEFINITIONS: { [className: string]: MungClassDefinition } = {
   secondaryHarmonyArrowRight: { uc: "\u{21BA}", mpp: false, notSmufl: true },
   secondaryHarmonyArrowLeft: { uc: "\u{21BB}", mpp: false, notSmufl: true },
 
+  // Miscellaneous
   circleEmphasis: { uc: "\u{25EF}", mpp: false, notSmufl: true },
   circleMeasureNumber: { uc: "\u{25CB}", mpp: false, notSmufl: true },
 };
