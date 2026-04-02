@@ -3,6 +3,7 @@ node_modules
 .parcel-cache
 dist
 .mypy_cache
+simple-php-backend/documents
 
 # editors
 .idea

@@ -810,9 +810,17 @@ const DEFINITIONS: { [className: string]: MungClassDefinition } = {
 
   // Beams
   beamStructural: { uc: "\u{E1F0}\u{E1F2}", mpp: false, notSmufl: true },
-  beamStructuralPartialLeft: { uc: "\u{E1F0}\u{E1F7}", mpp: false, notSmufl: true, },
+  beamStructuralPartialLeft: {
+    uc: "\u{E1F0}\u{E1F7}",
+    mpp: false,
+    notSmufl: true,
+  },
   beamStructuralPartialRight: { uc: "\u{E1F2}", mpp: false, notSmufl: true },
-  beamStructuralPartialMiddle: { uc: "\u{E1F2}\u{E1F7}", mpp: false, notSmufl: true, },
+  beamStructuralPartialMiddle: {
+    uc: "\u{E1F2}\u{E1F7}",
+    mpp: false,
+    notSmufl: true,
+  },
   beamStructuralBridgeUp: { uc: "\u{2229}", mpp: false, notSmufl: true },
   beamStructuralBridgeDown: { uc: "\u{222A}", mpp: false, notSmufl: true },
 
@@ -839,10 +847,48 @@ const DEFINITIONS: { [className: string]: MungClassDefinition } = {
 
   // Barlines
   barlineStructuralDotted: { uc: "\u{250A}", mpp: false, notSmufl: true },
-  barlineStructuralDottedPartial: { uc: "\u{2502}", mpp: false, notSmufl: true },
+  barlineStructuralDottedPartial: {
+    uc: "\u{2502}",
+    mpp: false,
+    notSmufl: true,
+  },
 
   // Harmonic Analysis
-  keyAnalysis: { uc: "Gm:", mpp: false, notSmufl: true },
+  keyAnalysisAm: { uc: "Am:", mpp: false, notSmufl: true },
+  keyAnalysisBm: { uc: "Bm:", mpp: false, notSmufl: true },
+  keyAnalysisCm: { uc: "Cm:", mpp: false, notSmufl: true },
+  keyAnalysisDm: { uc: "Dm:", mpp: false, notSmufl: true },
+  keyAnalysisEm: { uc: "Em:", mpp: false, notSmufl: true },
+  keyAnalysisFm: { uc: "Fm:", mpp: false, notSmufl: true },
+  keyAnalysisGm: { uc: "Gm:", mpp: false, notSmufl: true },
+
+  keyAnalysisAM: { uc: "AM:", mpp: false, notSmufl: true },
+  keyAnalysisBM: { uc: "BM:", mpp: false, notSmufl: true },
+  keyAnalysisCM: { uc: "CM:", mpp: false, notSmufl: true },
+  keyAnalysisDM: { uc: "DM:", mpp: false, notSmufl: true },
+  keyAnalysisEM: { uc: "EM:", mpp: false, notSmufl: true },
+  keyAnalysisFM: { uc: "FM:", mpp: false, notSmufl: true },
+  keyAnalysisGM: { uc: "GM:", mpp: false, notSmufl: true },
+
+  keyAnalysisAsm: { uc: "A#m:", mpp: false, notSmufl: true },
+  keyAnalysisCsm: { uc: "C#m:", mpp: false, notSmufl: true },
+  keyAnalysisDsm: { uc: "D#m:", mpp: false, notSmufl: true },
+  keyAnalysisFsm: { uc: "F#m:", mpp: false, notSmufl: true },
+  keyAnalysisGsm: { uc: "G#m:", mpp: false, notSmufl: true },
+
+  keyAnalysisCsM: { uc: "C#M:", mpp: false, notSmufl: true },
+  keyAnalysisFsM: { uc: "F#M:", mpp: false, notSmufl: true },
+
+  keyAnalysisAfm: { uc: "Abm:", mpp: false, notSmufl: true },
+  keyAnalysisBfm: { uc: "Bbm:", mpp: false, notSmufl: true },
+  keyAnalysisEfm: { uc: "Ebm:", mpp: false, notSmufl: true },
+
+  keyAnalysisAfM: { uc: "AbM:", mpp: false, notSmufl: true },
+  keyAnalysisBfM: { uc: "BbM:", mpp: false, notSmufl: true },
+  keyAnalysisCfM: { uc: "CbM:", mpp: false, notSmufl: true },
+  keyAnalysisDfM: { uc: "DbM:", mpp: false, notSmufl: true },
+  keyAnalysisEfM: { uc: "EbM:", mpp: false, notSmufl: true },
+  keyAnalysisGfM: { uc: "GbM:", mpp: false, notSmufl: true },
 
   analyticalI: { uc: "\u{2160}", mpp: false, notSmufl: true },
   analyticalII: { uc: "\u{2161}", mpp: false, notSmufl: true },
