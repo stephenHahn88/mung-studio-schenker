@@ -29,4 +29,9 @@ export enum EditorTool {
    * Specialized mode for editing precedence links
    */
   PrecedenceLinks = "PrecedenceLinks",
+
+  /**
+   * Temporary mode for drawing a recognition area.
+   */
+  RecognitionRegion = "RecognitionRegion",
 }

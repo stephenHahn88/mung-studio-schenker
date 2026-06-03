@@ -3,7 +3,9 @@ node_modules
 .parcel-cache
 dist
 .mypy_cache
-simple-php-backend/documents
+logs
+__pycache__
+simple-php-backend/__pycache__
 
 # editors
 .idea
@@ -15,3 +17,11 @@ simple-php-backend/documents
 # dotenv
 .env
 .env.production
+
+# local release data
+models/**
+!models/
+!models/README.md
+documents/*
+!documents/.gitkeep
+!documents/README.md

@@ -84,6 +84,11 @@ export function MainMenu(props: MainMenuProps) {
   const canGenerateGraphFromStafflines = useAtomValue(
     controller.canGenerateGraphFromStafflinesAtom,
   );
+  const canRunYolo26Combined = useAtomValue(
+    controller.canRunYolo26CombinedAtom,
+  );
+  const isYolo26Running = useAtomValue(controller.isYolo26RunningAtom);
+  const yolo26Status = useAtomValue(controller.yolo26StatusAtom);
 
   ////////////////////////////
   // Action implementations //
@@ -171,6 +176,22 @@ export function MainMenu(props: MainMenuProps) {
         >
           Snap nodes to staves {renderShortcut("Shift + N")}
         </MyMenuItem>
+
+        <MyListDivider />
+        <MyCategoryTitle>Recognition</MyCategoryTitle>
+
+        <MyMenuItem
+          disabled={!canRunYolo26Combined}
+          onClick={() => controller.runYolo26Combined()}
+        >
+          {isYolo26Running
+            ? "Running symbol detector..."
+            : "Run default symbol detectors"}
+        </MyMenuItem>
+
+        {yolo26Status !== null && (
+          <MyMenuItem disabled>{yolo26Status}</MyMenuItem>
+        )}
 
         <MyListDivider />
         <MyCategoryTitle>Select</MyCategoryTitle>

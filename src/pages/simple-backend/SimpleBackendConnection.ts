@@ -1,5 +1,6 @@
 import { Atom, atom, WritableAtom } from "jotai";
 import { atomWithStorage, createJSONStorage } from "jotai/utils";
+import { resolveBackendUrl } from "./resolveBackendUrl";
 
 export interface SimpleBackendConnection {
   /**
@@ -29,7 +30,9 @@ export const userTokenAtom: WritableAtom<string | null, [string | null], void> =
  */
 export const simpleBackendConnectionAtom: Atom<SimpleBackendConnection> = atom(
   (get) => {
-    const url = process.env["SIMPLE_PHP_BACKEND_URL"];
+    const url = resolveBackendUrl(
+      process.env["SIMPLE_PHP_BACKEND_URL"] ?? "AUTO",
+    );
     if (url === undefined) {
       throw new Error("Simple PHP Backend URL is not specified in env vars.");
     }
