@@ -15,6 +15,7 @@ import { AutosaveStatus } from "./AutosaveStatus";
 import { DocumentAccordionPanel } from "./DocumentAccordionPanel";
 import { ViewAccordionPanel } from "./ViewAccordionPanel";
 import { SelectionAccordionPanel } from "./SelectionAccordionPanel";
+import { RecognitionQuickAction } from "./RecognitionQuickAction";
 
 export interface OverviewPanelProps {
   readonly onClose: () => void;
@@ -47,6 +48,8 @@ export function OverviewPanel(props: OverviewPanelProps) {
       <Typography level="title-md" sx={{ p: 1 }}>
         {props.fileName}
       </Typography>
+
+      <RecognitionQuickAction />
 
       <Divider />
 

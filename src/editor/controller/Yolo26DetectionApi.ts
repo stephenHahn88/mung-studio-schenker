@@ -1,0 +1,227 @@
+import { resolveBackendUrl } from "../../pages/simple-backend/resolveBackendUrl";
+
+export interface Yolo26Prediction {
+  readonly left: number;
+  readonly top: number;
+  readonly width: number;
+  readonly height: number;
+  readonly classId: number;
+  readonly rawClassName: string;
+  readonly className: string;
+  readonly confidence: number;
+  readonly source: SymbolDetectionSource;
+  readonly modelKey: string;
+  readonly modelLabel: string;
+  readonly backend: DetectionModelBackend;
+}
+
+export interface Yolo26DetectionResponse {
+  readonly model: string;
+  readonly device: string;
+  readonly options: SymbolDetectionRunOptions;
+  readonly models: {
+    readonly large: DetectionModelMetadata | null;
+    readonly small: DetectionModelMetadata | null;
+  };
+  readonly largeCount: number;
+  readonly tiledCount: number;
+  readonly count: number;
+  readonly image: {
+    readonly width: number;
+    readonly height: number;
+  };
+  readonly region?: null | {
+    readonly left: number;
+    readonly top: number;
+    readonly width: number;
+    readonly height: number;
+  };
+  readonly predictions: Yolo26Prediction[];
+}
+
+export type SymbolDetectionSource = "large" | "small";
+
+export type DetectionModelBackend = "yolo" | "detr";
+
+export type DetectionModelRole = "large" | "small";
+
+export interface DetectionModelMetadata {
+  readonly key: string;
+  readonly label: string;
+  readonly role: DetectionModelRole;
+  readonly backend: DetectionModelBackend;
+  readonly path?: string;
+  readonly available?: boolean;
+  readonly candidatePaths?: readonly string[];
+}
+
+export interface DetectionModelOption {
+  readonly key: string;
+  readonly label: string;
+  readonly role: DetectionModelRole;
+  readonly backend: DetectionModelBackend;
+}
+
+export const DETECTION_MODEL_OPTIONS: DetectionModelOption[] = [
+  {
+    key: "yolo26l_large_fullwidth_7pages_pre",
+    label: "YOLO26L, 7 pages",
+    role: "large",
+    backend: "yolo",
+  },
+  {
+    key: "yolo26l_tiled_7pages_pre",
+    label: "YOLO26L, 7 pages",
+    role: "small",
+    backend: "yolo",
+  },
+  {
+    key: "yolo26l_large_fullwidth_9pages_ep300",
+    label: "YOLO26L, 9 pages, 300 epochs",
+    role: "large",
+    backend: "yolo",
+  },
+  {
+    key: "yolo26l_tiled_9pages_ep300",
+    label: "YOLO26L, 9 pages, 300 epochs",
+    role: "small",
+    backend: "yolo",
+  },
+  {
+    key: "detr_large_9pages_plus50",
+    label: "DETR, 9 pages, 200 epochs",
+    role: "large",
+    backend: "detr",
+  },
+  {
+    key: "detr_tiled_9pages_plus50",
+    label: "DETR, 9 pages, 170 epochs",
+    role: "small",
+    backend: "detr",
+  },
+];
+
+export const DEFAULT_LARGE_DETECTION_MODEL_KEY =
+  "yolo26l_large_fullwidth_9pages_ep300";
+
+export const DEFAULT_SMALL_DETECTION_MODEL_KEY =
+  "yolo26l_tiled_9pages_ep300";
+
+export interface Yolo26DetectionOptions {
+  readonly largeConf: number;
+  readonly largeImgsz: number;
+  readonly stripWidth: number;
+  readonly stripHeight: number;
+  readonly stripStepX: number;
+  readonly stripStepY: number;
+  readonly tileConf: number;
+  readonly tilePatch: number;
+  readonly tileStep: number;
+  readonly tileMargin: number;
+  readonly sameClassIou: number;
+  readonly sameClassAreaRatio: number;
+  readonly xclassIou: number;
+  readonly xclassAreaRatio: number;
+}
+
+export interface SymbolDetectionRunOptions extends Yolo26DetectionOptions {
+  readonly largeModelKey: string;
+  readonly smallModelKey: string;
+  readonly runLarge: boolean;
+  readonly runSmall: boolean;
+  readonly deduplicate: boolean;
+  readonly roiLeft?: number;
+  readonly roiTop?: number;
+  readonly roiWidth?: number;
+  readonly roiHeight?: number;
+}
+
+export const DEFAULT_YOLO26_DETECTION_OPTIONS: Yolo26DetectionOptions = {
+  largeConf: 0.4,
+  largeImgsz: 3072,
+  stripWidth: 0,
+  stripHeight: 768,
+  stripStepX: 1,
+  stripStepY: 384,
+  tileConf: 0.15,
+  tilePatch: 1216,
+  tileStep: 960,
+  tileMargin: 128,
+  sameClassIou: 0.3,
+  sameClassAreaRatio: 0.5,
+  xclassIou: 0.75,
+  xclassAreaRatio: 0.7,
+};
+
+export class Yolo26DetectionApi {
+  private readonly backendUrl: string;
+
+  constructor() {
+    const url = resolveBackendUrl(
+      process.env["YOLO26_BACKEND_URL"] ||
+        process.env["SIMPLE_PHP_BACKEND_URL"] ||
+        "AUTO",
+    );
+    if (url === undefined) {
+      throw new Error("YOLO26 backend URL is not specified.");
+    }
+    this.backendUrl = url;
+  }
+
+  public static isConfigured(): boolean {
+    return true;
+  }
+
+  public async detectImageUrl(
+    imageUrl: string,
+    options: SymbolDetectionRunOptions,
+  ): Promise<Yolo26DetectionResponse> {
+    const imageResponse = await fetch(imageUrl);
+    if (!imageResponse.ok) {
+      throw new Error(
+        "Could not read the current background image: " +
+          (await imageResponse.text()),
+      );
+    }
+
+    const imageBlob = await imageResponse.blob();
+    const body = new FormData();
+    body.append("image", imageBlob, "mung-studio-page.png");
+    for (const [key, value] of Object.entries(options)) {
+      body.append(key, String(value));
+    }
+
+    const response = await fetch(this.buildUrl("detect-symbols"), {
+      method: "POST",
+      body,
+    });
+    if (!response.ok) {
+      const data = await response.text();
+      throw new Error("YOLO26 detection failed: " + data);
+    }
+
+    return (await response.json()) as Yolo26DetectionResponse;
+  }
+
+  public async listDetectionModels(): Promise<DetectionModelMetadata[]> {
+    const response = await fetch(this.buildUrl("list-detection-models"));
+    if (!response.ok) {
+      const data = await response.text();
+      throw new Error("Could not list detection models: " + data);
+    }
+    const data = (await response.json()) as {
+      readonly models?: DetectionModelMetadata[];
+    };
+    return data.models ?? [];
+  }
+
+  private buildUrl(action: string): string {
+    const separator = this.backendUrl.includes("?") ? "&" : "?";
+    return (
+      this.backendUrl +
+      separator +
+      "action=" +
+      encodeURIComponent(action)
+    );
+  }
+}

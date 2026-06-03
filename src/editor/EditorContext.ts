@@ -26,6 +26,8 @@ import { BackgroundImageStore } from "./model/BackgroundImageStore";
 import { StafflinesToolController } from "./controller/tools/StafflinesToolController";
 import { StaffGeometryStore } from "./model/StaffGeometryStore";
 import { NodeNavigationController } from "./controller/NodeNavigationController";
+import { HistoryStore } from "./model/HistoryStore";
+import { RecognitionRegionController } from "./controller/RecognitionRegionController";
 
 /**
  * All fields present in the editor component's global context
@@ -37,6 +39,7 @@ export interface EditorContextState {
   readonly classVisibilityStore: ClassVisibilityStore;
   readonly staffGeometryStore: StaffGeometryStore;
   readonly editorStateStore: EditorStateStore;
+  readonly historyStore: HistoryStore;
   readonly autosaveStore: AutosaveStore;
   readonly settingsStore: SettingsStore;
   readonly validationStore: ValidationStore;
@@ -55,6 +58,7 @@ export interface EditorContextState {
   readonly polygonToolsController: PolygonToolsController;
   readonly stafflinesToolController: StafflinesToolController;
   readonly mainMenuController: MainMenuController;
+  readonly recognitionRegionController: RecognitionRegionController;
   readonly nodeNavigationController: NodeNavigationController;
 }
 
@@ -95,7 +99,10 @@ export function useConstructContextServices(
 
   const editorStateStore = useMemo(() => new EditorStateStore(jotaiStore), []);
 
-  // TODO: historyStore (for undo/redo)
+  const historyStore = useMemo(
+    () => new HistoryStore(notationGraphStore, jotaiStore),
+    [],
+  );
 
   const autosaveStore = useMemo(
     () => new AutosaveStore(notationGraphStore),
@@ -225,6 +232,19 @@ export function useConstructContextServices(
         editorStateStore,
         pythonRuntime,
         classVisibilityStore,
+        backgroundImageStore,
+        historyStore,
+      ),
+    [],
+  );
+
+  const recognitionRegionController = useMemo(
+    () =>
+      new RecognitionRegionController(
+        jotaiStore,
+        zoomController,
+        toolbeltController,
+        mainMenuController,
       ),
     [],
   );
@@ -247,6 +267,7 @@ export function useConstructContextServices(
     classVisibilityStore,
     staffGeometryStore,
     editorStateStore,
+    historyStore,
     autosaveStore,
     settingsStore,
     validationStore,
@@ -265,6 +286,7 @@ export function useConstructContextServices(
     polygonToolsController,
     stafflinesToolController,
     mainMenuController,
+    recognitionRegionController,
     nodeNavigationController,
   };
 }

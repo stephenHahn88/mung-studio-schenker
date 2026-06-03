@@ -52,6 +52,7 @@ export class SelectionController implements IController {
     const currentTool = get(this.toolbeltController.currentToolAtom);
     if (currentTool === EditorTool.Hand) return false;
     if (currentTool === EditorTool.NodeEditing) return false;
+    if (currentTool === EditorTool.RecognitionRegion) return false;
     return true;
   });
 

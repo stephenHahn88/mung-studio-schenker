@@ -10,6 +10,7 @@ The MUSCIMA++ v2.0 dataset: https://github.com/OMR-Research/muscima-pp/releases/
 ## Documentation
 
 - [User Manual](docs/user-manual/user-manual.md)
+- [Local Symbol Detector Guide](docs/local-symbol-detector-guide.md)
 
 Development documentation:
 
@@ -24,6 +25,11 @@ Development documentation:
 
 
 ## Development
+
+For local annotators using the symbol detector panel, see the
+[Local Symbol Detector Guide](docs/local-symbol-detector-guide.md). The local
+release only needs this repository plus local model files in `models/`; it does
+not require a separate `Schenkerian_OMR` checkout.
 
 Start the development frontend server:
 
@@ -47,5 +53,19 @@ php -S localhost:8080
 # otherwise the frontend will not know where to connect to:
 SIMPLE_PHP_BACKEND_URL=http://localhost:8080
 ```
+
+To use the symbol detector recognizer from the editor menu, start the bundled
+Python backend instead:
+
+```bash
+npm run start-yolo26-backend
+
+# in .env
+YOLO26_BACKEND_URL=http://localhost:8080
+```
+
+The backend expects model files under `models/`. See
+[models/README.md](models/README.md) for the supported file names and optional
+environment variable overrides.
 
 Read the [Development Setup](docs/development-setup.md) documentation page to see how to develop, debug, and deploy the project.

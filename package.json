@@ -12,6 +12,8 @@
     "build": "npm run clean && parcel build --public-url ./",
     "clean": "rimraf .parcel-cache dist",
     "serve": "http-server dist",
+    "start-local": "./start_local.sh",
+    "start-yolo26-backend": "python3 simple-php-backend/server.py --port 8080 --documents documents",
     "lint": "eslint src/**/*.tsx",
     "prettier-check": "prettier src pyodide/*.ts --check",
     "prettier-write": "prettier src pyodide/*.ts --write",
@@ -19,7 +21,7 @@
   },
   "pyodide": {
     "mung-path": "pyodide/mung",
-    "mung-url": "git@github.com:OmniOMR/mung.git",
+    "mung-url": "https://github.com/OmniOMR/mung.git",
     "mung-commit": "d37ed97"
   },
   "devDependencies": {

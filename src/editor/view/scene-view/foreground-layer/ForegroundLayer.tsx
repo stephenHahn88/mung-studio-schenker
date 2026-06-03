@@ -22,6 +22,7 @@ export function ForegroundLayer() {
     polygonToolsController,
     stafflinesToolController,
     mainMenuController,
+    recognitionRegionController,
     nodeNavigationController,
   } = useContext(EditorContext);
 
@@ -33,6 +34,7 @@ export function ForegroundLayer() {
   const controllers: IController[] = [
     mousePointerController,
     highlightController,
+    recognitionRegionController,
     selectionController,
     toolbeltController,
     nodeEditingController,
@@ -132,6 +134,7 @@ export function ForegroundLayer() {
   const isGrabbing = useAtomValue(zoomController.isGrabbingAtom);
   let cursor = "default";
   if (editorTool === EditorTool.Hand) cursor = "grab";
+  if (editorTool === EditorTool.RecognitionRegion) cursor = "crosshair";
   if (isGrabbing) cursor = "grabbing";
   if (
     nodeTool === NodeTool.PolygonErase ||
