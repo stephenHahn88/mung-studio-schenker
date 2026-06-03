@@ -10,6 +10,7 @@ The MUSCIMA++ v2.0 dataset: https://github.com/OMR-Research/muscima-pp/releases/
 ## Documentation
 
 - [User Manual](docs/user-manual/user-manual.md)
+- [Local Symbol Detector Guide](docs/local-symbol-detector-guide.md)
 
 Development documentation:
 
@@ -25,10 +26,10 @@ Development documentation:
 
 ## Development
 
-For local annotators using the symbol detector panel, see
-[README_LOCAL.md](README_LOCAL.md). The local release only needs this
-repository plus local model files in `models/`; it does not require a
-separate `Schenkerian_OMR` checkout.
+For local annotators using the symbol detector panel, see the
+[Local Symbol Detector Guide](docs/local-symbol-detector-guide.md). The local
+release only needs this repository plus local model files in `models/`; it does
+not require a separate `Schenkerian_OMR` checkout.
 
 Start the development frontend server:
 
