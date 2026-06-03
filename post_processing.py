@@ -2,6 +2,7 @@
 CLASS_MAP = {
     "stem": "stemStructural",
     "noteheadFull": "noteheadBlack",
+    "noteheadFullSmall": "noteheadBlack",
     "augmentationDot": "noteheadBlack",
     "slur": "slurStructuralUp",
     "tie": "slurStructuralUp",
@@ -22,7 +23,7 @@ def replace_classnames(input_path, output_path):
         f.write(content)
 
 if __name__ == "__main__":
-    input_file = "C:\\Users\\88ste\\PycharmProjects\\mung-studio-schenker\\simple-php-backend\\documents\\rachmaninov_bells_mvt2_p6\\mung.xml"
+    input_file = "C:\\Users\\88ste\\PycharmProjects\\mung-studio-schenker\\simple-php-backend\\documents\\rachmaninov_bells_mvt2_p5\\mung.xml"
     output_file = input_file
     replace_classnames(input_file, output_file)
     print(f"Done! Saved to {output_file}")

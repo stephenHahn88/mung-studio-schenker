@@ -807,6 +807,8 @@ const DEFINITIONS: { [className: string]: MungClassDefinition } = {
   // Slurs
   slurStructuralDown: { uc: "\u{E4BB}", mpp: false, notSmufl: true },
   slurStructuralUp: { uc: "\u{E4BA}", mpp: false, notSmufl: true },
+  slurStructuralUpDashed: { uc: "\u{E4BA}\u{E4BA}", mpp: false, notSmufl: true },
+  slurStructuralDownDashed: { uc: "\u{E4BB}\u{E4BB}", mpp: false, notSmufl: true },
 
   // Beams
   beamStructural: { uc: "\u{E1F0}\u{E1F2}", mpp: false, notSmufl: true },
@@ -912,6 +914,7 @@ const DEFINITIONS: { [className: string]: MungClassDefinition } = {
   // Miscellaneous
   circleEmphasis: { uc: "\u{25EF}", mpp: false, notSmufl: true },
   circleMeasureNumber: { uc: "\u{25CB}", mpp: false, notSmufl: true },
+  analysisInterruption: { uc: "''", mpp: false, notSmufl: true },
 };
 
 ////////////////////////////////////////////////////////////////////////////////
