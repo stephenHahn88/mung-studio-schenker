@@ -402,6 +402,27 @@ symbol_detector_confidence
 This lets the editor distinguish detector predictions from manually created
 or edited symbols.
 
+## Editing Predicted Bounding Boxes
+
+Detector predictions are editable after insertion. This is useful when the
+model predicts the correct symbol class but the bounding box is slightly
+misaligned.
+
+To edit a predicted bounding box:
+
+1. Stay in the normal pointer/selection mode.
+2. Click one detector-predicted box.
+3. Use the yellow resize handles to adjust the box size.
+4. Drag inside the selected box to move the whole box.
+5. Release the mouse button to commit the edit.
+
+The edit is written as a normal MuNG node update and is saved through the
+Simple Backend. Use `Undo` to return to the previous bounding box.
+
+This box-editing tool is only shown for detector-predicted nodes that use a
+plain bounding box. Nodes with masks or polygons should still be edited with
+the normal node-editing tools.
+
 ## Detection Parameters
 
 The panel exposes the most useful detector parameters. Defaults are shown in

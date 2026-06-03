@@ -17,6 +17,7 @@ export function ForegroundLayer() {
     zoomController,
     mousePointerController,
     highlightController,
+    bboxEditingController,
     selectionController,
     redrawTrigger,
     polygonToolsController,
@@ -34,6 +35,7 @@ export function ForegroundLayer() {
   const controllers: IController[] = [
     mousePointerController,
     highlightController,
+    bboxEditingController,
     recognitionRegionController,
     selectionController,
     toolbeltController,
@@ -132,7 +134,9 @@ export function ForegroundLayer() {
   const editorTool = useAtomValue(toolbeltController.currentToolAtom);
   const nodeTool = useAtomValue(nodeEditingController.currentNodeToolAtom);
   const isGrabbing = useAtomValue(zoomController.isGrabbingAtom);
+  const bboxEditingCursor = useAtomValue(bboxEditingController.cursorAtom);
   let cursor = "default";
+  if (bboxEditingCursor !== null) cursor = bboxEditingCursor;
   if (editorTool === EditorTool.Hand) cursor = "grab";
   if (editorTool === EditorTool.RecognitionRegion) cursor = "crosshair";
   if (isGrabbing) cursor = "grabbing";
