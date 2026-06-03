@@ -16,8 +16,20 @@ pip install --upgrade pip
 pip install -r requirements-yolo26.txt
 ```
 
-Add model files under `models/`. See [models/README.md](models/README.md) for
-the exact file names.
+Download the model package from Google Drive:
+
+```text
+https://drive.google.com/file/d/1RsXbsR17CwZLJQ7G-Iiw7xSl3RtpcHZp/view?usp=drive_link
+```
+
+Unzip it in the repository root:
+
+```bash
+unzip ~/Downloads/mung-studio-symbol-detector-models.zip
+```
+
+After extraction, the repository should contain `models/`. See
+[models/README.md](models/README.md) for the exact file names.
 
 Add pages under `documents/`:
 

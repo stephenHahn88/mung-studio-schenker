@@ -1,5 +1,14 @@
 Place local detector model files in this directory.
 
+Download the prepared model package from Google Drive:
+
+```text
+https://drive.google.com/file/d/1RsXbsR17CwZLJQ7G-Iiw7xSl3RtpcHZp/view?usp=drive_link
+```
+
+Unzip the package in the repository root, not inside this directory. After
+extraction, this directory should contain the files and folders listed below.
+
 YOLO model weights:
 
 - yolo26l_large_fullwidth_7pages_pre.pt

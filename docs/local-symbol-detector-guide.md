@@ -103,6 +103,76 @@ pip install -r requirements-yolo26.txt
 Put local model files under `models/`. Large model files are intentionally
 ignored by git.
 
+The prepared model package is available on Google Drive:
+
+```text
+https://drive.google.com/file/d/1RsXbsR17CwZLJQ7G-Iiw7xSl3RtpcHZp/view?usp=drive_link
+```
+
+### Download The Model Package
+
+Browser download:
+
+1. Open the Google Drive link above.
+2. Click the download button.
+3. If Google Drive shows a large-file warning, choose to download anyway.
+4. Save the file as `mung-studio-symbol-detector-models.zip`.
+
+Optional command-line download:
+
+```bash
+python3 -m pip install gdown
+gdown --id 1RsXbsR17CwZLJQ7G-Iiw7xSl3RtpcHZp -O mung-studio-symbol-detector-models.zip
+```
+
+### Unzip The Model Package
+
+Unzip the package in the repository root, not inside `models/`.
+
+macOS/Linux:
+
+```bash
+cd mung-studio-schenker
+unzip ~/Downloads/mung-studio-symbol-detector-models.zip
+```
+
+If the zip file is already in the repository root:
+
+```bash
+unzip mung-studio-symbol-detector-models.zip
+```
+
+Windows:
+
+1. Move `mung-studio-symbol-detector-models.zip` into the
+   `mung-studio-schenker` repository folder.
+2. Right-click the zip file.
+3. Choose `Extract All...`.
+4. Extract into the repository root.
+
+After extraction, these paths should exist:
+
+```text
+models/yolo26l_large_fullwidth_7pages_pre.pt
+models/yolo26l_tiled_7pages_pre.pt
+models/yolo26l_large_fullwidth_9pages_pre_ep300.pt
+models/yolo26l_tiled_9pages_pre_ep300.pt
+models/detr_large_9pages_plus50/model/model.safetensors
+models/detr_tiled_9pages_plus50/model/model.safetensors
+```
+
+The model zip SHA256 checksum is:
+
+```text
+5fa13d55c4d09114f85c5d7ef6dc5015756f28e800810231ddde3b9112177616
+```
+
+On macOS/Linux, verify it with:
+
+```bash
+shasum -a 256 mung-studio-symbol-detector-models.zip
+```
+
 Supported YOLO model files:
 
 ```text
