@@ -1,0 +1,30 @@
+# project
+node_modules
+.parcel-cache
+dist
+.mypy_cache
+logs
+__pycache__
+simple-php-backend/__pycache__
+
+# editors
+.idea
+# .vscode is not ignored - it has proper settings for tabsize
+
+# operating system
+.DS_Store
+
+# dotenv
+.env
+.env.production
+
+# local release data
+models/**
+!models/
+!models/README.md
+documents/*
+!documents/.gitkeep
+!documents/README.md
+
+# secrets (real per-annotator tokens — never commit; use users.example.json as template)
+simple-php-backend/users.json
