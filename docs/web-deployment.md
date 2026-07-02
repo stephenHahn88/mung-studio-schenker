@@ -11,7 +11,7 @@ internet.
 
 ```
                          (public internet)
-  annotator's browser  ───────────────────────►  https://<name>.trycloudflare.com
+  annotator's browser  ───────────────────────►  https://<your-domain>  (named tunnel)
                                                           │  cloudflared tunnel
                                                           ▼
   GPU node (this machine)        python simple-php-backend/server.py :8080
@@ -58,30 +58,31 @@ Already done on this machine, listed here for reproducing elsewhere:
 
 ## Running it (always-on)
 
-Run this in **your own terminal** (ideally inside `tmux`/`screen` so it survives
-disconnects):
+The service runs as a **self-healing SLURM batch job** (`run_mung_service.sbatch`).
+SLURM keeps it alive: if the backend or the Cloudflare tunnel dies it is restarted
+automatically, and ~3 min before the wall-time limit the job submits a fresh copy of
+itself and hands off — so the deployment is near-continuous with no tmux/screen.
+With the **named** tunnel (below) the public URL stays the same across every restart.
 
 ```bash
-tmux new -s mung
-./start_web_persistent.sh
+sbatch run_mung_service.sbatch      # start
+squeue -u $USER -n mung-web         # check (shows node + runtime)
+scancel -n mung-web                 # stop ALL copies (so it won't resubmit)
 ```
 
-This builds the frontend (if needed), starts the backend detached, opens the
-public tunnel, and prints the public URL (also saved to `logs/public-url.txt`).
-Detach from tmux with `Ctrl-b d`; the deployment keeps running.
+Logs: `logs/slurm-mung-<jobid>.log` (supervisor), `logs/web-backend.log`,
+`logs/web-tunnel.log`.
 
-Stop everything:
+### Redeploy after a code / frontend change (graceful, same URL)
 
 ```bash
-./stop_web.sh
+npm run build                             # rebuild dist/ if the frontend changed
+squeue -u $USER -n mung-web               # note the current <jobid>
+scancel --signal=USR1 --batch <jobid>     # triggers a clean resubmit onto a fresh job
 ```
 
-### Alternative: two terminals (foreground)
-
-```bash
-./start_web.sh       # terminal 1 — build + serve on :8080 (local only)
-./start_tunnel.sh    # terminal 2 — open the public URL
-```
+The backend re-reads `server.py` / model code on restart; the named tunnel keeps the
+same URL, so annotators are only briefly disconnected.
 
 ## Giving access to annotators
 
@@ -99,9 +100,17 @@ Because models live only here, updating them is a one-place operation:
 
 1. Drop the new weights into `models/` (or point env vars at them — see
    `models/README.md`).
-2. Restart the backend (`./stop_web.sh` then `./start_web_persistent.sh`).
+2. Restart the backend (graceful resubmit: `scancel --signal=USR1 --batch <jobid>`).
 
 Annotators do nothing; their next recognition run uses the new model.
+
+## Backups
+
+Annotations in `documents/` are backed up **off-site to Google Drive**, versioned
+(a live mirror + daily snapshots + archived previous versions of every changed or
+deleted file). A daily `cron` job runs `backup_documents.sh` at 05:00, and the
+sidebar's **"Backup now"** button triggers one on demand. To recover a deleted or
+overwritten file, use `find_backup_versions.sh <name>` and follow **`RESTORE.md`**.
 
 ## Stable / custom-domain URL (optional)
 
@@ -131,11 +140,11 @@ hostname is in front of it.
 
 ## Troubleshooting
 
-- **`./start_web_persistent.sh` does nothing / exits oddly inside an automated
-  agent shell:** sandboxed shells may block detached processes. Run it in a
-  normal interactive login shell / tmux.
-- **No public URL printed:** check `logs/web-tunnel.log`; the line to look for
-  contains `trycloudflare.com`.
+- **Service not reachable:** check it's queued/running with
+  `squeue -u $USER -n mung-web`; if absent, `sbatch run_mung_service.sbatch`.
+  Inspect `logs/slurm-mung-<jobid>.log` for the supervisor's restart messages.
+- **Tunnel / URL issues:** check `logs/web-tunnel.log`. With the named tunnel the
+  URL is fixed; a quick tunnel prints a `trycloudflare.com` line instead.
 - **Recognition returns 401:** the annotator is not logged in, or their token
   is not in `users.json`. The frontend sends the same token used for documents.
 - **Detection is slow / first call is ~10s:** the model loads into VRAM on the

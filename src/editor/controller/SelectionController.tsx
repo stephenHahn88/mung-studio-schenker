@@ -111,6 +111,10 @@ export class SelectionController implements IController {
   public onMouseDown(e: MouseEvent) {
     if (e.button !== 0) return; // LMB only
 
+    // Ctrl/Cmd + drag is reserved for the quick-rectangle node creation gesture
+    // (QuickRectNodeController), so don't start a selection sweep here.
+    if (e.ctrlKey || e.metaKey) return;
+
     const highlightedNode = this.highlighter.highlightedNode;
 
     // pointer position

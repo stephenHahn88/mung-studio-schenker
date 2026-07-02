@@ -2,6 +2,10 @@
 node_modules
 .parcel-cache
 dist
+# build-output backup/staging copies from atomic deploy swaps (never commit)
+dist_new
+dist_old
+dist.*
 .mypy_cache
 logs
 __pycache__
@@ -25,6 +29,8 @@ models/**
 documents/*
 !documents/.gitkeep
 !documents/README.md
+# one-off local data backups (kept on disk, never committed)
+documents_backup_*
 
 # secrets (real per-annotator tokens — never commit; use users.example.json as template)
 simple-php-backend/users.json

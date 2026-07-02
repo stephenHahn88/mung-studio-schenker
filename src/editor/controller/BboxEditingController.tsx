@@ -49,7 +49,11 @@ const EMPTY_INTERACTION_STATE: BboxInteractionState = {
 const MIN_BBOX_SIZE = 2;
 
 /**
- * Lets annotators move and resize detector-predicted bounding boxes.
+ * Lets annotators move and resize any node via bounding-box handles. Moving
+ * carries the node's pixel mask along with the box; resizing keeps the mask
+ * pixels that still fall inside the new box, drops those now outside it, and
+ * leaves any newly-exposed area empty (see commitRect / cropMaskToRect). A node
+ * with no mask (null) represents "fills the whole box" and stays that way.
  */
 export class BboxEditingController implements IController {
   public readonly controllerName = "BboxEditingController";
@@ -189,19 +193,11 @@ export class BboxEditingController implements IController {
     return this.isEditableBboxNode(node) ? node : null;
   }
 
-  private isEditableBboxNode(node: Node): boolean {
-    return (
-      this.isDetectorPredictionNode(node) &&
-      node.decodedMask === null &&
-      node.polygon === null
-    );
-  }
-
-  private isDetectorPredictionNode(node: Node): boolean {
-    return (
-      node.data["symbol_detector_prediction"]?.value === "true" ||
-      node.data["yolo26_combined"]?.value === "true"
-    );
+  private isEditableBboxNode(_node: Node): boolean {
+    // Every node can be moved/resized via the bounding-box handles. The pixel
+    // mask (if any) is carried/cropped to the new box on edit (see commitRect),
+    // so it stays in sync with the box dimensions.
+    return true;
   }
 
   private commitRect(node: Node, rect: BboxRect): void {
@@ -215,20 +211,81 @@ export class BboxEditingController implements IController {
       return;
     }
 
+    const oldRect = this.nodeToRect(node);
+    const dimsChanged =
+      normalized.width !== node.width || normalized.height !== node.height;
+
+    // Re-anchor the pixel mask to the new bounding box:
+    //  - move (size unchanged): the mask travels with the box (unchanged);
+    //  - resize: keep mask pixels still inside the new box, drop those now
+    //    outside it, and leave any newly-exposed area empty.
+    // A null mask means "fills the whole box" and stays null.
+    let decodedMask = node.decodedMask;
+    if (decodedMask !== null && dimsChanged) {
+      decodedMask = this.cropMaskToRect(decodedMask, oldRect, normalized);
+    }
+
     this.notationGraphStore.updateNode({
       ...node,
       left: normalized.left,
       top: normalized.top,
       width: normalized.width,
       height: normalized.height,
+      decodedMask,
     });
+  }
+
+  /**
+   * Re-expresses a node's pixel mask for a resized bounding box. The mask is
+   * treated as anchored in absolute scene coordinates: a pixel stays ink iff
+   * its absolute position is still inside the new box. Cells of the new box
+   * that lie outside the old box are left empty (transparent). The returned
+   * ImageData has exactly the new box's dimensions, so it stays consistent with
+   * the box (a hard requirement of the MuNG mask format).
+   */
+  private cropMaskToRect(
+    mask: ImageData,
+    oldRect: BboxRect,
+    newRect: BboxRect,
+  ): ImageData {
+    const ow = mask.width;
+    const oh = mask.height;
+    const nw = newRect.width;
+    const nh = newRect.height;
+    const out = new ImageData(nw, nh); // zero-filled => expanded area is empty
+    const src = mask.data;
+    const dst = out.data;
+    // old index for a new pixel (x,y): absolute (newLeft+x, newTop+y) - oldOrigin
+    const dx = newRect.left - oldRect.left;
+    const dy = newRect.top - oldRect.top;
+    for (let y = 0; y < nh; y++) {
+      const oy = y + dy;
+      if (oy < 0 || oy >= oh) continue;
+      for (let x = 0; x < nw; x++) {
+        const ox = x + dx;
+        if (ox < 0 || ox >= ow) continue;
+        const si = (oy * ow + ox) * 4;
+        const di = (y * nw + x) * 4;
+        dst[di] = src[si];
+        dst[di + 1] = src[si + 1];
+        dst[di + 2] = src[si + 2];
+        dst[di + 3] = src[si + 3];
+      }
+    }
+    return out;
   }
 
   private normalizeCommittedRect(rect: BboxRect): BboxRect {
     const left = Math.round(rect.left);
     const top = Math.round(rect.top);
-    const right = Math.max(left + MIN_BBOX_SIZE, Math.round(rect.left + rect.width));
-    const bottom = Math.max(top + MIN_BBOX_SIZE, Math.round(rect.top + rect.height));
+    const right = Math.max(
+      left + MIN_BBOX_SIZE,
+      Math.round(rect.left + rect.width),
+    );
+    const bottom = Math.max(
+      top + MIN_BBOX_SIZE,
+      Math.round(rect.top + rect.height),
+    );
     return {
       left,
       top,
@@ -246,7 +303,10 @@ export class BboxEditingController implements IController {
     };
   }
 
-  private rectForDrag(activeDrag: ActiveDrag, point: DOMPointReadOnly): BboxRect {
+  private rectForDrag(
+    activeDrag: ActiveDrag,
+    point: DOMPointReadOnly,
+  ): BboxRect {
     const rect = activeDrag.startRect;
     if (activeDrag.action === "move") {
       return {
@@ -360,7 +420,10 @@ export class BboxEditingController implements IController {
 
   private getScenePoint(e: MouseEvent): DOMPointReadOnly {
     const transform = this.zoomController.currentTransform;
-    return new DOMPoint(transform.invertX(e.offsetX), transform.invertY(e.offsetY));
+    return new DOMPoint(
+      transform.invertX(e.offsetX),
+      transform.invertY(e.offsetY),
+    );
   }
 
   private setInteractionState(state: BboxInteractionState): void {

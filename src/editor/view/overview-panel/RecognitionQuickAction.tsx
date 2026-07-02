@@ -23,6 +23,7 @@ import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import UndoIcon from "@mui/icons-material/Undo";
 import { useAtomValue } from "jotai";
 import { useContext, useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import { EditorContext } from "../../EditorContext";
 import {
   DEFAULT_LARGE_DETECTION_MODEL_KEY,
@@ -50,85 +51,99 @@ const PARAMETER_DEFS: {
     key: "largeConf",
     label: "Large confidence threshold",
     step: "0.01",
-    helper: "Confidence threshold for the large-symbol model; higher means fewer false positives but more missed symbols.",
+    helper:
+      "Confidence threshold for the large-symbol model; higher means fewer false positives but more missed symbols.",
   },
   {
     key: "tileConf",
     label: "Small confidence threshold",
     step: "0.01",
-    helper: "Confidence threshold for the tiled small-symbol model; lower can find more small symbols.",
+    helper:
+      "Confidence threshold for the tiled small-symbol model; lower can find more small symbols.",
   },
   {
     key: "largeImgsz",
     label: "Large image size",
     step: "64",
-    helper: "Input size for the large-symbol model; larger can be more accurate but slower.",
+    helper:
+      "Input size for the large-symbol model; larger can be more accurate but slower.",
   },
   {
     key: "stripWidth",
     label: "Strip width",
     step: "128",
-    helper: "Horizontal strip width for the large model; 0 uses the full page width.",
+    helper:
+      "Horizontal strip width for the large model; 0 uses the full page width.",
   },
   {
     key: "stripHeight",
     label: "Strip height",
     step: "64",
-    helper: "Vertical strip height for the large model; controls how much page context is visible.",
+    helper:
+      "Vertical strip height for the large model; controls how much page context is visible.",
   },
   {
     key: "stripStepX",
     label: "Strip step X",
     step: "1",
-    helper: "Horizontal step between strips; usually keep this at 1 when using full-width strips.",
+    helper:
+      "Horizontal step between strips; usually keep this at 1 when using full-width strips.",
   },
   {
     key: "stripStepY",
     label: "Strip step Y",
     step: "32",
-    helper: "Vertical step between strips; smaller gives more overlap and slower detection.",
+    helper:
+      "Vertical step between strips; smaller gives more overlap and slower detection.",
   },
   {
     key: "tilePatch",
     label: "Tile patch",
     step: "64",
-    helper: "Tile size for the small-symbol model; larger gives more context and slower detection.",
+    helper:
+      "Tile size for the small-symbol model; larger gives more context and slower detection.",
   },
   {
     key: "tileStep",
     label: "Tile step",
     step: "32",
-    helper: "Step between small-symbol tiles; smaller gives more overlap and slower detection.",
+    helper:
+      "Step between small-symbol tiles; smaller gives more overlap and slower detection.",
   },
   {
     key: "tileMargin",
     label: "Tile margin",
     step: "16",
-    helper: "Ignore predictions near tile edges to reduce duplicate border boxes.",
+    helper:
+      "Ignore predictions near tile edges to reduce duplicate border boxes.",
   },
   {
     key: "sameClassIou",
     label: "Same-class IoU",
     step: "0.01",
-    helper: "Overlap threshold for merging boxes of the same class; lower merges more aggressively.",
+    helper:
+      "Overlap threshold for merging boxes of the same class; lower merges more aggressively.",
   },
   {
     key: "sameClassAreaRatio",
     label: "Same-class area",
     step: "0.01",
-    helper: "Area-similarity threshold for same-class deduplication; lower removes more boxes.",
+    helper:
+      "Area-similarity threshold for same-class deduplication; lower removes more boxes.",
   },
   {
     key: "xclassIou",
     label: "Cross-class IoU",
     step: "0.01",
-    helper: "Overlap threshold for conflicting boxes of different classes; lower removes more conflicts.",
+    helper:
+      "Overlap threshold for conflicting boxes of different classes; lower removes more conflicts.",
   },
   {
     key: "xclassAreaRatio",
     label: "Cross-class area",
     step: "0.01",
-    helper: "Area-similarity threshold for cross-class deduplication; lower removes more conflicts.",
+    helper:
+      "Area-similarity threshold for cross-class deduplication; lower removes more conflicts.",
   },
 ];
 
@@ -150,7 +165,9 @@ function buildDefaultParameterValues(): DetectionParameterValues {
   return values;
 }
 
-function resolveOptions(values: DetectionParameterValues): Yolo26DetectionOptions {
+function resolveOptions(
+  values: DetectionParameterValues,
+): Yolo26DetectionOptions {
   const options = {} as Yolo26DetectionOptions;
   for (const definition of PARAMETER_DEFS) {
     const key = definition.key;
@@ -176,13 +193,16 @@ function findFirstAvailableModelKey(
   models: readonly DetectionModelMetadata[],
   role: "large" | "small",
 ): string | null {
-  return models.find((model) => model.role === role && model.available)?.key ?? null;
+  return (
+    models.find((model) => model.role === role && model.available)?.key ?? null
+  );
 }
 
 export function RecognitionQuickAction() {
   const { mainMenuController, recognitionRegionController } =
     useContext(EditorContext);
   const controller = mainMenuController;
+  const documentName = useParams().documentName || "";
 
   const canRunYolo26Combined = useAtomValue(
     controller.canRunYolo26CombinedAtom,
@@ -295,14 +315,11 @@ export function RecognitionQuickAction() {
       variant="soft"
       color="primary"
       sx={{
-        mx: 1,
-        mb: 1,
         p: 1,
         borderRadius: 8,
       }}
     >
       <Stack spacing={0.75}>
-        <Typography level="title-sm">Recognition</Typography>
         <FormControl size="sm">
           <FormLabel>Large-symbol model</FormLabel>
           <Select
@@ -354,14 +371,18 @@ export function RecognitionQuickAction() {
                 <AutoAwesomeIcon />
               )
             }
-            onClick={() => controller.runYolo26Combined(buildRunOptions("large"))}
+            onClick={() =>
+              controller.runYolo26Combined(buildRunOptions("large"))
+            }
           >
             Run large
           </Button>
           <Button
             fullWidth
             disabled={!canRunSmall || isRecognitionRegionSelecting}
-            onClick={() => controller.runYolo26Combined(buildRunOptions("small"))}
+            onClick={() =>
+              controller.runYolo26Combined(buildRunOptions("small"))
+            }
           >
             Run small
           </Button>
@@ -382,6 +403,16 @@ export function RecognitionQuickAction() {
           onClick={() => controller.runYolo26Combined(buildRunOptions("both"))}
         >
           {isYolo26Running ? "Running detector..." : "Run both"}
+        </Button>
+        <Button
+          size="sm"
+          variant="soft"
+          color="success"
+          fullWidth
+          disabled={isRecognitionRegionSelecting}
+          onClick={() => controller.predictEdges(documentName)}
+        >
+          Predict edges (small)
         </Button>
         <ButtonGroup size="sm" variant="soft" color="warning">
           <Button
@@ -445,7 +476,9 @@ export function RecognitionQuickAction() {
                 color="neutral"
                 startDecorator={<RestartAltIcon />}
                 disabled={isYolo26Running || isRecognitionRegionSelecting}
-                onClick={() => setParameterValues(buildDefaultParameterValues())}
+                onClick={() =>
+                  setParameterValues(buildDefaultParameterValues())
+                }
               >
                 Reset defaults
               </Button>
@@ -511,7 +544,9 @@ export function RecognitionQuickAction() {
         <ButtonGroup size="sm" variant="soft" color="neutral">
           <Button
             fullWidth
-            disabled={!canUndo || isYolo26Running || isRecognitionRegionSelecting}
+            disabled={
+              !canUndo || isYolo26Running || isRecognitionRegionSelecting
+            }
             startDecorator={<UndoIcon />}
             onClick={() => controller.undo()}
           >
@@ -519,7 +554,9 @@ export function RecognitionQuickAction() {
           </Button>
           <Button
             fullWidth
-            disabled={!canRedo || isYolo26Running || isRecognitionRegionSelecting}
+            disabled={
+              !canRedo || isYolo26Running || isRecognitionRegionSelecting
+            }
             startDecorator={<RedoIcon />}
             onClick={() => controller.redo()}
           >

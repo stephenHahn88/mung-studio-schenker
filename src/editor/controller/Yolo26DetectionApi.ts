@@ -41,7 +41,7 @@ export interface Yolo26DetectionResponse {
 
 export type SymbolDetectionSource = "large" | "small";
 
-export type DetectionModelBackend = "yolo" | "detr";
+export type DetectionModelBackend = "yolo" | "detr" | "rfdetr" | "ensemble";
 
 export type DetectionModelRole = "large" | "small";
 
@@ -112,6 +112,18 @@ export const DETECTION_MODEL_OPTIONS: DetectionModelOption[] = [
     backend: "detr",
   },
   {
+    key: "rfdetr_large_9pages_medium_ep120",
+    label: "RF-DETR Medium @1536, 9 pages",
+    role: "large",
+    backend: "rfdetr",
+  },
+  {
+    key: "rfdetr_large_9pages_large2048_ep120",
+    label: "RF-DETR Large @2048, 9 pages",
+    role: "large",
+    backend: "rfdetr",
+  },
+  {
     key: "detr_large_9pages_plus50",
     label: "DETR, 9 pages, 200 epochs",
     role: "large",
@@ -123,13 +135,18 @@ export const DETECTION_MODEL_OPTIONS: DetectionModelOption[] = [
     role: "small",
     backend: "detr",
   },
+  {
+    key: "yolo_rfdetr_small_ensemble",
+    label: "YOLO + RF-DETR ensemble (slower, opt-in)",
+    role: "small",
+    backend: "ensemble",
+  },
 ];
 
 export const DEFAULT_LARGE_DETECTION_MODEL_KEY =
-  "detr_large_9pages_copypaste_ep50";
+  "rfdetr_large_9pages_large2048_ep120";
 
-export const DEFAULT_SMALL_DETECTION_MODEL_KEY =
-  "yolo26l_tiled_9pages_ep200";
+export const DEFAULT_SMALL_DETECTION_MODEL_KEY = "yolo26l_tiled_9pages_ep200";
 
 export interface Yolo26DetectionOptions {
   readonly largeConf: number;
@@ -266,13 +283,53 @@ export class Yolo26DetectionApi {
     return data.models ?? [];
   }
 
+  /**
+   * Predict syntax edges among the SMALL symbols of a saved document, using the
+   * server-side small-symbol edge model. Returns node-id pairs to link.
+   * Note: predicts on the document's last-saved mung.xml.
+   */
+  public async assembleEdges(
+    documentName: string,
+    threshold?: number,
+  ): Promise<{
+    edges: { source: number; target: number; confidence: number }[];
+    edgeCount?: number;
+    smallCount?: number;
+    pairCount?: number;
+  }> {
+    let url =
+      this.buildUrl("assemble-edges") +
+      "&document=" +
+      encodeURIComponent(documentName);
+    if (threshold !== undefined) url += "&threshold=" + String(threshold);
+    const response = await fetch(url, { headers: this.authHeaders() });
+    if (!response.ok) {
+      throw new Error("Edge assembly failed: " + (await response.text()));
+    }
+    return await response.json();
+  }
+
+  /**
+   * Trigger an off-site Google Drive backup of ALL documents on the server
+   * (the "Backup now" button in the sidebar). Requires a user token.
+   */
+  public async backupDocuments(): Promise<{
+    ok: boolean;
+    log?: string;
+    error?: string;
+  }> {
+    const response = await fetch(this.buildUrl("backup-documents"), {
+      method: "POST",
+      headers: this.authHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error("Backup failed: " + (await response.text()));
+    }
+    return await response.json();
+  }
+
   private buildUrl(action: string): string {
     const separator = this.backendUrl.includes("?") ? "&" : "?";
-    return (
-      this.backendUrl +
-      separator +
-      "action=" +
-      encodeURIComponent(action)
-    );
+    return this.backendUrl + separator + "action=" + encodeURIComponent(action);
   }
 }

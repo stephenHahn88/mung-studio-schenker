@@ -127,6 +127,8 @@ class Handler(BaseHTTPRequestHandler):
             self._action_get_document_thumbnail(params)
         elif action == "list-detection-models":
             self._action_list_detection_models()
+        elif action == "assemble-edges":
+            self._action_assemble_edges(params)
         elif action is None and FRONTEND_PATH is not None:
             self._serve_static(parsed.path)
         else:
@@ -151,6 +153,10 @@ class Handler(BaseHTTPRequestHandler):
             self._action_get_document_thumbnail(params)
         elif action == "upload-document-mung":
             self._action_upload_document_mung(params)
+        elif action == "set-doc-status":
+            self._action_set_doc_status(params)
+        elif action == "backup-documents":
+            self._action_backup_documents()
         else:
             self.send_error(400, "Missing or unknown action.")
 
@@ -172,6 +178,108 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json.dumps({"name": user["name"]}, indent=2).encode())
 
+    def _read_doc_status(self, doc_name):
+        """Per-document annotation status, stored at {doc}/status.json. Defaults if absent."""
+        path = os.path.join(DOCUMENTS_PATH, doc_name, "status.json")
+        if os.path.isfile(path):
+            try:
+                with open(path) as f:
+                    d = json.load(f)
+                return {"status": str(d.get("status", "not-started")),
+                        "annotator": str(d.get("annotator", ""))}
+            except Exception:
+                pass
+        return {"status": "not-started", "annotator": ""}
+
+    def _action_set_doc_status(self, params):
+        """Set a document's annotation status + annotator (shared across all users)."""
+        user = self._authenticate()
+        if not user: return
+        doc_name = params.get("document", [None])[0]
+        if not doc_name or not is_valid_name(doc_name):
+            self._send_json({"error": "Missing or invalid document name."}, status=400)
+            return
+        doc_dir = os.path.join(DOCUMENTS_PATH, doc_name)
+        if not os.path.isdir(doc_dir):
+            self._send_json({"error": "Document not found."}, status=404)
+            return
+        try:
+            length = int(self.headers.get("Content-Length", 0))
+            body = json.loads(self.rfile.read(length) or b"{}")
+        except Exception:
+            body = {}
+        status = str(body.get("status", "not-started"))
+        if status not in {"not-started", "in-progress", "done"}:
+            self._send_json({"error": "Invalid status."}, status=400)
+            return
+        annotator = str(body.get("annotator", ""))[:80]
+        payload = {"status": status, "annotator": annotator,
+                   "updatedAt": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+                   "updatedBy": user["name"]}
+        with open(os.path.join(doc_dir, "status.json"), "w") as f:
+            json.dump(payload, f, indent=2)
+        log_to_file(f"{user['name']} set status of {doc_name} -> {status} (annotator={annotator}).", AUDIT_LOG_PATH)
+        self._send_json({"ok": True, **payload})
+
+    def _action_backup_documents(self):
+        """Run the off-site Google Drive backup on demand (the 'Backup now' button)."""
+        user = self._authenticate()
+        if not user: return
+        import subprocess
+        script = "/home/users/yh477/lab/mung-studio-schenker/backup_documents.sh"
+        log_path = "/home/users/yh477/lab/mung-studio-schenker/logs/backup.log"
+        try:
+            proc = subprocess.run(["bash", script], capture_output=True, text=True, timeout=600)
+            tail = ""
+            try:
+                with open(log_path) as f:
+                    tail = "".join(f.readlines()[-6:])
+            except Exception:
+                pass
+            log_to_file(f"{user['name']} triggered manual backup (rc={proc.returncode}).", AUDIT_LOG_PATH)
+            self._send_json({"ok": proc.returncode == 0, "returncode": proc.returncode, "log": tail})
+        except subprocess.TimeoutExpired:
+            self._send_json({"ok": False, "error": "backup timed out (>600s)"}, status=500)
+        except Exception as exc:
+            self._send_json({"ok": False, "error": str(exc)}, status=500)
+
+    def _action_assemble_edges(self, params):
+        """Predict syntax edges among the small symbols of a saved document."""
+        user = self._authenticate()
+        if not user: return
+        doc_name = params.get("document", [None])[0]
+        if not doc_name or not is_valid_name(doc_name):
+            self._send_json({"error": "Missing or invalid document name."}, status=400)
+            return
+        doc_dir = os.path.join(DOCUMENTS_PATH, doc_name)
+        mung_path = os.path.join(doc_dir, "mung.xml")
+        image_path = None
+        for ext in ("png", "jpg", "jpeg"):
+            p = os.path.join(doc_dir, f"image.{ext}")
+            if os.path.isfile(p):
+                image_path = p
+                break
+        if not os.path.isfile(mung_path) or image_path is None:
+            self._send_json({"error": "Document or image not found."}, status=404)
+            return
+        raw_thr = params.get("threshold", [None])[0]
+        try:
+            threshold = float(raw_thr) if raw_thr is not None else None
+        except ValueError:
+            threshold = None
+        try:
+            import edge_inference
+            result = edge_inference.predict_edges(mung_path, image_path, threshold=threshold)
+        except Exception as exc:
+            traceback.print_exc()
+            self._send_json({"error": f"edge inference failed: {exc}"}, status=500)
+            return
+        log_to_file(
+            f"{user['name']} predicted {result.get('edgeCount', 0)} edges in {doc_name}.",
+            AUDIT_LOG_PATH,
+        )
+        self._send_json(result)
+
     def _action_list_documents(self):
         user = self._authenticate()
         if not user: return
@@ -183,7 +291,9 @@ class Handler(BaseHTTPRequestHandler):
                 has_image = find_image(item) is not None
                 mtime = os.path.getmtime(mung_path)
                 modified = datetime.datetime.utcfromtimestamp(mtime).strftime("%Y-%m-%dT%H:%M:%SZ")
-                documents.append({"name": item, "hasImage": has_image, "modifiedAt": modified})
+                st = self._read_doc_status(item)
+                documents.append({"name": item, "hasImage": has_image, "modifiedAt": modified,
+                                  "status": st["status"], "annotator": st["annotator"]})
 
         self.send_response(200)
         self.send_header("Content-Type", "application/json; charset=utf-8")

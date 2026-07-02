@@ -29,6 +29,7 @@ import { NodeNavigationController } from "./controller/NodeNavigationController"
 import { HistoryStore } from "./model/HistoryStore";
 import { RecognitionRegionController } from "./controller/RecognitionRegionController";
 import { BboxEditingController } from "./controller/BboxEditingController";
+import { QuickRectNodeController } from "./controller/tools/QuickRectNodeController";
 
 /**
  * All fields present in the editor component's global context
@@ -57,6 +58,7 @@ export interface EditorContextState {
   readonly bboxEditingController: BboxEditingController;
   readonly selectionController: SelectionController;
   readonly nodeEditingController: NodeEditingController;
+  readonly quickRectNodeController: QuickRectNodeController;
   readonly polygonToolsController: PolygonToolsController;
   readonly stafflinesToolController: StafflinesToolController;
   readonly mainMenuController: MainMenuController;
@@ -208,6 +210,17 @@ export function useConstructContextServices(
     [],
   );
 
+  const quickRectNodeController = useMemo(
+    () =>
+      new QuickRectNodeController(
+        jotaiStore,
+        zoomController,
+        toolbeltController,
+        nodeEditingController,
+      ),
+    [],
+  );
+
   const polygonToolsController = useMemo(
     () =>
       new PolygonToolsController(
@@ -298,6 +311,7 @@ export function useConstructContextServices(
     bboxEditingController,
     selectionController,
     nodeEditingController,
+    quickRectNodeController,
     polygonToolsController,
     stafflinesToolController,
     mainMenuController,
