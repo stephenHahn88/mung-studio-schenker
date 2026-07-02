@@ -37,8 +37,20 @@ LOCAL_YOLO26_LARGE_9PAGES_EP300_MODEL = (
 LOCAL_YOLO26_TILED_9PAGES_EP300_MODEL = (
     MODELS_DIR / "yolo26l_tiled_9pages_pre_ep300.pt"
 )
+LOCAL_YOLO26_TILED_9PAGES_EP200_MODEL = (
+    MODELS_DIR / "yolo26l_tiled_9pages_pre_ep200.pt"
+)
 LOCAL_DETR_LARGE_9PAGES_PLUS50_MODEL = (
     MODELS_DIR / "detr_large_9pages_plus50" / "model"
+)
+LOCAL_DETR_LARGE_FULLWIDTH_9PAGES_EP90_MODEL = (
+    MODELS_DIR / "detr_large_fullwidth_9pages_ep90" / "model"
+)
+LOCAL_DETR_LARGE_FULLWIDTH_9PAGES_BOXFOCUSED_EP200_MODEL = (
+    MODELS_DIR / "detr_large_fullwidth_9pages_boxfocused_ep200" / "model"
+)
+LOCAL_DETR_LARGE_9PAGES_COPYPASTE_EP50_MODEL = (
+    MODELS_DIR / "detr_large_9pages_copypaste_ep50" / "model"
 )
 LOCAL_DETR_TILED_9PAGES_PLUS50_MODEL = (
     MODELS_DIR / "detr_tiled_9pages_plus50" / "model"
@@ -49,6 +61,18 @@ REMOTE_YOLO26_LARGE_9PAGES_EP300_MODEL = Path(
 )
 REMOTE_YOLO26_TILED_9PAGES_EP300_MODEL = Path(
     "/home/users/yh477/lab/Schenkerian_OMR/trained_models/yolo26l_tiled_9pages_pre_ep300.pt"
+)
+REMOTE_YOLO26_TILED_9PAGES_EP200_MODEL = Path(
+    "/home/users/yh477/lab/Schenkerian_OMR/trained_models/yolo26l_tiled_9pages_pre_ep200.pt"
+)
+REMOTE_DETR_LARGE_FULLWIDTH_9PAGES_EP90_MODEL = Path(
+    "/home/users/yh477/lab/Schenkerian_OMR/trained_models/detr_large_fullwidth_9pages_pre_ep90"
+)
+REMOTE_DETR_LARGE_FULLWIDTH_9PAGES_BOXFOCUSED_EP200_MODEL = Path(
+    "/home/users/yh477/lab/Schenkerian_OMR/trained_models/detr_large_fullwidth_9pages_boxfocused_ep200"
+)
+REMOTE_DETR_LARGE_9PAGES_COPYPASTE_EP50_MODEL = Path(
+    "/home/users/yh477/lab/Schenkerian_OMR/outputs/large_all9_copypaste_deploy_20260607/copypaste/checkpoint_epoch_0050"
 )
 REMOTE_DETR_LARGE_9PAGES_PLUS50_MODEL = Path(
     "/home/users/yh477/lab/Schenkerian_OMR/outputs/mdetr_style_9pages_final_plus50_from_large150_tiled120_pre/large_fullwidth_strips_9pages_pre/model"
@@ -69,10 +93,34 @@ YOLO26_TILED_9PAGES_EP300_MODEL = Path(
         LOCAL_YOLO26_TILED_9PAGES_EP300_MODEL,
     )
 )
+YOLO26_TILED_9PAGES_EP200_MODEL = Path(
+    os.environ.get(
+        "YOLO26_TILED_9PAGES_EP200_MODEL",
+        LOCAL_YOLO26_TILED_9PAGES_EP200_MODEL,
+    )
+)
 DETR_LARGE_9PAGES_PLUS50_MODEL = Path(
     os.environ.get(
         "DETR_LARGE_9PAGES_PLUS50_MODEL",
         LOCAL_DETR_LARGE_9PAGES_PLUS50_MODEL,
+    )
+)
+DETR_LARGE_FULLWIDTH_9PAGES_EP90_MODEL = Path(
+    os.environ.get(
+        "DETR_LARGE_FULLWIDTH_9PAGES_EP90_MODEL",
+        LOCAL_DETR_LARGE_FULLWIDTH_9PAGES_EP90_MODEL,
+    )
+)
+DETR_LARGE_FULLWIDTH_9PAGES_BOXFOCUSED_EP200_MODEL = Path(
+    os.environ.get(
+        "DETR_LARGE_FULLWIDTH_9PAGES_BOXFOCUSED_EP200_MODEL",
+        LOCAL_DETR_LARGE_FULLWIDTH_9PAGES_BOXFOCUSED_EP200_MODEL,
+    )
+)
+DETR_LARGE_9PAGES_COPYPASTE_EP50_MODEL = Path(
+    os.environ.get(
+        "DETR_LARGE_9PAGES_COPYPASTE_EP50_MODEL",
+        LOCAL_DETR_LARGE_9PAGES_COPYPASTE_EP50_MODEL,
     )
 )
 DETR_TILED_9PAGES_PLUS50_MODEL = Path(
@@ -82,13 +130,78 @@ DETR_TILED_9PAGES_PLUS50_MODEL = Path(
     )
 )
 
+# --- RF-DETR (DINOv2 backbone, full-page squish; runs isolated in the rfdetr_clean
+#     venv via subprocess so it cannot disturb this server's torch/transformers). ---
+RFDETR_LARGE_9PAGES_MEDIUM_EP120_MODEL = Path(
+    os.environ.get(
+        "RFDETR_LARGE_9PAGES_MEDIUM_EP120_MODEL",
+        "/home/users/yh477/lab/Schenkerian_OMR/outputs/rfdetr_large_20260629/"
+        "run_medium_1536_ALL9_deploy/checkpoint_best_total.pth",
+    )
+)
+RFDETR_VENV_PY = os.environ.get(
+    "RFDETR_VENV_PY", "/home/users/yh477/venvs/rfdetr_clean/bin/python"
+)
+RFDETR_PREDICT_SCRIPT = os.environ.get(
+    "RFDETR_PREDICT_SCRIPT",
+    "/home/users/yh477/lab/Schenkerian_OMR/scripts/training/rfdetr/predict_one_image.py",
+)
+RFDETR_CLASS_NAMES = os.environ.get(
+    "RFDETR_CLASS_NAMES",
+    "/home/users/yh477/lab/Schenkerian_OMR/outputs/rfdetr_large_20260629/"
+    "dataset_coco_large_all9/class_names.json",
+)
+RFDETR_VARIANT = os.environ.get("RFDETR_VARIANT", "medium")
+RFDETR_RESOLUTION = int(os.environ.get("RFDETR_RESOLUTION", "1536"))
+
+# all-9 Large @2048 (best held-out localization: mAP@0.75 0.53 vs 0.46 for Medium@1536).
+# Uses the SAME class_names (dataset_coco_large_all9) as the Medium model.
+RFDETR_LARGE_9PAGES_LARGE2048_MODEL = Path(
+    os.environ.get(
+        "RFDETR_LARGE_9PAGES_LARGE2048_MODEL",
+        "/home/users/yh477/lab/Schenkerian_OMR/outputs/rfdetr_large_20260629/"
+        "run_large_2048_ALL9_deploy/checkpoint_best_total.pth",
+    )
+)
+# per-model (variant, resolution); RfDetrModelAdapter looks up by spec.key,
+# falling back to the RFDETR_VARIANT/RFDETR_RESOLUTION globals.
+RFDETR_MODEL_CONFIG = {
+    "rfdetr_large_9pages_medium_ep120": ("medium", 1536),
+    "rfdetr_large_9pages_large2048_ep120": ("large", 2048),
+}
+
+# --- Small-symbol YOLO + RF-DETR ENSEMBLE (opt-in). run_tiled_ensemble runs the YOLO
+#     tiled model + an RF-DETR tiled model (one subprocess call over the page) and lets
+#     the normal dedup fuse them. Beats YOLO alone on held-out (F1 0.835 vs 0.820). ---
+RFDETR_SMALL_ENSEMBLE_KEY = "yolo_rfdetr_small_ensemble"
+RFDETR_SMALL_ENSEMBLE_YOLO_KEY = os.environ.get(
+    "RFDETR_SMALL_ENSEMBLE_YOLO_KEY", "yolo26l_tiled_9pages_ep200"
+)
+RFDETR_SMALL_CKPT = os.environ.get(
+    "RFDETR_SMALL_CKPT",
+    # all-9 MUSCIMA-init RF-DETR small (deployment); was ft_small_1216 (7-split) initially
+    "/home/users/yh477/lab/Schenkerian_OMR/outputs/rfdetr_tiled_20260629/"
+    "run_small_1216_ALL9_muscima_deploy/checkpoint_best_total.pth",
+)
+RFDETR_SMALL_CLASS_NAMES = os.environ.get(
+    "RFDETR_SMALL_CLASS_NAMES",
+    "/home/users/yh477/lab/Schenkerian_OMR/outputs/rfdetr_tiled_20260629/"
+    "dataset_coco_tiled/class_names.json",
+)
+RFDETR_TILED_PREDICT_SCRIPT = os.environ.get(
+    "RFDETR_TILED_PREDICT_SCRIPT",
+    "/home/users/yh477/lab/Schenkerian_OMR/scripts/training/rfdetr/predict_tiled_page.py",
+)
+RFDETR_SMALL_VARIANT = os.environ.get("RFDETR_SMALL_VARIANT", "medium")
+RFDETR_SMALL_RESOLUTION = int(os.environ.get("RFDETR_SMALL_RESOLUTION", "1216"))
+
 DEFAULT_LARGE_MODEL_KEY = os.environ.get(
     "SYMBOL_DETECTOR_DEFAULT_LARGE_MODEL",
-    "yolo26l_large_fullwidth_9pages_ep300",
+    "rfdetr_large_9pages_large2048_ep120",
 )
 DEFAULT_SMALL_MODEL_KEY = os.environ.get(
     "SYMBOL_DETECTOR_DEFAULT_SMALL_MODEL",
-    "yolo26l_tiled_9pages_ep300",
+    "yolo26l_tiled_9pages_ep200",
 )
 
 LARGE_CONF = float(os.environ.get("YOLO26_LARGE_CONF", "0.4"))
@@ -493,6 +606,38 @@ DETECTION_MODEL_SPECS = [
         fallback_paths=(REMOTE_YOLO26_TILED_9PAGES_EP300_MODEL,),
     ),
     DetectionModelSpec(
+        key="yolo26l_tiled_9pages_ep200",
+        label="YOLO26L, 9 pages, 200 epochs",
+        role="small",
+        backend="yolo",
+        path=YOLO26_TILED_9PAGES_EP200_MODEL,
+        fallback_paths=(REMOTE_YOLO26_TILED_9PAGES_EP200_MODEL,),
+    ),
+    DetectionModelSpec(
+        key="detr_large_fullwidth_9pages_ep90",
+        label="DETR, 9 pages, 90 epochs",
+        role="large",
+        backend="detr",
+        path=DETR_LARGE_FULLWIDTH_9PAGES_EP90_MODEL,
+        fallback_paths=(REMOTE_DETR_LARGE_FULLWIDTH_9PAGES_EP90_MODEL,),
+    ),
+    DetectionModelSpec(
+        key="detr_large_fullwidth_9pages_boxfocused_ep200",
+        label="DETR box-focused, 9 pages, 200 epochs",
+        role="large",
+        backend="detr",
+        path=DETR_LARGE_FULLWIDTH_9PAGES_BOXFOCUSED_EP200_MODEL,
+        fallback_paths=(REMOTE_DETR_LARGE_FULLWIDTH_9PAGES_BOXFOCUSED_EP200_MODEL,),
+    ),
+    DetectionModelSpec(
+        key="detr_large_9pages_copypaste_ep50",
+        label="DETR copy-paste, 9 pages, 50 epochs",
+        role="large",
+        backend="detr",
+        path=DETR_LARGE_9PAGES_COPYPASTE_EP50_MODEL,
+        fallback_paths=(REMOTE_DETR_LARGE_9PAGES_COPYPASTE_EP50_MODEL,),
+    ),
+    DetectionModelSpec(
         key="detr_large_9pages_plus50",
         label="DETR, 9 pages, 200 epochs",
         role="large",
@@ -507,6 +652,27 @@ DETECTION_MODEL_SPECS = [
         backend="detr",
         path=DETR_TILED_9PAGES_PLUS50_MODEL,
         fallback_paths=(REMOTE_DETR_TILED_9PAGES_PLUS50_MODEL,),
+    ),
+    DetectionModelSpec(
+        key="rfdetr_large_9pages_medium_ep120",
+        label="RF-DETR Medium @1536, 9 pages",
+        role="large",
+        backend="rfdetr",
+        path=RFDETR_LARGE_9PAGES_MEDIUM_EP120_MODEL,
+    ),
+    DetectionModelSpec(
+        key="rfdetr_large_9pages_large2048_ep120",
+        label="RF-DETR Large @2048, 9 pages",
+        role="large",
+        backend="rfdetr",
+        path=RFDETR_LARGE_9PAGES_LARGE2048_MODEL,
+    ),
+    DetectionModelSpec(
+        key=RFDETR_SMALL_ENSEMBLE_KEY,
+        label="YOLO + RF-DETR ensemble (slower, opt-in)",
+        role="small",
+        backend="ensemble",
+        path=RFDETR_SMALL_CKPT,
     ),
 ]
 
@@ -709,6 +875,82 @@ class DetrModelAdapter(DetectionModelAdapter):
         return boxes, scores, classes
 
 
+class RfDetrModelAdapter(DetectionModelAdapter):
+    """RF-DETR adapter. RF-DETR + its torch/transformers live in a separate venv, so
+    we shell out to that venv's python (a one-image predict helper) instead of
+    importing rfdetr in this process. RF-DETR predicts on the WHOLE squished page,
+    not on 768-tall strips -- see Yolo26CombinedDetector.run_large_whole."""
+
+    def __init__(self, spec: DetectionModelSpec, path: Path, device: str) -> None:
+        super().__init__(spec, path)
+        import json as _json
+
+        self.venv_py = RFDETR_VENV_PY
+        self.script = RFDETR_PREDICT_SCRIPT
+        self.variant, self.resolution = RFDETR_MODEL_CONFIG.get(
+            spec.key, (RFDETR_VARIANT, RFDETR_RESOLUTION)
+        )
+        # label index -> MUSCIMA class name (same name space as the DETR/YOLO adapters,
+        # so the downstream MUSCIMA->Schenker mapping is identical).
+        class_names = _json.loads(Path(RFDETR_CLASS_NAMES).read_text())
+        self.names = {int(c["index"]): str(c["name"]) for c in class_names}
+
+    def predict_boxes(
+        self,
+        image: Image.Image,
+        imgsz: int,
+        conf: float,
+        device: str,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        import json as _json
+        import subprocess
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as td:
+            img_path = os.path.join(td, "page.png")
+            out_path = os.path.join(td, "dets.json")
+            image.convert("RGB").save(img_path)
+            cmd = [
+                self.venv_py, self.script,
+                "--image", img_path,
+                "--ckpt", str(self.path),
+                "--variant", self.variant,
+                "--resolution", str(self.resolution),
+                "--conf", str(float(conf)),
+                "--out", out_path,
+            ]
+            proc = subprocess.run(cmd, capture_output=True, text=True, env=os.environ.copy())
+            if proc.returncode != 0:
+                raise RuntimeError(
+                    f"RF-DETR predict subprocess failed (exit {proc.returncode}). "
+                    f"stderr tail:\n{proc.stderr[-2000:]}"
+                )
+            dets = _json.loads(Path(out_path).read_text())["dets"]
+
+        if not dets:
+            return _empty_prediction()
+        boxes = np.array([[d[0], d[1], d[2], d[3]] for d in dets], dtype=float)
+        scores = np.array([d[4] for d in dets], dtype=float)
+        classes = np.array([int(d[5]) for d in dets], dtype=int)
+        return boxes, scores, classes
+
+
+class _RfdetrTiledStub:
+    """Adapter-shaped shim so Yolo26CombinedDetector.to_detection() can turn RF-DETR tiled
+    subprocess output (label index -> MUSCIMA name) into Detection objects for the ensemble."""
+
+    spec = DetectionModelSpec(
+        key="rfdetr_tiled_small", label="RF-DETR tiled (ensemble)",
+        role="small", backend="rfdetr", path=Path("."),
+    )
+
+    def __init__(self, names: dict[int, str]) -> None:
+        self.names = names
+
+    def get_raw_class_name(self, class_id: int) -> str:
+        return self.names.get(int(class_id), str(int(class_id)))
+
+
 def _torch_device_name(device: str) -> str:
     if device.isdigit():
         return f"cuda:{device}"
@@ -765,6 +1007,36 @@ class Yolo26CombinedDetector:
 
         return self.postprocess_detections(detections, options)
 
+    def run_large_whole(
+        self,
+        canvas: Image.Image,
+        model_key: str,
+        options: Yolo26Options,
+    ) -> list[Detection]:
+        """Large-symbol detection on the WHOLE page (no strips). Used by backends
+        (e.g. RF-DETR) that resize the full image internally and would be broken by
+        slicing long horizontal symbols across strip boundaries."""
+        adapter = self.get_model(model_key, "large")
+        boxes, scores, classes = adapter.predict_boxes(
+            canvas,
+            options.large_imgsz,
+            options.large_conf,
+            self.device,
+        )
+        detections: list[Detection] = []
+        for box, score, cls_id in zip(boxes, scores, classes):
+            detection = self.to_detection(
+                box=[float(box[0]), float(box[1]), float(box[2]), float(box[3])],
+                score=float(score),
+                cls_id=int(cls_id),
+                adapter=adapter,
+                source="large",
+                image_size=canvas.size,
+            )
+            if detection is not None:
+                detections.append(detection)
+        return self.postprocess_detections(detections, options)
+
     def run_tiled(
         self,
         canvas: Image.Image,
@@ -817,6 +1089,44 @@ class Yolo26CombinedDetector:
 
         return self.postprocess_detections(detections, options)
 
+    def run_tiled_ensemble(self, canvas: Image.Image, options: Yolo26Options) -> list[Detection]:
+        """Small-symbol ensemble: YOLO tiled (in-process) + RF-DETR tiled (one subprocess over
+        the whole page), fused by the normal dedup. Recovers detections neither model gets alone."""
+        import json as _json
+        import os as _os
+        import subprocess as _sub
+        import tempfile as _tf
+
+        yolo = self.run_tiled(canvas, RFDETR_SMALL_ENSEMBLE_YOLO_KEY, options)
+        with _tf.TemporaryDirectory() as td:
+            img_path = _os.path.join(td, "page.png")
+            out_path = _os.path.join(td, "dets.json")
+            canvas.convert("RGB").save(img_path)
+            cmd = [
+                RFDETR_VENV_PY, RFDETR_TILED_PREDICT_SCRIPT,
+                "--image", img_path, "--ckpt", RFDETR_SMALL_CKPT,
+                "--variant", RFDETR_SMALL_VARIANT, "--resolution", str(RFDETR_SMALL_RESOLUTION),
+                "--conf", str(float(options.tile_conf)), "--out", out_path,
+            ]
+            proc = _sub.run(cmd, capture_output=True, text=True, env=_os.environ.copy())
+            if proc.returncode != 0:
+                raise RuntimeError(
+                    f"RF-DETR tiled subprocess failed (exit {proc.returncode}).\n{proc.stderr[-2000:]}"
+                )
+            raw = _json.loads(Path(out_path).read_text())["dets"]
+
+        cn = _json.loads(Path(RFDETR_SMALL_CLASS_NAMES).read_text())
+        stub = _RfdetrTiledStub({int(c["index"]): str(c["name"]) for c in cn})
+        rfdetr: list[Detection] = []
+        for x0, y0, x1, y1, score, lab in raw:
+            det = self.to_detection(
+                box=[x0, y0, x1, y1], score=float(score), cls_id=int(lab),
+                adapter=stub, source="small", image_size=canvas.size,
+            )
+            if det is not None:
+                rfdetr.append(det)
+        return self.postprocess_detections(yolo + rfdetr, options)
+
     def detect(
         self,
         image: Image.Image,
@@ -835,16 +1145,21 @@ class Yolo26CombinedDetector:
             canvas = full_canvas.crop(
                 (offset_x, offset_y, offset_x + roi_width, offset_y + roi_height)
             )
-        large = (
-            self.run_large_strips(canvas, options.large_model_key, options)
-            if options.run_large
-            else []
-        )
-        tiled = (
-            self.run_tiled(canvas, options.small_model_key, options)
-            if options.run_small
-            else []
-        )
+        if options.run_large:
+            large_spec = DETECTION_MODEL_SPECS_BY_KEY.get(options.large_model_key)
+            if large_spec is not None and large_spec.backend == "rfdetr":
+                large = self.run_large_whole(canvas, options.large_model_key, options)
+            else:
+                large = self.run_large_strips(canvas, options.large_model_key, options)
+        else:
+            large = []
+        if options.run_small:
+            if options.small_model_key == RFDETR_SMALL_ENSEMBLE_KEY:
+                tiled = self.run_tiled_ensemble(canvas, options)
+            else:
+                tiled = self.run_tiled(canvas, options.small_model_key, options)
+        else:
+            tiled = []
         detections = large + tiled
         if options.deduplicate:
             detections = self.deduplicate_detections(detections, options)
@@ -926,6 +1241,8 @@ class Yolo26CombinedDetector:
             adapter = YoloModelAdapter(spec, path)
         elif spec.backend == "detr":
             adapter = DetrModelAdapter(spec, path, self.device)
+        elif spec.backend == "rfdetr":
+            adapter = RfDetrModelAdapter(spec, path, self.device)
         else:
             raise ValueError(f"Unsupported detection backend: {spec.backend}")
 
@@ -1116,6 +1433,12 @@ class Yolo26CombinedDetector:
 _detector: Yolo26CombinedDetector | None = None
 _detector_lock = threading.Lock()
 
+# Serializes the actual GPU work. With a threaded HTTP server, several
+# annotators can hit the detector at once; running them sequentially keeps
+# VRAM bounded and avoids CUDA contention. One page takes a few seconds, so a
+# small queue is acceptable for a shared annotation team.
+_inference_lock = threading.Lock()
+
 
 def get_detector() -> Yolo26CombinedDetector:
     global _detector
@@ -1131,4 +1454,6 @@ def detect_image(
 ) -> dict[str, Any]:
     if not isinstance(options, Yolo26Options):
         options = Yolo26Options.from_mapping(options)
-    return get_detector().detect(image, options)
+    detector = get_detector()
+    with _inference_lock:
+        return detector.detect(image, options)

@@ -11,6 +11,7 @@ The MUSCIMA++ v2.0 dataset: https://github.com/OMR-Research/muscima-pp/releases/
 
 - [User Manual](docs/user-manual/user-manual.md)
 - [Local Symbol Detector Guide](docs/local-symbol-detector-guide.md)
+- [Web Deployment (hosted, no local models)](docs/web-deployment.md)
 
 Development documentation:
 

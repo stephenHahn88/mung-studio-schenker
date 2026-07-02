@@ -114,6 +114,10 @@ export class PolygonToolsController implements IController {
   private polygonVertices: DOMPointReadOnly[] = [];
 
   public onMouseDown(e: MouseEvent): void {
+    // Ctrl/Cmd + drag is reserved for the quick-rectangle node creation gesture
+    // (QuickRectNodeController), so don't drop a polygon point here.
+    if (e.ctrlKey || e.metaKey) return;
+
     // LMB: add point
     if (e.button === 0) {
       this.addPointToPolygon();

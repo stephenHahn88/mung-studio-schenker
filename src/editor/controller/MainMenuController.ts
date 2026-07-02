@@ -24,6 +24,7 @@ import {
 } from "./Yolo26DetectionApi";
 import { HistoryStore } from "../model/HistoryStore";
 import { isMacish } from "../../utils/isMacish";
+import { MUNG_CLASSES_BY_NAME } from "../../mung/ontology/mungClasses";
 
 /**
  * Implements the logic and keyboard shortcuts behind actions from
@@ -126,6 +127,164 @@ export class MainMenuController implements IController {
     if (key === "y") {
       e.preventDefault();
       this.redo();
+      return;
+    }
+    if (key === "u") {
+      e.preventDefault();
+      this.switchSelectedUpDown("Up");
+      return;
+    }
+    if (key === "d") {
+      e.preventDefault();
+      this.switchSelectedUpDown("Down");
+      return;
+    }
+    if (key === "c") {
+      e.preventDefault();
+      this.copySelectedNodes();
+      return;
+    }
+    if (key === "v") {
+      e.preventDefault();
+      this.pasteNodes();
+      return;
+    }
+  }
+
+  /**
+   * Switch the selected node(s) to their "Up" or "Down" sibling class — e.g.
+   * slurStructuralDown <-> slurStructuralUp. Generic: flips a trailing
+   * "Up"/"Down" in the class name, applied only when the resulting class
+   * actually exists (so it covers slur/beam/flag/grace/voiceExchange/etc.
+   * families and is a no-op on classes without an Up/Down sibling).
+   * Bound to Ctrl/Cmd+U (Up) and Ctrl/Cmd+D (Down).
+   */
+  private switchSelectedUpDown(direction: "Up" | "Down"): void {
+    for (const id of this.selectionStore.selectedNodeIds) {
+      if (!this.notationGraphStore.hasNode(id)) continue;
+      const node = this.notationGraphStore.getNode(id);
+      const target = this.upDownVariant(node.className, direction);
+      if (target !== null && target !== node.className) {
+        this.notationGraphStore.updateNode({ ...node, className: target });
+      }
+    }
+  }
+
+  private upDownVariant(
+    className: string,
+    direction: "Up" | "Down",
+  ): string | null {
+    let candidate: string | null = null;
+    if (direction === "Up") {
+      if (className.endsWith("Down")) candidate = className.slice(0, -4) + "Up";
+    } else {
+      if (className.endsWith("Up")) candidate = className.slice(0, -2) + "Down";
+    }
+    if (candidate === null) return null;
+    return MUNG_CLASSES_BY_NAME[candidate] !== undefined ? candidate : null;
+  }
+
+  // Internal clipboard for copy/paste of annotation boxes.
+  private clipboardNodes: Node[] = [];
+
+  /** Ctrl/Cmd+C: copy the selected node(s) into the clipboard. */
+  private copySelectedNodes(): void {
+    const copied: Node[] = [];
+    for (const id of this.selectionStore.selectedNodeIds) {
+      if (this.notationGraphStore.hasNode(id)) {
+        copied.push(this.notationGraphStore.getNode(id));
+      }
+    }
+    this.clipboardNodes = copied;
+    if (copied.length > 0) {
+      this.setYolo26Status(
+        `Copied ${copied.length} symbol(s). Press Ctrl+V to paste.`,
+      );
+    }
+  }
+
+  /**
+   * Ctrl/Cmd+V: paste copies of the clipboard node(s). Each copy keeps the
+   * class and box, gets a fresh id, is offset slightly so it is visible, and is
+   * selected in the pointer tool so it can be dragged/resized immediately.
+   * Handy for many similar symbols in nearby places: copy once, paste, drag.
+   */
+  private pasteNodes(): void {
+    if (this.clipboardNodes.length === 0) return;
+    const OFFSET = 15;
+    const newIds: number[] = [];
+    for (const src of this.clipboardNodes) {
+      const mask = src.decodedMask;
+      const node: Node = {
+        id: this.notationGraphStore.getFreeId(),
+        className: src.className,
+        left: src.left + OFFSET,
+        top: src.top + OFFSET,
+        width: src.width,
+        height: src.height,
+        syntaxOutlinks: [],
+        syntaxInlinks: [],
+        precedenceOutlinks: [],
+        precedenceInlinks: [],
+        decodedMask:
+          mask === null
+            ? null
+            : new ImageData(
+                new Uint8ClampedArray(mask.data),
+                mask.width,
+                mask.height,
+              ),
+        textTranscription: src.textTranscription,
+        data: {},
+        polygon: null,
+      };
+      this.notationGraphStore.insertNode(node);
+      newIds.push(node.id);
+    }
+    this.toolbeltController.setCurrentTool(EditorTool.Pointer);
+    this.selectionStore.changeSelection(newIds);
+    this.setYolo26Status(
+      `Pasted ${newIds.length} symbol(s). Drag to reposition or resize.`,
+    );
+  }
+
+  /**
+   * Predict syntax edges among SMALL symbols using the server-side small-edge
+   * model, and add the returned links to the graph. Predicts on the document's
+   * last-saved mung.xml, so save (autosave) before running.
+   */
+  public async predictEdges(documentName: string): Promise<void> {
+    if (!documentName) {
+      this.setYolo26Status("No document name for edge prediction.");
+      return;
+    }
+    const api = new Yolo26DetectionApi();
+    this.setYolo26Status("Predicting edges...");
+    try {
+      const result = await api.assembleEdges(documentName);
+      let added = 0;
+      for (const e of result.edges) {
+        if (
+          !this.notationGraphStore.hasNode(e.source) ||
+          !this.notationGraphStore.hasNode(e.target)
+        ) {
+          continue;
+        }
+        const src = this.notationGraphStore.getNode(e.source);
+        if (
+          src.syntaxOutlinks.includes(e.target) ||
+          src.syntaxInlinks.includes(e.target)
+        ) {
+          continue; // already linked
+        }
+        this.notationGraphStore.insertLink(e.source, e.target, LinkType.Syntax);
+        added++;
+      }
+      this.setYolo26Status(
+        `Added ${added} predicted edge(s) from ${result.edges.length} candidates.`,
+      );
+    } catch (err) {
+      this.setYolo26Status("Edge prediction failed: " + String(err));
     }
   }
 
@@ -455,7 +614,9 @@ export class MainMenuController implements IController {
       const message =
         `Inserted ${inserted} ${this.formatSources(sourcesToReplace)} predicted symbols` +
         (region === null ? "" : " in the selected area") +
-        (removed > 0 ? ` after replacing ${removed} previous predictions` : "") +
+        (removed > 0
+          ? ` after replacing ${removed} previous predictions`
+          : "") +
         (deduplicated > 0
           ? ` and removing ${deduplicated} overlapping predictions.`
           : ".");
@@ -791,10 +952,7 @@ export class MainMenuController implements IController {
     const top = Math.max(a.top, b.top);
     const right = Math.min(a.right, b.right);
     const bottom = Math.min(a.bottom, b.bottom);
-    return (
-      Math.max(0, right - left) *
-      Math.max(0, bottom - top)
-    );
+    return Math.max(0, right - left) * Math.max(0, bottom - top);
   }
 
   private computeIou(a: DOMRect, b: DOMRect): number {

@@ -1,9 +1,13 @@
 import { SimpleBackendConnection } from "./SimpleBackendConnection";
 
+export type DocStatus = "not-started" | "in-progress" | "done";
+
 export interface Document {
   readonly name: string;
   readonly hasImage: boolean;
   readonly modifiedAt: string;
+  readonly status?: DocStatus;
+  readonly annotator?: string;
 }
 
 export interface WhoamiResponse {
@@ -63,6 +67,41 @@ export class SimpleBackendApi {
     }
     const data = await response.json();
     return data.documents as Document[];
+  }
+
+  public async setDocumentStatus(
+    documentName: string,
+    status: DocStatus,
+    annotator: string,
+  ): Promise<void> {
+    const response = await fetch(this.buildUrl("set-doc-status", documentName), {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + this.connection.userToken,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ status, annotator }),
+    });
+    if (response.status === 401) {
+      throw new Error("Invalid user token.");
+    }
+    if (!response.ok) {
+      throw new Error("Unexpected response: " + (await response.text()));
+    }
+  }
+
+  public async backupDocuments(): Promise<{ ok: boolean; log?: string; error?: string }> {
+    const response = await fetch(this.buildUrl("backup-documents"), {
+      method: "POST",
+      headers: { Authorization: "Bearer " + this.connection.userToken },
+    });
+    if (response.status === 401) {
+      throw new Error("Invalid user token.");
+    }
+    if (!response.ok) {
+      throw new Error("Unexpected response: " + (await response.text()));
+    }
+    return await response.json();
   }
 
   public async getDocumentMung(documentName: string): Promise<string> {

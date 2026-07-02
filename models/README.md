@@ -15,10 +15,14 @@ YOLO model weights:
 - yolo26l_tiled_7pages_pre.pt
 - yolo26l_large_fullwidth_9pages_pre_ep300.pt
 - yolo26l_tiled_9pages_pre_ep300.pt
+- yolo26l_tiled_9pages_pre_ep200.pt
 
 Place local DETR model directories in this shape:
 
 ```text
+models/detr_large_fullwidth_9pages_ep90/model/
+models/detr_large_fullwidth_9pages_boxfocused_ep200/model/
+models/detr_large_9pages_copypaste_ep50/model/
 models/detr_large_9pages_plus50/model/
 models/detr_tiled_9pages_plus50/model/
 ```
@@ -30,6 +34,10 @@ registered in `simple-php-backend/yolo26_inference.py`:
 
 - YOLO26L, 7 pages
 - YOLO26L, 9 pages, 300 epochs
+- YOLO26L, 9 pages, 200 epochs
+- DETR, 9 pages, 90 epochs
+- DETR box-focused, 9 pages, 200 epochs
+- DETR copy-paste, 9 pages, 50 epochs
 - DETR, 9 pages, 200 epochs
 - DETR, 9 pages, 170 epochs
 
