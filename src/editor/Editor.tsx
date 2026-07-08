@@ -13,6 +13,8 @@ import { SettingsWindow } from "./view/settings-window/SettingsWindow";
 import { ValidationPanel } from "./view/validation-panel/ValidationPanel";
 import { useAtomValue } from "jotai";
 import { NodeNavigationTab } from "./view/NodeNavigationTab";
+import { CollabConfig } from "./controller/CollabController";
+import { PresenceBar } from "./view/collab/PresenceBar";
 
 export interface EditorProps {
   /**
@@ -48,6 +50,12 @@ export interface EditorProps {
    * Name of the openned file
    */
   readonly fileName: string;
+
+  /**
+   * When provided, the editor joins a real-time collaboration session for
+   * this document (live op sync + presence + peer cursors). Optional.
+   */
+  readonly collabConfig?: CollabConfig | null;
 }
 
 /**
@@ -63,13 +71,22 @@ export function Editor(props: EditorProps) {
     props.initialNodes,
     props.initialMungFileMetadata,
     props.backgroundImageUrl,
+    props.collabConfig ?? null,
   );
   const {
     notationGraphStore,
     autosaveStore,
     backgroundImageStore,
     zoomController,
+    collabController,
   } = editorContext;
+
+  // join / leave the real-time collaboration session
+  useEffect(() => {
+    if (collabController === null) return;
+    collabController.start();
+    return () => collabController.stop();
+  }, [collabController]);
 
   // bind autosave store to the props.onSave method
   useEffect(() => {
@@ -163,6 +180,7 @@ export function Editor(props: EditorProps) {
             <Box sx={{ position: "relative", flexGrow: 1 }}>
               <SceneView />
               <Toolbelt />
+              {collabController !== null && <PresenceBar />}
             </Box>
             <NodeNavigationTab />
             <ValidationPanel />

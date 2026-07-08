@@ -163,12 +163,48 @@ RFDETR_LARGE_9PAGES_LARGE2048_MODEL = Path(
         "run_large_2048_ALL9_deploy/checkpoint_best_total.pth",
     )
 )
-# per-model (variant, resolution); RfDetrModelAdapter looks up by spec.key,
-# falling back to the RFDETR_VARIANT/RFDETR_RESOLUTION globals.
+# per-model (variant, resolution[, invert]); RfDetrModelAdapter looks up by spec.key,
+# falling back to the RFDETR_VARIANT/RFDETR_RESOLUTION globals. invert=True means the
+# page is color-inverted IN MEMORY before inference (the MuSViT-inv member was trained
+# on inverted pages to match MuSViT's white-paper pretraining polarity; documents on
+# disk / in mung-studio stay untouched).
 RFDETR_MODEL_CONFIG = {
     "rfdetr_large_9pages_medium_ep120": ("medium", 1536),
     "rfdetr_large_9pages_large2048_ep120": ("large", 2048),
+    "rfdetr_all9_stockL_1536": ("large", 1536),
+    "rfdetr_all9_musvit_native_1536": ("full_deprecated", 1536),
+    "rfdetr_all9_musvit_inv_1536": ("full_deprecated", 1536, True),
+    "rfdetr_all9_musvit_warmft_1536": ("full_deprecated", 1536),
 }
+
+# --- Large-symbol 5-model WBF ENSEMBLE (2026-07-05 MuSViT exploration result:
+#     held-out F1 0.902 / mAP@.75 0.520 vs best single 0.884/0.491; see
+#     Schenkerian_OMR/docs/musvit_exploration_2026-07-05.md). Every member predicts
+#     on the whole squished page; detections are fused per class with Weighted Box
+#     Fusion (score-weighted box average; fused score rewards cross-model agreement). ---
+MUSVIT_LARGE_ENSEMBLE_KEY = "musvit_large_ensemble"
+MUSVIT_LARGE_ENSEMBLE_MEMBERS = [
+    "rfdetr_all9_stockL_1536",
+    "rfdetr_large_9pages_medium_ep120",
+    "rfdetr_all9_musvit_warmft_1536",
+    "rfdetr_all9_musvit_inv_1536",
+    "rfdetr_all9_musvit_native_1536",
+]
+MUSVIT_ENSEMBLE_MEMBER_CONF = float(os.environ.get("MUSVIT_ENSEMBLE_MEMBER_CONF", "0.05"))
+MUSVIT_ENSEMBLE_WBF_IOU = float(os.environ.get("MUSVIT_ENSEMBLE_WBF_IOU", "0.55"))
+_MUSVIT_DEPLOY_ROOT = "/home/users/yh477/lab/Schenkerian_OMR/outputs/rfdetr_musvit_20260704"
+RFDETR_ALL9_STOCKL_MODEL = Path(os.environ.get(
+    "RFDETR_ALL9_STOCKL_MODEL",
+    f"{_MUSVIT_DEPLOY_ROOT}/run_ALL9_stockL_1536/checkpoint_best_total.pth"))
+RFDETR_ALL9_MUSVIT_NATIVE_MODEL = Path(os.environ.get(
+    "RFDETR_ALL9_MUSVIT_NATIVE_MODEL",
+    f"{_MUSVIT_DEPLOY_ROOT}/run_ALL9_native_1536/checkpoint_best_total.pth"))
+RFDETR_ALL9_MUSVIT_INV_MODEL = Path(os.environ.get(
+    "RFDETR_ALL9_MUSVIT_INV_MODEL",
+    f"{_MUSVIT_DEPLOY_ROOT}/run_ALL9_inv_1536/checkpoint_best_total.pth"))
+RFDETR_ALL9_MUSVIT_WARMFT_MODEL = Path(os.environ.get(
+    "RFDETR_ALL9_MUSVIT_WARMFT_MODEL",
+    f"{_MUSVIT_DEPLOY_ROOT}/run_ALL9_warmft_1536/checkpoint_best_total.pth"))
 
 # --- Small-symbol YOLO + RF-DETR ENSEMBLE (opt-in). run_tiled_ensemble runs the YOLO
 #     tiled model + an RF-DETR tiled model (one subprocess call over the page) and lets
@@ -197,7 +233,7 @@ RFDETR_SMALL_RESOLUTION = int(os.environ.get("RFDETR_SMALL_RESOLUTION", "1216"))
 
 DEFAULT_LARGE_MODEL_KEY = os.environ.get(
     "SYMBOL_DETECTOR_DEFAULT_LARGE_MODEL",
-    "rfdetr_large_9pages_large2048_ep120",
+    MUSVIT_LARGE_ENSEMBLE_KEY,
 )
 DEFAULT_SMALL_MODEL_KEY = os.environ.get(
     "SYMBOL_DETECTOR_DEFAULT_SMALL_MODEL",
@@ -674,6 +710,41 @@ DETECTION_MODEL_SPECS = [
         backend="ensemble",
         path=RFDETR_SMALL_CKPT,
     ),
+    DetectionModelSpec(
+        key="rfdetr_all9_stockL_1536",
+        label="RF-DETR Large @1536, 9 pages",
+        role="large",
+        backend="rfdetr",
+        path=RFDETR_ALL9_STOCKL_MODEL,
+    ),
+    DetectionModelSpec(
+        key="rfdetr_all9_musvit_native_1536",
+        label="MuSViT-RF-DETR @1536, 9 pages",
+        role="large",
+        backend="rfdetr",
+        path=RFDETR_ALL9_MUSVIT_NATIVE_MODEL,
+    ),
+    DetectionModelSpec(
+        key="rfdetr_all9_musvit_inv_1536",
+        label="MuSViT-RF-DETR inverted @1536, 9 pages",
+        role="large",
+        backend="rfdetr",
+        path=RFDETR_ALL9_MUSVIT_INV_MODEL,
+    ),
+    DetectionModelSpec(
+        key="rfdetr_all9_musvit_warmft_1536",
+        label="MuSViT-RF-DETR MUSCIMA-warmup @1536, 9 pages",
+        role="large",
+        backend="rfdetr",
+        path=RFDETR_ALL9_MUSVIT_WARMFT_MODEL,
+    ),
+    DetectionModelSpec(
+        key=MUSVIT_LARGE_ENSEMBLE_KEY,
+        label="5-model MuSViT ensemble (best quality, slower)",
+        role="large",
+        backend="ensemble",
+        path=RFDETR_ALL9_MUSVIT_INV_MODEL,
+    ),
 ]
 
 DETECTION_MODEL_SPECS_BY_KEY = {
@@ -887,9 +958,9 @@ class RfDetrModelAdapter(DetectionModelAdapter):
 
         self.venv_py = RFDETR_VENV_PY
         self.script = RFDETR_PREDICT_SCRIPT
-        self.variant, self.resolution = RFDETR_MODEL_CONFIG.get(
-            spec.key, (RFDETR_VARIANT, RFDETR_RESOLUTION)
-        )
+        cfg = RFDETR_MODEL_CONFIG.get(spec.key, (RFDETR_VARIANT, RFDETR_RESOLUTION))
+        self.variant, self.resolution = cfg[0], cfg[1]
+        self.invert = bool(cfg[2]) if len(cfg) > 2 else False
         # label index -> MUSCIMA class name (same name space as the DETR/YOLO adapters,
         # so the downstream MUSCIMA->Schenker mapping is identical).
         class_names = _json.loads(Path(RFDETR_CLASS_NAMES).read_text())
@@ -919,6 +990,8 @@ class RfDetrModelAdapter(DetectionModelAdapter):
                 "--conf", str(float(conf)),
                 "--out", out_path,
             ]
+            if self.invert:
+                cmd.append("--invert")
             proc = subprocess.run(cmd, capture_output=True, text=True, env=os.environ.copy())
             if proc.returncode != 0:
                 raise RuntimeError(
@@ -1037,6 +1110,90 @@ class Yolo26CombinedDetector:
                 detections.append(detection)
         return self.postprocess_detections(detections, options)
 
+    def run_large_ensemble(
+        self,
+        canvas: Image.Image,
+        options: Yolo26Options,
+    ) -> list[Detection]:
+        """5-model WBF large-symbol ensemble (held-out F1 0.902 vs 0.884 best single).
+        Members each predict on the whole page at a low member confidence; per-class
+        Weighted Box Fusion merges them (box = score-weighted average of the cluster,
+        fused score = cluster score sum / n_models, so cross-model agreement is
+        rewarded); the fused score is then thresholded at options.large_conf."""
+
+        def _iou(a, b):
+            ix0, iy0 = max(a[0], b[0]), max(a[1], b[1])
+            ix1, iy1 = min(a[2], b[2]), min(a[3], b[3])
+            iw, ih = max(0.0, ix1 - ix0), max(0.0, iy1 - iy0)
+            inter = iw * ih
+            if inter <= 0:
+                return 0.0
+            ua = ((a[2] - a[0]) * (a[3] - a[1])
+                  + (b[2] - b[0]) * (b[3] - b[1]) - inter)
+            return inter / ua if ua > 0 else 0.0
+
+        members = [k for k in MUSVIT_LARGE_ENSEMBLE_MEMBERS
+                   if k in DETECTION_MODEL_SPECS_BY_KEY
+                   and _resolve_model_spec_path(DETECTION_MODEL_SPECS_BY_KEY[k]).exists()]
+        if not members:
+            raise RuntimeError("musvit_large_ensemble: no member checkpoints available")
+        n_models = len(members)
+
+        # collect all member detections (class index space is shared: every member is
+        # trained on a dataset_coco_large* build with the identical 8-category order).
+        # Members run in PARALLEL: each is an independent subprocess into the rfdetr
+        # venv (subprocess.run releases the GIL), and 5 concurrent 1536px inferences
+        # fit comfortably in the serving GPU. Serial was ~90s/page; parallel ~25s.
+        from concurrent.futures import ThreadPoolExecutor
+
+        adapters = {key: self.get_model(key, "large") for key in members}
+        ref_adapter = adapters[members[0]]
+
+        def _run_member(key: str):
+            return adapters[key].predict_boxes(
+                canvas, options.large_imgsz, MUSVIT_ENSEMBLE_MEMBER_CONF, self.device
+            )
+
+        per_class: dict[int, list[tuple[float, list[float]]]] = {}
+        with ThreadPoolExecutor(max_workers=len(members)) as pool:
+            for boxes, scores, classes in pool.map(_run_member, members):
+                for box, score, cls_id in zip(boxes, scores, classes):
+                    per_class.setdefault(int(cls_id), []).append(
+                        (float(score),
+                         [float(box[0]), float(box[1]), float(box[2]), float(box[3])])
+                    )
+
+        detections: list[Detection] = []
+        for cls_id, cand in per_class.items():
+            clusters: list[dict] = []
+            for score, box in sorted(cand, key=lambda t: -t[0]):
+                placed = False
+                for cl in clusters:
+                    if _iou(box, cl["rep"]) >= MUSVIT_ENSEMBLE_WBF_IOU:
+                        cl["items"].append((score, box))
+                        sw = sum(s for s, _ in cl["items"])
+                        cl["rep"] = [sum(s * b[k] for s, b in cl["items"]) / sw
+                                     for k in range(4)]
+                        placed = True
+                        break
+                if not placed:
+                    clusters.append({"rep": list(box), "items": [(score, box)]})
+            for cl in clusters:
+                fused_score = min(1.0, sum(s for s, _ in cl["items"]) / n_models)
+                if fused_score < options.large_conf:
+                    continue
+                detection = self.to_detection(
+                    box=cl["rep"],
+                    score=fused_score,
+                    cls_id=cls_id,
+                    adapter=ref_adapter,
+                    source="large",
+                    image_size=canvas.size,
+                )
+                if detection is not None:
+                    detections.append(detection)
+        return self.postprocess_detections(detections, options)
+
     def run_tiled(
         self,
         canvas: Image.Image,
@@ -1147,7 +1304,9 @@ class Yolo26CombinedDetector:
             )
         if options.run_large:
             large_spec = DETECTION_MODEL_SPECS_BY_KEY.get(options.large_model_key)
-            if large_spec is not None and large_spec.backend == "rfdetr":
+            if options.large_model_key == MUSVIT_LARGE_ENSEMBLE_KEY:
+                large = self.run_large_ensemble(canvas, options)
+            elif large_spec is not None and large_spec.backend == "rfdetr":
                 large = self.run_large_whole(canvas, options.large_model_key, options)
             else:
                 large = self.run_large_strips(canvas, options.large_model_key, options)

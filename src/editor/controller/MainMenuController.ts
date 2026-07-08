@@ -249,11 +249,14 @@ export class MainMenuController implements IController {
   }
 
   /**
-   * Predict syntax edges among SMALL symbols using the server-side small-edge
-   * model, and add the returned links to the graph. Predicts on the document's
+   * Predict syntax edges among ALL symbols using the server-side edge model,
+   * and add the returned links to the graph. Predicts on the document's
    * last-saved mung.xml, so save (autosave) before running.
    */
-  public async predictEdges(documentName: string): Promise<void> {
+  public async predictEdges(
+    documentName: string,
+    threshold?: number,
+  ): Promise<void> {
     if (!documentName) {
       this.setYolo26Status("No document name for edge prediction.");
       return;
@@ -261,7 +264,7 @@ export class MainMenuController implements IController {
     const api = new Yolo26DetectionApi();
     this.setYolo26Status("Predicting edges...");
     try {
-      const result = await api.assembleEdges(documentName);
+      const result = await api.assembleEdges(documentName, threshold);
       let added = 0;
       for (const e of result.edges) {
         if (
@@ -281,11 +284,35 @@ export class MainMenuController implements IController {
         added++;
       }
       this.setYolo26Status(
-        `Added ${added} predicted edge(s) from ${result.edges.length} candidates.`,
+        `Added ${added} predicted edge(s) from ${result.edges.length} candidates` +
+          (threshold !== undefined ? ` (threshold ${threshold})` : "") +
+          ".",
       );
     } catch (err) {
       this.setYolo26Status("Edge prediction failed: " + String(err));
     }
+  }
+
+  /** Live count of ALL syntax edges in the document (works across reloads). */
+  public readonly syntaxEdgeCountAtom = atom((get) => {
+    return get(this.notationGraphStore.syntaxLinksAtom).length;
+  });
+
+  /**
+   * Removes ALL syntax edges from the document (predicted and hand-drawn
+   * alike), leaving every symbol untouched. Unlike the old session-scoped
+   * "clear predicted edges", this works after a reload too.
+   */
+  public clearAllEdges(): void {
+    const links = [...this.notationGraphStore.syntaxLinks];
+    for (const link of links) {
+      this.notationGraphStore.removeLink(link.fromId, link.toId, link.type);
+    }
+    this.setYolo26Status(
+      links.length === 0
+        ? "No edges to clear."
+        : `Removed ${links.length} edge(s); symbols untouched.`,
+    );
   }
 
   private isTextInputEvent(e: KeyboardEvent): boolean {

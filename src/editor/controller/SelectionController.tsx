@@ -7,6 +7,7 @@ import { NotationGraphStore } from "../model/notation-graph-store/NotationGraphS
 import { ClassVisibilityStore } from "../model/ClassVisibilityStore";
 import { ZoomController } from "./ZoomController";
 import { Node } from "../../mung/Node";
+import { LinkType } from "../../mung/LinkType";
 import { EditorStateStore } from "../model/EditorStateStore";
 import { IController } from "./IController";
 import { ToolbeltController } from "./ToolbeltController";
@@ -110,6 +111,27 @@ export class SelectionController implements IController {
 
   public onMouseDown(e: MouseEvent) {
     if (e.button !== 0) return; // LMB only
+
+    // Ctrl/Cmd + Shift + click on a node toggles a syntax edge between the
+    // currently selected node(s) and the clicked node. (Plain ctrl+click is
+    // taken by the ctrl+drag quick-rectangle node gesture, so the edge gesture
+    // lives on ctrl+shift.) The selection is kept, so you can connect one
+    // source to several targets by ctrl+shift+clicking each of them.
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
+      const target = this.highlighter.highlightedNode;
+      if (target !== null) {
+        for (const srcId of this.selectionStore.selectedNodeIds) {
+          if (srcId !== target.id) {
+            this.notationGraphStore.toggleLink(
+              srcId,
+              target.id,
+              LinkType.Syntax,
+            );
+          }
+        }
+      }
+      return;
+    }
 
     // Ctrl/Cmd + drag is reserved for the quick-rectangle node creation gesture
     // (QuickRectNodeController), so don't start a selection sweep here.

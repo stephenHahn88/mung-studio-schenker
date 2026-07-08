@@ -231,6 +231,15 @@ export function RecognitionQuickAction() {
   const [modelAvailability, setModelAvailability] = useState<
     Record<string, boolean | undefined>
   >({});
+  const [edgeThresholdText, setEdgeThresholdText] = useState("0.5");
+  const parsedEdgeThreshold = Number(edgeThresholdText);
+  const edgeThreshold =
+    Number.isFinite(parsedEdgeThreshold) &&
+    parsedEdgeThreshold > 0 &&
+    parsedEdgeThreshold <= 1
+      ? parsedEdgeThreshold
+      : 0.5;
+  const syntaxEdgeCount = useAtomValue(controller.syntaxEdgeCountAtom);
 
   useEffect(() => {
     let cancelled = false;
@@ -410,9 +419,40 @@ export function RecognitionQuickAction() {
           color="success"
           fullWidth
           disabled={isRecognitionRegionSelecting}
-          onClick={() => controller.predictEdges(documentName)}
+          onClick={() => controller.predictEdges(documentName, edgeThreshold)}
         >
-          Predict edges (small)
+          Predict edges
+        </Button>
+        <FormControl size="sm">
+          <FormLabel>
+            Edge threshold
+            <Typography level="body-xs" sx={{ ml: 0.75, color: "text.tertiary" }}>
+              default 0.5
+            </Typography>
+          </FormLabel>
+          <Input
+            type="number"
+            value={edgeThresholdText}
+            disabled={isRecognitionRegionSelecting}
+            slotProps={{ input: { step: 0.05, min: 0, max: 1 } }}
+            onChange={(event) => setEdgeThresholdText(event.target.value)}
+          />
+          <FormHelperText>
+            Minimum confidence for predicted edges; lower finds more edges with
+            more mistakes, higher keeps only confident ones.
+          </FormHelperText>
+        </FormControl>
+        <Button
+          size="sm"
+          variant="soft"
+          color="danger"
+          fullWidth
+          disabled={syntaxEdgeCount === 0 || isRecognitionRegionSelecting}
+          startDecorator={<DeleteSweepIcon />}
+          onClick={() => controller.clearAllEdges()}
+        >
+          Clear all edges
+          {syntaxEdgeCount > 0 ? ` (${syntaxEdgeCount})` : ""}
         </Button>
         <ButtonGroup size="sm" variant="soft" color="warning">
           <Button

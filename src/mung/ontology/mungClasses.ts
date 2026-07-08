@@ -807,12 +807,30 @@ const DEFINITIONS: { [className: string]: MungClassDefinition } = {
   // Slurs
   slurStructuralDown: { uc: "\u{E4BB}", mpp: false, notSmufl: true },
   slurStructuralUp: { uc: "\u{E4BA}", mpp: false, notSmufl: true },
+  slurStructuralUpDashed: {
+    uc: "\u{E4BA}\u{E4BA}",
+    mpp: false,
+    notSmufl: true,
+  },
+  slurStructuralDownDashed: {
+    uc: "\u{E4BB}\u{E4BB}",
+    mpp: false,
+    notSmufl: true,
+  },
 
   // Beams
   beamStructural: { uc: "\u{E1F0}\u{E1F2}", mpp: false, notSmufl: true },
-  beamStructuralPartialLeft: { uc: "\u{E1F0}\u{E1F7}", mpp: false, notSmufl: true, },
+  beamStructuralPartialLeft: {
+    uc: "\u{E1F0}\u{E1F7}",
+    mpp: false,
+    notSmufl: true,
+  },
   beamStructuralPartialRight: { uc: "\u{E1F2}", mpp: false, notSmufl: true },
-  beamStructuralPartialMiddle: { uc: "\u{E1F2}\u{E1F7}", mpp: false, notSmufl: true, },
+  beamStructuralPartialMiddle: {
+    uc: "\u{E1F2}\u{E1F7}",
+    mpp: false,
+    notSmufl: true,
+  },
   beamStructuralBridgeUp: { uc: "\u{2229}", mpp: false, notSmufl: true },
   beamStructuralBridgeDown: { uc: "\u{222A}", mpp: false, notSmufl: true },
 
@@ -839,10 +857,14 @@ const DEFINITIONS: { [className: string]: MungClassDefinition } = {
 
   // Barlines
   barlineStructuralDotted: { uc: "\u{250A}", mpp: false, notSmufl: true },
-  barlineStructuralDottedPartial: { uc: "\u{2502}", mpp: false, notSmufl: true },
+  barlineStructuralDottedPartial: {
+    uc: "\u{2502}",
+    mpp: false,
+    notSmufl: true,
+  },
 
   // Harmonic Analysis
-  keyAnalysis: { uc: "Gm:", mpp: false, notSmufl: true },
+  keyAnalysis: { uc: "Gm:", mpp: false, notSmufl: true, transcribable: true },
 
   analyticalI: { uc: "\u{2160}", mpp: false, notSmufl: true },
   analyticalII: { uc: "\u{2161}", mpp: false, notSmufl: true },
@@ -860,12 +882,19 @@ const DEFINITIONS: { [className: string]: MungClassDefinition } = {
   numeralRomanVI: { uc: "\u{2165}", mpp: false, notSmufl: true },
   numeralRomanVII: { uc: "\u{2166}", mpp: false, notSmufl: true },
 
+  analyticalPlus: { uc: "\u{002B}", mpp: false, notSmufl: true },
+  analyticalMinus: { uc: "\u{2212}", mpp: false, notSmufl: true },
+
   secondaryHarmonyArrowRight: { uc: "\u{21BA}", mpp: false, notSmufl: true },
   secondaryHarmonyArrowLeft: { uc: "\u{21BB}", mpp: false, notSmufl: true },
+
+  motiveBracket: { uc: "\u{23B4}", mpp: false, notSmufl: true },
+  tonicizationBar: { uc: "---", mpp: false, notSmufl: true },
 
   // Miscellaneous
   circleEmphasis: { uc: "\u{25EF}", mpp: false, notSmufl: true },
   circleMeasureNumber: { uc: "\u{25CB}", mpp: false, notSmufl: true },
+  analysisInterruption: { uc: "''", mpp: false, notSmufl: true },
 };
 
 ////////////////////////////////////////////////////////////////////////////////

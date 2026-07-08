@@ -61,6 +61,61 @@ export class NotationGraphStore {
   private nodeAtomsView: NodeAtomsView;
   private linkAtomsView: LinkAtomsView;
 
+  /**
+   * Real-time collaboration hook. When set (by the CollabController), every
+   * local graph mutation is emitted as an operation descriptor so it can be
+   * broadcast to other clients. Null = no collaboration (default).
+   */
+  public opSink: ((op: any) => void) | null = null;
+
+  /** While true, mutations are NOT re-emitted (used while applying remote ops). */
+  private _suppressOps = false;
+
+  private emitOp(op: any): void {
+    if (this.opSink !== null && !this._suppressOps) this.opSink(op);
+  }
+
+  /**
+   * Applies an operation received from another collaborator, without
+   * re-broadcasting it. Idempotent: safe to replay an op already reflected in
+   * the graph (e.g. one that raced a save-snapshot).
+   */
+  public applyRemoteOp(op: any): void {
+    this._suppressOps = true;
+    try {
+      switch (op?.t) {
+        case "insertNode":
+          if (this.hasNode(op.node.id)) this.updateNode(op.node);
+          else this.insertNode(op.node);
+          break;
+        case "updateNode":
+          if (this.hasNode(op.node.id)) this.updateNode(op.node);
+          break;
+        case "removeNode":
+        case "removeNodeWithLinks":
+          if (this.hasNode(op.id)) this.removeNodeWithLinks(op.id);
+          break;
+        case "insertLink":
+          if (
+            this.hasNode(op.from) &&
+            this.hasNode(op.to) &&
+            !this.hasLink(op.from, op.to, op.linkType)
+          )
+            this.insertLink(op.from, op.to, op.linkType);
+          break;
+        case "removeLink":
+          if (this.hasLink(op.from, op.to, op.linkType))
+            this.removeLink(op.from, op.to, op.linkType);
+          break;
+        case "setAll":
+          this.setAllNodes(op.nodes);
+          break;
+      }
+    } finally {
+      this._suppressOps = false;
+    }
+  }
+
   constructor(
     initialNodes: readonly Node[],
     initialMetadata: MungFileMetadata,
@@ -246,6 +301,7 @@ export class NotationGraphStore {
    */
   public insertNode(node: Node) {
     this.nodeCollection.insertNode(node);
+    this.emitOp({ t: "insertNode", node });
   }
 
   /**
@@ -254,6 +310,7 @@ export class NotationGraphStore {
    */
   public updateNode(newValue: Node) {
     this.nodeCollection.updateNode(newValue);
+    this.emitOp({ t: "updateNode", node: newValue });
   }
 
   /**
@@ -264,6 +321,7 @@ export class NotationGraphStore {
    */
   public removeNode(nodeId: number) {
     this.nodeCollection.removeNode(nodeId);
+    this.emitOp({ t: "removeNode", id: nodeId });
   }
 
   /**
@@ -292,6 +350,7 @@ export class NotationGraphStore {
 
     // now the node should have no links
     this.nodeCollection.removeNode(nodeId);
+    this.emitOp({ t: "removeNodeWithLinks", id: nodeId });
   }
 
   /**
@@ -304,6 +363,7 @@ export class NotationGraphStore {
     // (something that only emits change events for what has actually changed)
     this.bulkActionLayer.clear();
     this.bulkActionLayer.insertManyNodes(nodes);
+    this.emitOp({ t: "setAll", nodes });
   }
 
   /////////////////////
@@ -375,6 +435,7 @@ export class NotationGraphStore {
    */
   public insertLink(fromId: number, toId: number, type: LinkType) {
     this.nodeCollection.insertLink(fromId, toId, type);
+    this.emitOp({ t: "insertLink", from: fromId, to: toId, linkType: type });
   }
 
   /**
@@ -382,6 +443,7 @@ export class NotationGraphStore {
    */
   public removeLink(fromId: number, toId: number, type: LinkType) {
     this.nodeCollection.removeLink(fromId, toId, type);
+    this.emitOp({ t: "removeLink", from: fromId, to: toId, linkType: type });
   }
 
   /**

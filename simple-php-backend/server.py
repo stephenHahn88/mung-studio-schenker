@@ -7,6 +7,7 @@ Run: python3 server.py [--port 8080] [--documents /path/to/documents]
 import os
 import json
 import re
+import queue
 import datetime
 import mimetypes
 import posixpath
@@ -129,6 +130,8 @@ class Handler(BaseHTTPRequestHandler):
             self._action_list_detection_models()
         elif action == "assemble-edges":
             self._action_assemble_edges(params)
+        elif action == "collab-stream":
+            self._action_collab_stream(params)
         elif action is None and FRONTEND_PATH is not None:
             self._serve_static(parsed.path)
         else:
@@ -157,6 +160,10 @@ class Handler(BaseHTTPRequestHandler):
             self._action_set_doc_status(params)
         elif action == "backup-documents":
             self._action_backup_documents()
+        elif action == "collab-op":
+            self._action_collab_op(params)
+        elif action == "collab-presence":
+            self._action_collab_presence(params)
         else:
             self.send_error(400, "Missing or unknown action.")
 
@@ -177,6 +184,108 @@ class Handler(BaseHTTPRequestHandler):
         self._cors()
         self.end_headers()
         self.wfile.write(json.dumps({"name": user["name"]}, indent=2).encode())
+
+    # ==================== real-time collaboration ====================
+    def _auth_query_or_header(self, params):
+        """Auth that also accepts ?token= (EventSource/curl cannot set headers)."""
+        auth = self.headers.get("Authorization", "")
+        token = (auth[7:].strip() if auth.startswith("Bearer ")
+                 else (params.get("token", [None])[0]))
+        if token:
+            for u in USERS:
+                if u["token"] == token:
+                    return u
+        self.send_error(401, "Unauthenticated.")
+        return None
+
+    def _sse(self, obj):
+        self.wfile.write(("data: " + json.dumps(obj) + "\n\n").encode())
+        self.wfile.flush()
+
+    def _action_collab_stream(self, params):
+        """Long-lived SSE stream: replays ops since last save, then live ops +
+        presence for one document. Held open on its own thread per client."""
+        user = self._auth_query_or_header(params)
+        if not user:
+            return
+        doc = params.get("document", [None])[0]
+        client_id = params.get("clientId", [None])[0]
+        if not doc or not is_valid_name(doc) or not client_id:
+            self.send_error(400, "Missing document/clientId.")
+            return
+        name = (params.get("name", [None])[0] or user["name"])[:60]
+        color = (params.get("color", [None])[0] or "#888888")[:16]
+        from collab import HUB, PING_INTERVAL
+        sid, q = HUB.subscribe(doc)
+        HUB.presence(doc, client_id, {"name": name, "color": color})
+        try:
+            self.send_response(200)
+            self.send_header("Content-Type", "text/event-stream; charset=utf-8")
+            self.send_header("Cache-Control", "no-cache")
+            self.send_header("Connection", "keep-alive")
+            self.send_header("X-Accel-Buffering", "no")
+            self._cors()
+            self.end_headers()
+            seq, oplog, users = HUB.snapshot(doc)
+            self._sse({"type": "init", "seq": seq, "oplog": oplog, "users": users})
+            while True:
+                try:
+                    self._sse(q.get(timeout=PING_INTERVAL))
+                except queue.Empty:
+                    self.wfile.write(b": ping\n\n")
+                    self.wfile.flush()
+        except (BrokenPipeError, ConnectionResetError, OSError):
+            pass
+        finally:
+            HUB.unsubscribe(doc, sid, client_id)
+
+    def _action_collab_op(self, params):
+        user = self._authenticate()
+        if not user:
+            return
+        doc = params.get("document", [None])[0]
+        if not doc or not is_valid_name(doc):
+            self._send_json({"error": "Missing or invalid document name."}, status=400)
+            return
+        try:
+            length = int(self.headers.get("Content-Length", 0))
+            body = json.loads(self.rfile.read(length) or b"{}")
+        except Exception:
+            self._send_json({"error": "Bad JSON."}, status=400)
+            return
+        client_id, op = body.get("clientId"), body.get("op")
+        if not client_id or op is None:
+            self._send_json({"error": "Missing clientId/op."}, status=400)
+            return
+        from collab import HUB
+        seq = HUB.push_op(doc, op, client_id)
+        self._send_json({"ok": True, "seq": seq})
+
+    def _action_collab_presence(self, params):
+        user = self._authenticate()
+        if not user:
+            return
+        doc = params.get("document", [None])[0]
+        if not doc or not is_valid_name(doc):
+            self._send_json({"error": "Missing or invalid document name."}, status=400)
+            return
+        try:
+            length = int(self.headers.get("Content-Length", 0))
+            body = json.loads(self.rfile.read(length) or b"{}")
+        except Exception:
+            body = {}
+        client_id = body.get("clientId")
+        if not client_id:
+            self._send_json({"error": "Missing clientId."}, status=400)
+            return
+        from collab import HUB
+        HUB.presence(doc, client_id, {
+            "name": str(body.get("name", user["name"]))[:60],
+            "color": str(body.get("color", "#888888"))[:16],
+            "cursor": body.get("cursor"),
+            "selection": body.get("selection"),
+        })
+        self._send_json({"ok": True})
 
     def _read_doc_status(self, doc_name):
         """Per-document annotation status, stored at {doc}/status.json. Defaults if absent."""
@@ -411,6 +520,14 @@ class Handler(BaseHTTPRequestHandler):
 
         with open(mung_path, 'wb') as f:
             f.write(body)
+
+        # Collab: this full-document save is now the durable snapshot, so the
+        # per-op replay log can be compacted (joiners will load this mung.xml).
+        try:
+            from collab import HUB
+            HUB.clear_oplog(doc_name)
+        except Exception:
+            pass
 
         # Backup
         today = datetime.datetime.utcnow().strftime("%Y-%m-%d")

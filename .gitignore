@@ -2,10 +2,12 @@
 node_modules
 .parcel-cache
 dist
-# build-output backup/staging copies from atomic deploy swaps (never commit)
-dist_new
-dist_old
+# build-output + ALL deploy-swap staging/backup copies (dist_new, dist_old, dist_old2,
+# dist_edge, dist_collab, dist_fix, ...) — large, never commit
+dist_*
 dist.*
+# pyodide package bundles are large build artifacts (never commit)
+*.pyodide-packages
 .mypy_cache
 logs
 __pycache__

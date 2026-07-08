@@ -1,14 +1,19 @@
-"""
-Small-symbol edge (notation-assembly) inference for the MuNG Studio backend.
+"""ALL-symbol edge (notation-assembly) inference for the MuNG Studio backend. v3.
 
-Loads the trained MLPwithSoftClass edge model (from the Schenkerian_OMR repo)
-lazily, and predicts syntax edges among the SMALL symbols of a document:
-for every pair of small symbols within 200px, runs the model and returns the
-pairs whose edge probability exceeds a threshold.
+v1 (small-symbol-only, center-distance gate, 5-Rachmaninov-page training) failed on
+new pages: the center<=200px gate alone discards 16.5% of true edges, small-only
+ignores the slur/beam links that carry Schenkerian syntax, and one-piece training
+did not generalize. v2 loads the all-symbol model (MUSCIMA++ 140-page pretrain ->
+9-page two-piece fine-tune) and its learned per-class-pair BBOX-GAP candidate gates.
+v3 is a RULES+MODEL HYBRID: geometric rules (edge_rules.py) decide the well-defined
+attachment/slur types (~90% of edges, held-out-validated far above the model:
+slur-NH 0.90 vs 0.54, beam-NH 0.85 vs 0.14); the model handles only the remaining
+types (numerals, text, long-range). Hybrid aggregate ~0.87 vs 0.632 model-only.
 
-Self-contained: can be run directly to test on one document, e.g.
-    python edge_inference.py /path/to/documents/<doc>
+Self-contained test:
+    python edge_inference.py /path/to/documents/<doc> [threshold]
 """
+import json
 import os
 import sys
 import threading
@@ -16,40 +21,41 @@ import threading
 import numpy as np
 
 SCHENK_ROOT = os.environ.get("SCHENK_ROOT", "/home/users/yh477/lab/Schenkerian_OMR")
+EDGE_DEPLOY_DIR = os.environ.get(
+    "EDGE_DEPLOY_DIR", os.path.join(SCHENK_ROOT, "outputs/assembly/all_edges_deploy"))
 EDGE_MODEL_PATH = os.environ.get(
-    "EDGE_MODEL_PATH",
-    os.path.join(SCHENK_ROOT, "outputs/assembly/best_models/small_edge_pw1.5_lr2e3.pth"),
-)
+    "EDGE_MODEL_PATH", os.path.join(EDGE_DEPLOY_DIR, "model_final.pth"))
+# optional second ensemble member (2-init ensemble); averaged if present
+EDGE_MODEL_PATH_B = os.environ.get(
+    "EDGE_MODEL_PATH_B", os.path.join(EDGE_DEPLOY_DIR, "model_final_b.pth"))
 EDGE_CONFIG_PATH = os.environ.get(
-    "EDGE_CONFIG_PATH",
-    os.path.join(SCHENK_ROOT, "outputs/assembly/pretrain_small/config.yaml"),
-)
-MAX_DIST = float(os.environ.get("EDGE_MAX_DISTANCE", "200.0"))
+    "EDGE_CONFIG_PATH", os.path.join(EDGE_DEPLOY_DIR, "config.yaml"))
+EDGE_GATES_PATH = os.environ.get(
+    "EDGE_GATES_PATH", os.path.join(EDGE_DEPLOY_DIR, "gates.json"))
+GATE_DEFAULT = float(os.environ.get("EDGE_GATE_DEFAULT", "60.0"))
 DEFAULT_THRESHOLD = float(os.environ.get("EDGE_THRESHOLD", "0.5"))
 
-# Schenkerian -> MUSCIMA class-name mapping (same as training).
+# Schenkerian -> MUSCIMA class-name mapping (MUST mirror train_all_edges.py).
 SCHENKER_TO_MUSCIMA = {
     "noteheadBlack": "noteheadFull",
     "stemStructural": "stem",
     "slurStructuralUp": "slur", "slurStructuralDown": "slur",
-    "slurStructuralUpDashed": "slur",
+    "slurStructuralUpDashed": "slur", "slurStructuralDownDashed": "slur",
     "beamStructural": "beam", "beamStructuralPartialLeft": "beam",
     "beamStructuralPartialMiddle": "beam", "beamStructuralPartialRight": "beam",
     "beamStructuralUnfoldingUp": "beam", "beamStructuralUnfoldingDown": "beam",
     "flagStructuralUp": "flag8thUp", "flagStructuralDown": "flag8thDown",
+    "measureNumber": "otherNumericSign",
+    "scaleDegreeMark": "otherText",
+    "voiceExchangeUp": "slur", "voiceExchangeDown": "slur",
+    "characterHyphen": "otherText",
 }
-
-
-def _map_name(name):
-    return SCHENKER_TO_MUSCIMA.get(name, name)
-
 
 _state = None
 _lock = threading.Lock()
 
 
 def _get_state():
-    """Lazily load model, config, class dict and the small-class set."""
     global _state
     with _lock:
         if _state is not None:
@@ -57,12 +63,10 @@ def _get_state():
         import torch
         if SCHENK_ROOT not in sys.path:
             sys.path.insert(0, SCHENK_ROOT)
-        # constants.py reads the MUSCIMA class XML via a RELATIVE path, so import
-        # it with cwd set to the repo root, then restore.
         prev = os.getcwd()
         try:
             os.chdir(SCHENK_ROOT)
-            from utils.constants import CLASS_DICT_ALL, CLASS_LIST_SMALL
+            from utils.constants import CLASS_DICT_ALL
             from configs.assembler.default import get_cfg_defaults
             from model.model import MLPwithSoftClass
         finally:
@@ -75,102 +79,129 @@ def _get_state():
         ckpt = torch.load(EDGE_MODEL_PATH, map_location=device)
         model.load_state_dict(ckpt["model"])
         model.eval()
+        models = [model]
+        if os.path.isfile(EDGE_MODEL_PATH_B):
+            model_b = MLPwithSoftClass(cfg).to(device)
+            model_b.load_state_dict(
+                torch.load(EDGE_MODEL_PATH_B, map_location=device)["model"])
+            model_b.eval()
+            models.append(model_b)
+        gates = json.loads(open(EDGE_GATES_PATH).read())
 
         _state = {
             "torch": torch,
             "model": model,
+            "models": models,
             "device": device,
             "class_dict": dict(CLASS_DICT_ALL),
-            "small_set": set(CLASS_LIST_SMALL),
+            "gates": gates,
             "vocab_dim": int(cfg.MODEL.VOCAB_DIM),
         }
         return _state
 
 
-def predict_edges(mung_path, image_path, threshold=None):
-    """Return a list of {source, target, confidence} edges for SMALL symbols.
+def _map_name(name, class_dict):
+    m = SCHENKER_TO_MUSCIMA.get(name, name)
+    if m in class_dict:
+        return m
+    if name.startswith("numeralRoman") or name.startswith("parensImplied") \
+            or name.startswith("keyAnalysis"):
+        return "otherText"
+    return m if m in class_dict else "otherText"
 
-    source/target are node ids; the edge is undirected (added as a syntax link).
-    """
+
+def _bbox_gap(a, b):
+    dx = max(0, max(a.left, b.left) - min(a.right, b.right))
+    dy = max(0, max(a.top, b.top) - min(a.bottom, b.bottom))
+    return (dx * dx + dy * dy) ** 0.5
+
+
+def predict_edges(mung_path, image_path, threshold=None):
+    """Return {source, target, confidence} edges among ALL symbols (undirected)."""
     if threshold is None:
         threshold = DEFAULT_THRESHOLD
     st = _get_state()
     torch = st["torch"]
-    model = st["model"]
-    device = st["device"]
-    class_dict = st["class_dict"]
-    small_set = st["small_set"]
-    vocab = st["vocab_dim"]
+    models, device = st["models"], st["device"]
+    class_dict, gates, vocab = st["class_dict"], st["gates"], st["vocab_dim"]
 
     from mung.io import read_nodes_from_file
     from PIL import Image
 
     nodes = read_nodes_from_file(mung_path)
-    small = [n for n in nodes if _map_name(n.class_name) in small_set]
-    if len(small) < 2:
-        return {"edges": [], "nodeCount": len(nodes), "smallCount": len(small),
-                "pairCount": 0}
+    if len(nodes) < 2:
+        return {"edges": [], "nodeCount": len(nodes), "smallCount": len(nodes),
+                "pairCount": 0, "edgeCount": 0, "threshold": threshold}
+    w, h = Image.open(image_path).size
+    mapped = [_map_name(n.class_name, class_dict) for n in nodes]
 
-    w, h = Image.open(image_path).size  # (width, height)
+    # geometric rules decide their types outright (confidence 0.99)
+    from edge_rules import rule_edges, is_rule_pair
+    edges = [{"source": int(a), "target": int(b), "confidence": 0.99}
+             for a, b in sorted(rule_edges(nodes))]
+    rule_count = len(edges)
 
-    # candidate undirected pairs within MAX_DIST (center-to-center)
     pairs = []
-    for i in range(len(small)):
-        ni = small[i]; ciy = (ni.top + ni.bottom) / 2.0; cix = (ni.left + ni.right) / 2.0
-        for j in range(i + 1, len(small)):
-            nj = small[j]; cjy = (nj.top + nj.bottom) / 2.0; cjx = (nj.left + nj.right) / 2.0
-            if ((ciy - cjy) ** 2 + (cix - cjx) ** 2) ** 0.5 <= MAX_DIST:
+    for i in range(len(nodes)):
+        for j in range(i + 1, len(nodes)):
+            if is_rule_pair(nodes[i].class_name, nodes[j].class_name):
+                continue                      # rule-owned type: model must skip
+            gate = gates.get("|".join(sorted([mapped[i], mapped[j]])), GATE_DEFAULT)
+            if _bbox_gap(nodes[i], nodes[j]) <= gate:
                 pairs.append((i, j))
     if not pairs:
-        return {"edges": [], "nodeCount": len(nodes), "smallCount": len(small),
-                "pairCount": 0}
-
-    edges = []
+        edges.sort(key=lambda e: -e["confidence"])
+        return {"edges": edges, "nodeCount": len(nodes), "smallCount": len(nodes),
+                "pairCount": 0, "edgeCount": len(edges), "threshold": threshold,
+                "ruleEdgeCount": rule_count}
     bs = 8192
     with torch.no_grad():
         for s in range(0, len(pairs), bs):
             chunk = pairs[s:s + bs]
-            sb = np.array([[small[i].left / w, small[i].top / h,
-                            small[i].right / w, small[i].bottom / h] for i, _ in chunk],
+            sb = np.array([[nodes[i].left / w, nodes[i].top / h,
+                            nodes[i].right / w, nodes[i].bottom / h] for i, _ in chunk],
                           dtype=np.float32)
-            tb = np.array([[small[j].left / w, small[j].top / h,
-                            small[j].right / w, small[j].bottom / h] for _, j in chunk],
+            tb = np.array([[nodes[j].left / w, nodes[j].top / h,
+                            nodes[j].right / w, nodes[j].bottom / h] for _, j in chunk],
                           dtype=np.float32)
             n = len(chunk)
             sc = torch.zeros(n, vocab, device=device)
             tc = torch.zeros(n, vocab, device=device)
-            si = torch.tensor([class_dict.get(_map_name(small[i].class_name), 0) for i, _ in chunk])
-            ti = torch.tensor([class_dict.get(_map_name(small[j].class_name), 0) for _, j in chunk])
+            si = torch.tensor([class_dict[mapped[i]] for i, _ in chunk])
+            tj = torch.tensor([class_dict[mapped[j]] for _, j in chunk])
             sc[torch.arange(n), si] = 1.0
-            tc[torch.arange(n), ti] = 1.0
+            tc[torch.arange(n), tj] = 1.0
             batch = {
                 "source_bbox": torch.tensor(sb, device=device),
                 "target_bbox": torch.tensor(tb, device=device),
                 "source_class": sc, "target_class": tc,
             }
-            probs = torch.sigmoid(model(batch)).squeeze(-1).cpu().numpy()
+            member_probs = [torch.sigmoid(m(batch)).squeeze(-1).cpu().numpy()
+                            for m in models]
+            probs = np.mean(member_probs, axis=0)
             for k, (i, j) in enumerate(chunk):
                 p = float(probs[k])
                 if p > threshold:
-                    edges.append({"source": int(small[i].id),
-                                  "target": int(small[j].id),
+                    edges.append({"source": int(nodes[i].id),
+                                  "target": int(nodes[j].id),
                                   "confidence": round(p, 4)})
     edges.sort(key=lambda e: -e["confidence"])
-    return {"edges": edges, "nodeCount": len(nodes), "smallCount": len(small),
-            "pairCount": len(pairs), "edgeCount": len(edges), "threshold": threshold}
+    # smallCount kept for API compatibility (frontend displays it); now = all nodes
+    return {"edges": edges, "nodeCount": len(nodes), "smallCount": len(nodes),
+            "pairCount": len(pairs), "edgeCount": len(edges), "threshold": threshold,
+            "ruleEdgeCount": rule_count}
 
 
 if __name__ == "__main__":
-    import json
     doc_dir = sys.argv[1]
     mung = os.path.join(doc_dir, "mung.xml")
     img = None
     for ext in ("png", "jpg", "jpeg"):
         p = os.path.join(doc_dir, f"image.{ext}")
         if os.path.exists(p):
-            img = p; break
-    res = predict_edges(mung, img)
-    # quick GT comparison
+            img = p
+            break
+    res = predict_edges(mung, img, threshold=float(sys.argv[2]) if len(sys.argv) > 2 else None)
     from mung.io import read_nodes_from_file
     nodes = {n.id: n for n in read_nodes_from_file(mung)}
     gt = set()
@@ -179,8 +210,10 @@ if __name__ == "__main__":
             if o in nodes:
                 gt.add(tuple(sorted((n.id, o))))
     pred = set(tuple(sorted((e["source"], e["target"]))) for e in res["edges"])
-    tp = len(pred & gt)
-    print(json.dumps({k: v for k, v in res.items() if k != "edges"}, indent=2))
-    print(f"predicted_edges={len(pred)} gt_edges(small-small subset N/A here, all)={len(gt)} "
-          f"overlap_with_any_gt={tp}")
-    print("sample edges:", res["edges"][:5])
+    tp = len(gt & pred)
+    print(f"nodes={res['nodeCount']} pairs={res['pairCount']} "
+          f"pred_edges={len(pred)} gt_edges={len(gt)}")
+    if gt:
+        pr = tp / max(len(pred), 1)
+        rc = tp / len(gt)
+        print(f"vs GT: P={pr:.3f} R={rc:.3f} F1={2*pr*rc/max(pr+rc,1e-9):.3f}")

@@ -138,6 +138,9 @@ export class BboxEditingController implements IController {
 
   public onMouseDown(e: MouseEvent): void {
     if (e.button !== 0) return;
+    // Ctrl/Cmd + Shift + click is reserved for edge creation; don't start a
+    // bbox move/resize drag on that gesture.
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey) return;
 
     const node = this.getEditableSelectedNode();
     if (node === null) return;

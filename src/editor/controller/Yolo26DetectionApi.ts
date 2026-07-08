@@ -141,10 +141,21 @@ export const DETECTION_MODEL_OPTIONS: DetectionModelOption[] = [
     role: "small",
     backend: "ensemble",
   },
+  {
+    key: "musvit_large_ensemble",
+    label: "5-model MuSViT ensemble (best quality, slower)",
+    role: "large",
+    backend: "ensemble",
+  },
+  {
+    key: "rfdetr_all9_musvit_inv_1536",
+    label: "MuSViT-RF-DETR inverted @1536, 9 pages",
+    role: "large",
+    backend: "rfdetr",
+  },
 ];
 
-export const DEFAULT_LARGE_DETECTION_MODEL_KEY =
-  "rfdetr_large_9pages_large2048_ep120";
+export const DEFAULT_LARGE_DETECTION_MODEL_KEY = "musvit_large_ensemble";
 
 export const DEFAULT_SMALL_DETECTION_MODEL_KEY = "yolo26l_tiled_9pages_ep200";
 

@@ -18,6 +18,7 @@ export function DocumentEditorPage() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>("");
 
   useEffect(() => {
     if (connection.userToken === null) {
@@ -34,6 +35,14 @@ export function DocumentEditorPage() {
 
       try {
         const api = new SimpleBackendApi(connection);
+
+        // who am I (for collaboration presence)
+        try {
+          const who = await api.whoami();
+          setUserName(who.name);
+        } catch {
+          /* non-fatal: presence just shows a generic name */
+        }
 
         // download MuNG and parse into nodes
         const mungXmlString = await api.getDocumentMung(documentName);
@@ -85,6 +94,16 @@ export function DocumentEditorPage() {
           onSave={onSave}
           onClose={onClose}
           fileName={documentName}
+          collabConfig={
+            connection.userToken !== null
+              ? {
+                  backendUrl: connection.backendUrl,
+                  token: connection.userToken,
+                  documentName,
+                  userName: userName || "Anonymous",
+                }
+              : null
+          }
         />
       )}
       {error !== null && <Alert color="danger">{error}</Alert>}

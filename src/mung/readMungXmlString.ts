@@ -39,8 +39,22 @@ function readNodeFromXmlElement(element: Element): Node {
   const height = parseInt(element.querySelector("Height")?.innerHTML || "NaN");
   const maskString = element.querySelector("Mask")?.textContent || null;
 
-  const decodedMask =
-    maskString !== null ? decodeRleMaskString(maskString, width, height) : null;
+  // A single malformed mask must NOT block the whole document from loading.
+  // Some nodes get saved with an empty/degenerate RLE mask (covers 0 pixels);
+  // decode defensively and drop just that mask, keeping the node (its bbox,
+  // class and links are intact). The node is fully usable without a pixel mask.
+  let decodedMask: ImageData | null = null;
+  if (maskString !== null) {
+    try {
+      decodedMask = decodeRleMaskString(maskString, width, height);
+    } catch (e) {
+      console.warn(
+        `Ignoring invalid mask on node ` +
+          `${element.querySelector("Id")?.innerHTML ?? "?"}: ${e}`,
+      );
+      decodedMask = null;
+    }
+  }
 
   const dataItems = parseDataItems(element);
   const precedenceOutlinks = parseIntList(

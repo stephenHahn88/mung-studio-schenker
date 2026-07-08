@@ -30,6 +30,7 @@ import { HistoryStore } from "./model/HistoryStore";
 import { RecognitionRegionController } from "./controller/RecognitionRegionController";
 import { BboxEditingController } from "./controller/BboxEditingController";
 import { QuickRectNodeController } from "./controller/tools/QuickRectNodeController";
+import { CollabController, CollabConfig } from "./controller/CollabController";
 
 /**
  * All fields present in the editor component's global context
@@ -64,6 +65,7 @@ export interface EditorContextState {
   readonly mainMenuController: MainMenuController;
   readonly recognitionRegionController: RecognitionRegionController;
   readonly nodeNavigationController: NodeNavigationController;
+  readonly collabController: CollabController | null;
 }
 
 /**
@@ -73,6 +75,7 @@ export function useConstructContextServices(
   initialNodes: readonly Node[],
   initialMungFileMetadata: MungFileMetadata,
   backgroundImageUrl: string | null,
+  collabConfig: CollabConfig | null = null,
 ): EditorContextState {
   const jotaiStore: JotaiStore = useMemo(() => getDefaultStore(), []);
 
@@ -287,6 +290,19 @@ export function useConstructContextServices(
     [],
   );
 
+  const collabController = useMemo(
+    () =>
+      collabConfig
+        ? new CollabController(
+            jotaiStore,
+            notationGraphStore,
+            selectionStore,
+            collabConfig,
+          )
+        : null,
+    [],
+  );
+
   return {
     backgroundImageStore,
     notationGraphStore,
@@ -317,6 +333,7 @@ export function useConstructContextServices(
     mainMenuController,
     recognitionRegionController,
     nodeNavigationController,
+    collabController,
   };
 }
 

@@ -77,6 +77,7 @@ export class QuickRectNodeController implements IController {
 
   public onMouseDown(e: MouseEvent): void {
     if (e.button !== 0) return; // LMB only
+    if (e.shiftKey) return; // Ctrl/Cmd + Shift is reserved for edge creation
     if (!this.isQuickModifier(e)) return; // only the Ctrl/Cmd + drag gesture
 
     const point = this.getScenePoint(e);
