@@ -28,6 +28,7 @@ import { StaffGeometryStore } from "./model/StaffGeometryStore";
 import { NodeNavigationController } from "./controller/NodeNavigationController";
 import { HistoryStore } from "./model/HistoryStore";
 import { RecognitionRegionController } from "./controller/RecognitionRegionController";
+import { BboxEditingController } from "./controller/BboxEditingController";
 
 /**
  * All fields present in the editor component's global context
@@ -53,6 +54,7 @@ export interface EditorContextState {
   readonly zoomController: ZoomController;
   readonly mousePointerController: MousePointerController;
   readonly highlightController: HighlightController;
+  readonly bboxEditingController: BboxEditingController;
   readonly selectionController: SelectionController;
   readonly nodeEditingController: NodeEditingController;
   readonly polygonToolsController: PolygonToolsController;
@@ -180,6 +182,18 @@ export function useConstructContextServices(
     [],
   );
 
+  const bboxEditingController = useMemo(
+    () =>
+      new BboxEditingController(
+        jotaiStore,
+        notationGraphStore,
+        selectionStore,
+        toolbeltController,
+        zoomController,
+      ),
+    [],
+  );
+
   const nodeEditingController = useMemo(
     () =>
       new NodeEditingController(
@@ -281,6 +295,7 @@ export function useConstructContextServices(
     zoomController,
     mousePointerController,
     highlightController,
+    bboxEditingController,
     selectionController,
     nodeEditingController,
     polygonToolsController,
