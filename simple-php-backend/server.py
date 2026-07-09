@@ -132,6 +132,8 @@ class Handler(BaseHTTPRequestHandler):
             self._action_assemble_edges(params)
         elif action == "collab-stream":
             self._action_collab_stream(params)
+        elif action == "version":
+            self._action_version()
         elif action is None and FRONTEND_PATH is not None:
             self._serve_static(parsed.path)
         else:
@@ -184,6 +186,23 @@ class Handler(BaseHTTPRequestHandler):
         self._cors()
         self.end_headers()
         self.wfile.write(json.dumps({"name": user["name"]}, indent=2).encode())
+
+    def _action_version(self):
+        """Deployed code version, for auto-deploy verification (unauthenticated:
+        exposes only the public repo's commit sha and the frontend build time)."""
+        import subprocess
+        try:
+            sha = subprocess.run(
+                ["git", "rev-parse", "--short", "HEAD"], cwd=PROJECT_ROOT,
+                capture_output=True, text=True, timeout=5).stdout.strip() or "unknown"
+        except Exception:
+            sha = "unknown"
+        dist_index = os.path.join(FRONTEND_PATH or "", "index.html")
+        built = None
+        if FRONTEND_PATH and os.path.isfile(dist_index):
+            built = datetime.datetime.utcfromtimestamp(
+                os.path.getmtime(dist_index)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        self._send_json({"commit": sha, "frontendBuiltAt": built})
 
     # ==================== real-time collaboration ====================
     def _auth_query_or_header(self, params):

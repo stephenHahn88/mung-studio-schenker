@@ -37,7 +37,7 @@ PORT=8080
 _resubmit() {
   echo "$(date) near time limit -> resubmitting service job"
   sbatch "$ROOT/run_mung_service.sbatch" || echo "WARN: resubmit failed"
-  kill "${BACKEND_PID:-}" "${TUNNEL_PID:-}" 2>/dev/null || true
+  kill "${BACKEND_PID:-}" "${TUNNEL_PID:-}" "${DEPLOY_LOOP_PID:-}" 2>/dev/null || true
   exit 0
 }
 trap _resubmit USR1
@@ -52,6 +52,7 @@ start_backend() {
     --documents "$ROOT/documents" --frontend "$ROOT/dist" \
     >> logs/web-backend.log 2>&1 &
   BACKEND_PID=$!
+  echo "$BACKEND_PID" > logs/backend.pid   # auto-deploy uses this to restart us
   echo "$(date) backend started (pid $BACKEND_PID)"
 }
 
@@ -70,6 +71,17 @@ start_tunnel() {
 
 start_backend
 start_tunnel
+
+# --- auto-deploy: poll GitHub (upstream/main) and update the running service ---
+# The script is re-read from disk each cycle, so it self-updates via git pull.
+(
+  while true; do
+    sleep 60
+    bash "$ROOT/scripts/auto_deploy_once.sh" >> "$ROOT/logs/auto-deploy.log" 2>&1
+  done
+) &
+DEPLOY_LOOP_PID=$!
+echo "$(date) auto-deploy loop started (pid $DEPLOY_LOOP_PID, watching upstream/main)"
 
 # --- off-site backup of documents/ to Google Drive ---
 # Handled by a DAILY cron job (see `crontab -l`: "mung-studio daily backup"), which is
