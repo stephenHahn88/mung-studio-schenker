@@ -69,7 +69,11 @@ USERS = load_users()
 
 
 def is_valid_name(name):
-    return bool(re.match(r'^[a-zA-Z0-9\s_-]+$', name))
+    """Document names may contain dots (e.g. figure numbers like "3.19b") but
+    must stay path-safe: no "..", no leading dot, no separators."""
+    if ".." in name or name.startswith("."):
+        return False
+    return bool(re.match(r'^[a-zA-Z0-9\s._-]+$', name))
 
 
 def log_to_file(message, path):
