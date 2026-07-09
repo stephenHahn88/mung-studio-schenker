@@ -44,7 +44,7 @@ function randomId(): string {
  *   - broadcasts the local cursor + selection, and exposes peers as an atom.
  *
  * Entirely optional: if no CollabController is constructed, the editor behaves
- * exactly as before.
+ * exactly as before. Reconnects automatically (1.5s backoff) if the stream drops.
  */
 export class CollabController {
   private readonly clientId = randomId();
