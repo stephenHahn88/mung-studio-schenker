@@ -74,29 +74,46 @@ def rule_edges(nodes):
         for n in pair:
             edges.add(tuple(sorted((s.id, n.id))))
 
-    # stem-NH: touching notehead(s), else nearest within 25
+    # stem-NH v2 (S4, dev-validated 0.917->0.929): touching + endpoint
+    # affinity (NH near a stem END) + notehead exclusivity (each NH keeps
+    # only its nearest stem). stem_nh map keeps ALL touching NHs for the
+    # flag/beam chains (their semantics need the full attachment set).
     stem_nh = defaultdict(list)
+    att = []
     for st in stems:
-        touch = [n for n in nhs if _gap(st, n) <= 5]
-        if not touch:
-            near = sorted(nhs, key=lambda n: _gap(st, n))[:1]
-            touch = [n for n in near if _gap(st, n) <= 25]
-        stem_nh[st.id] = touch
-        for n in touch:
-            edges.add(tuple(sorted((st.id, n.id))))
+        touch = [(n, _gap(st, n)) for n in nhs if _gap(st, n) <= 5]
+        if not touch and nhs:
+            n = min(nhs, key=lambda n: _gap(st, n))
+            if _gap(st, n) <= 25:
+                touch = [(n, _gap(st, n))]
+        stem_nh[st.id] = [n for n, _ in touch]
+        h = max(st.bottom - st.top, 1)
+        for n, g in touch:
+            rel = (_cy(n) - st.top) / h
+            if rel <= 0.4 or rel >= 0.6:
+                att.append((st, n, g))
+    best = {}
+    for st, n, g in att:
+        if n.id not in best or g < best[n.id][2]:
+            best[n.id] = (st, n, g)
+    for st, n, _ in best.values():
+        edges.add(tuple(sorted((st.id, n.id))))
 
-    # leger-NH: horizontal overlap + small vertical gap, else nearest
+    # leger-NH v2 (L2, dev-validated 0.839->0.866): the single vertically
+    # nearest overlapping notehead only; else nearest within 30
     for lg in (n for n in nodes if n.class_name in LEGER):
-        found = False
+        cands = []
         for n in nhs:
             xov = min(lg.right, n.right) - max(lg.left, n.left)
             if xov < 0.3 * (n.right - n.left):
                 continue
             vgap = max(0, max(lg.top, n.top) - min(lg.bottom, n.bottom))
             if vgap <= 14:
-                edges.add(tuple(sorted((lg.id, n.id))))
-                found = True
-        if not found and nhs:
+                cands.append((n, vgap))
+        if cands:
+            n = min(cands, key=lambda t: t[1])[0]
+            edges.add(tuple(sorted((lg.id, n.id))))
+        elif nhs:
             n = min(nhs, key=lambda n: _gap(lg, n))
             if _gap(lg, n) <= 30:
                 edges.add(tuple(sorted((lg.id, n.id))))
