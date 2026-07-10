@@ -139,12 +139,18 @@ def rule_edges(nodes):
         for n in targets:
             edges.add(tuple(sorted((fl.id, n.id))))
 
-    # beam-NH: via touching stems, plus directly-touching noteheads
+    # beam-NH v2 (B2, dev-validated 0.851->0.869): each stem carries only its
+    # NEAREST notehead through the beam chain (the all-touching map over-links)
+    beam_snh = {}
+    for st in stems:
+        touch = sorted(((n, _gap(st, n)) for n in nhs if _gap(st, n) <= 5),
+                       key=lambda t: t[1])[:1]
+        beam_snh[st.id] = [n for n, _ in touch]
     for bm in (n for n in nodes if n.class_name in BEAM):
         linked = set()
         for st in stems:
             if _gap(bm, st) <= 8:
-                linked.update(n.id for n in stem_nh[st.id])
+                linked.update(n.id for n in beam_snh[st.id])
         for n in nhs:
             if _gap(bm, n) <= 4:
                 linked.add(n.id)
