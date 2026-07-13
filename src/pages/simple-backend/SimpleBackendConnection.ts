@@ -31,7 +31,7 @@ export const userTokenAtom: WritableAtom<string | null, [string | null], void> =
 export const simpleBackendConnectionAtom: Atom<SimpleBackendConnection> = atom(
   (get) => {
     const url = resolveBackendUrl(
-      process.env["SIMPLE_PHP_BACKEND_URL"] ?? "AUTO",
+      process.env["SIMPLE_PHP_BACKEND_URL"] ?? "SAME_ORIGIN",
     );
     if (url === undefined) {
       throw new Error("Simple PHP Backend URL is not specified in env vars.");

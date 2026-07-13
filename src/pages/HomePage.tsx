@@ -17,7 +17,7 @@ import { JSX } from "react";
 const VERSION = packageJson.version;
 
 const HAS_SIMPLE_PHP_BACKEND =
-  process.env["SIMPLE_PHP_BACKEND_URL"] !== undefined;
+  (process.env["SIMPLE_PHP_BACKEND_URL"] ?? "SAME_ORIGIN") !== "";
 
 const DATASET_ERRATA_URL = process.env["DATASET_ERRATA_URL"] || null;
 

@@ -244,7 +244,7 @@ export class Yolo26DetectionApi {
     const url = resolveBackendUrl(
       process.env["YOLO26_BACKEND_URL"] ||
         process.env["SIMPLE_PHP_BACKEND_URL"] ||
-        "AUTO",
+        "SAME_ORIGIN",
     );
     if (url === undefined) {
       throw new Error("YOLO26 backend URL is not specified.");
