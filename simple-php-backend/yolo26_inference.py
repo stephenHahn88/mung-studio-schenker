@@ -37,19 +37,12 @@ FIXED100_MODELS_DIR = Path(
         MODELS_DIR,
     )
 ).expanduser()
-YOLO26_ALL9_FIXED_EP100_LARGE_MODEL = Path(
-    os.environ.get(
-        "YOLO26_ALL9_FIXED_EP100_LARGE_MODEL",
-        FIXED100_MODELS_DIR / "yolo26l_all9_fixed_ep100_large_ep100.pt",
-    )
-)
 YOLO26_ALL9_FIXED_EP100_TILED_MODEL = Path(
     os.environ.get(
         "YOLO26_ALL9_FIXED_EP100_TILED_MODEL",
         FIXED100_MODELS_DIR / "yolo26l_all9_fixed_ep100_tiled_ep100.pt",
     )
 )
-YOLO26_ALL9_FIXED_EP100_LARGE_KEY = "yolo26l_all9_fixed_ep100_large"
 YOLO26_ALL9_FIXED_EP100_TILED_KEY = "yolo26l_all9_fixed_ep100_tiled"
 
 LOCAL_YOLO26_LARGE_9PAGES_EP300_MODEL = (
@@ -254,7 +247,7 @@ RFDETR_SMALL_RESOLUTION = int(os.environ.get("RFDETR_SMALL_RESOLUTION", "1216"))
 
 DEFAULT_LARGE_MODEL_KEY = os.environ.get(
     "SYMBOL_DETECTOR_DEFAULT_LARGE_MODEL",
-    YOLO26_ALL9_FIXED_EP100_LARGE_KEY,
+    MUSVIT_LARGE_ENSEMBLE_KEY,
 )
 DEFAULT_SMALL_MODEL_KEY = os.environ.get(
     "SYMBOL_DETECTOR_DEFAULT_SMALL_MODEL",
@@ -662,13 +655,6 @@ class DetectionModelSpec:
 
 
 DETECTION_MODEL_SPECS = [
-    DetectionModelSpec(
-        key=YOLO26_ALL9_FIXED_EP100_LARGE_KEY,
-        label="YOLO26L all-9 fixed epoch 100",
-        role="large",
-        backend="yolo",
-        path=YOLO26_ALL9_FIXED_EP100_LARGE_MODEL,
-    ),
     DetectionModelSpec(
         key=YOLO26_ALL9_FIXED_EP100_TILED_KEY,
         label="YOLO26L all-9 fixed epoch 100 (center-owned tiles)",

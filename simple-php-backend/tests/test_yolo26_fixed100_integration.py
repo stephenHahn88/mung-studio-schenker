@@ -53,37 +53,32 @@ class FakeCenterOwnedAdapter:
 
 class Fixed100DetectorIntegrationTest(unittest.TestCase):
     def test_registry_defaults_and_paths(self) -> None:
-        large = yolo26.DETECTION_MODEL_SPECS_BY_KEY[
-            yolo26.YOLO26_ALL9_FIXED_EP100_LARGE_KEY
-        ]
         tiled = yolo26.DETECTION_MODEL_SPECS_BY_KEY[
             yolo26.YOLO26_ALL9_FIXED_EP100_TILED_KEY
         ]
 
         self.assertEqual(
             yolo26.DEFAULT_LARGE_MODEL_KEY,
-            yolo26.YOLO26_ALL9_FIXED_EP100_LARGE_KEY,
+            yolo26.MUSVIT_LARGE_ENSEMBLE_KEY,
         )
         self.assertEqual(
             yolo26.DEFAULT_SMALL_MODEL_KEY,
             yolo26.YOLO26_ALL9_FIXED_EP100_TILED_KEY,
         )
-        self.assertEqual(large.role, "large")
+        self.assertNotIn(
+            "yolo26l_all9_fixed_ep100_large",
+            yolo26.DETECTION_MODEL_SPECS_BY_KEY,
+        )
         self.assertEqual(tiled.role, "small")
         self.assertEqual(
             tiled.tile_ownership,
             yolo26.TILE_OWNERSHIP_CENTER_VORONOI,
         )
         self.assertEqual(
-            large.path.name,
-            "yolo26l_all9_fixed_ep100_large_ep100.pt",
-        )
-        self.assertEqual(
             tiled.path.name,
             "yolo26l_all9_fixed_ep100_tiled_ep100.pt",
         )
         self.assertEqual(yolo26.FIXED100_MODELS_DIR, yolo26.MODELS_DIR)
-        self.assertEqual(large.path.parent, yolo26.MODELS_DIR)
         self.assertEqual(tiled.path.parent, yolo26.MODELS_DIR)
 
     def test_voronoi_boundary_has_exactly_one_owner(self) -> None:
@@ -103,7 +98,7 @@ class Fixed100DetectorIntegrationTest(unittest.TestCase):
         detector.use_allowed_classes = False
         detector.get_model = lambda model_key, role: adapter
         options = yolo26.Yolo26Options(
-            large_model_key=yolo26.YOLO26_ALL9_FIXED_EP100_LARGE_KEY,
+            large_model_key=yolo26.MUSVIT_LARGE_ENSEMBLE_KEY,
             small_model_key=yolo26.YOLO26_ALL9_FIXED_EP100_TILED_KEY,
             run_large=False,
             run_small=True,

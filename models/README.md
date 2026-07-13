@@ -11,7 +11,6 @@ extraction, this directory should contain the files and folders listed below.
 
 YOLO model weights:
 
-- yolo26l_all9_fixed_ep100_large_ep100.pt
 - yolo26l_all9_fixed_ep100_tiled_ep100.pt
 - yolo26l_large_fullwidth_7pages_pre.pt
 - yolo26l_tiled_7pages_pre.pt
@@ -48,12 +47,12 @@ The backend verifies the production marker, the no-rules inference contract,
 and every declared artifact size and SHA-256 before loading this bundle. The
 directory can be overridden with `EDGE_LEARNED_BUNDLE_DIR`.
 
-The two fixed-epoch-100 files are the default detector pair. They must be
-present before enabling detection; the backend lists missing models but does
-not silently fall back. Override their directory with
-`YOLO26_ALL9_FIXED_EP100_MODELS_DIR`, or override each file with
-`YOLO26_ALL9_FIXED_EP100_LARGE_MODEL` and
-`YOLO26_ALL9_FIXED_EP100_TILED_MODEL`.
+The fixed-epoch-100 tiled file is the default small-symbol detector. It must be
+present before enabling small-symbol detection; the backend lists a missing
+model but does not silently fall back. Override its directory with
+`YOLO26_ALL9_FIXED_EP100_MODELS_DIR`, or override the file with
+`YOLO26_ALL9_FIXED_EP100_TILED_MODEL`. Large-symbol detection defaults to the
+5-model MuSViT ensemble registered in `simple-php-backend/yolo26_inference.py`.
 
 The backend checks local paths first and then falls back to the server paths
 registered in `simple-php-backend/yolo26_inference.py`:

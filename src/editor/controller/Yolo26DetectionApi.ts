@@ -65,12 +65,6 @@ export interface DetectionModelOption {
 
 export const DETECTION_MODEL_OPTIONS: DetectionModelOption[] = [
   {
-    key: "yolo26l_all9_fixed_ep100_large",
-    label: "YOLO26L all-9 fixed epoch 100",
-    role: "large",
-    backend: "yolo",
-  },
-  {
     key: "yolo26l_all9_fixed_ep100_tiled",
     label: "YOLO26L all-9 fixed epoch 100 (center-owned tiles)",
     role: "small",
@@ -168,8 +162,7 @@ export const DETECTION_MODEL_OPTIONS: DetectionModelOption[] = [
   },
 ];
 
-export const DEFAULT_LARGE_DETECTION_MODEL_KEY =
-  "yolo26l_all9_fixed_ep100_large";
+export const DEFAULT_LARGE_DETECTION_MODEL_KEY = "musvit_large_ensemble";
 
 export const DEFAULT_SMALL_DETECTION_MODEL_KEY =
   "yolo26l_all9_fixed_ep100_tiled";
