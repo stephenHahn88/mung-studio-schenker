@@ -31,6 +31,27 @@ MODELS_DIR = MODELS_DIR.resolve()
 DEFAULT_LARGE_MODEL = MODELS_DIR / "yolo26l_large_fullwidth_7pages_pre.pt"
 DEFAULT_TILED_MODEL = MODELS_DIR / "yolo26l_tiled_7pages_pre.pt"
 
+FIXED100_MODELS_DIR = Path(
+    os.environ.get(
+        "YOLO26_ALL9_FIXED_EP100_MODELS_DIR",
+        MODELS_DIR,
+    )
+).expanduser()
+YOLO26_ALL9_FIXED_EP100_LARGE_MODEL = Path(
+    os.environ.get(
+        "YOLO26_ALL9_FIXED_EP100_LARGE_MODEL",
+        FIXED100_MODELS_DIR / "yolo26l_all9_fixed_ep100_large_ep100.pt",
+    )
+)
+YOLO26_ALL9_FIXED_EP100_TILED_MODEL = Path(
+    os.environ.get(
+        "YOLO26_ALL9_FIXED_EP100_TILED_MODEL",
+        FIXED100_MODELS_DIR / "yolo26l_all9_fixed_ep100_tiled_ep100.pt",
+    )
+)
+YOLO26_ALL9_FIXED_EP100_LARGE_KEY = "yolo26l_all9_fixed_ep100_large"
+YOLO26_ALL9_FIXED_EP100_TILED_KEY = "yolo26l_all9_fixed_ep100_tiled"
+
 LOCAL_YOLO26_LARGE_9PAGES_EP300_MODEL = (
     MODELS_DIR / "yolo26l_large_fullwidth_9pages_pre_ep300.pt"
 )
@@ -233,11 +254,11 @@ RFDETR_SMALL_RESOLUTION = int(os.environ.get("RFDETR_SMALL_RESOLUTION", "1216"))
 
 DEFAULT_LARGE_MODEL_KEY = os.environ.get(
     "SYMBOL_DETECTOR_DEFAULT_LARGE_MODEL",
-    MUSVIT_LARGE_ENSEMBLE_KEY,
+    YOLO26_ALL9_FIXED_EP100_LARGE_KEY,
 )
 DEFAULT_SMALL_MODEL_KEY = os.environ.get(
     "SYMBOL_DETECTOR_DEFAULT_SMALL_MODEL",
-    "yolo26l_tiled_9pages_ep200",
+    YOLO26_ALL9_FIXED_EP100_TILED_KEY,
 )
 
 LARGE_CONF = float(os.environ.get("YOLO26_LARGE_CONF", "0.4"))
@@ -251,6 +272,8 @@ TILE_CONF = float(os.environ.get("YOLO26_TILE_CONF", "0.15"))
 PATCH = int(os.environ.get("YOLO26_TILE_PATCH", "1216"))
 STEP = int(os.environ.get("YOLO26_TILE_STEP", "960"))
 MARGIN = int(os.environ.get("YOLO26_TILE_MARGIN", "128"))
+TILE_OWNERSHIP_LEGACY_MARGIN = "legacy_margin"
+TILE_OWNERSHIP_CENTER_VORONOI = "center_voronoi"
 
 SAME_CLASS_IOU = 0.3
 SAME_CLASS_AREA_RATIO = 0.5
@@ -589,6 +612,33 @@ def _tile_positions(length: int, patch: int, step: int) -> list[int]:
     return sorted(set(positions))
 
 
+def _responsibility_bounds(
+    positions: list[int], crop: int, length: int
+) -> list[tuple[float, float]]:
+    """Return the same center-Voronoi ownership intervals used in strict OOF."""
+    centers = [position + crop / 2 for position in positions]
+    bounds = []
+    for index in range(len(positions)):
+        left = 0.0 if index == 0 else (centers[index - 1] + centers[index]) / 2
+        right = (
+            float(length)
+            if index == len(positions) - 1
+            else (centers[index] + centers[index + 1]) / 2
+        )
+        bounds.append((left, right))
+    return bounds
+
+
+def _center_owned_by_interval(
+    center: float,
+    bounds: list[tuple[float, float]],
+    index: int,
+) -> bool:
+    """Use half-open boundaries so every center has exactly one tile owner."""
+    left, right = bounds[index]
+    return left <= center and (center < right or index == len(bounds) - 1)
+
+
 def _empty_prediction() -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     return np.zeros((0, 4)), np.array([]), np.array([], dtype=int)
 
@@ -608,9 +658,25 @@ class DetectionModelSpec:
     backend: str
     path: Path
     fallback_paths: tuple[Path, ...] = ()
+    tile_ownership: str | None = None
 
 
 DETECTION_MODEL_SPECS = [
+    DetectionModelSpec(
+        key=YOLO26_ALL9_FIXED_EP100_LARGE_KEY,
+        label="YOLO26L all-9 fixed epoch 100",
+        role="large",
+        backend="yolo",
+        path=YOLO26_ALL9_FIXED_EP100_LARGE_MODEL,
+    ),
+    DetectionModelSpec(
+        key=YOLO26_ALL9_FIXED_EP100_TILED_KEY,
+        label="YOLO26L all-9 fixed epoch 100 (center-owned tiles)",
+        role="small",
+        backend="yolo",
+        path=YOLO26_ALL9_FIXED_EP100_TILED_MODEL,
+        tile_ownership=TILE_OWNERSHIP_CENTER_VORONOI,
+    ),
     DetectionModelSpec(
         key="yolo26l_large_fullwidth_7pages_pre",
         label="YOLO26L, 7 pages",
@@ -766,6 +832,7 @@ def list_detection_models() -> list[dict[str, Any]]:
                 str(path)
                 for path in _candidate_model_paths(spec)
             ],
+            "tileOwnership": spec.tile_ownership,
         }
         for spec in DETECTION_MODEL_SPECS
     ]
@@ -1204,6 +1271,24 @@ class Yolo26CombinedDetector:
         width, height = canvas.size
         x_positions = _tile_positions(width, options.tile_patch, options.tile_step)
         y_positions = _tile_positions(height, options.tile_patch, options.tile_step)
+        ownership = adapter.spec.tile_ownership or TILE_OWNERSHIP_LEGACY_MARGIN
+        if ownership not in {
+            TILE_OWNERSHIP_LEGACY_MARGIN,
+            TILE_OWNERSHIP_CENTER_VORONOI,
+        }:
+            raise ValueError(
+                f"Unsupported tile ownership '{ownership}' for model '{model_key}'."
+            )
+        x_bounds = (
+            _responsibility_bounds(x_positions, options.tile_patch, width)
+            if ownership == TILE_OWNERSHIP_CENTER_VORONOI
+            else []
+        )
+        y_bounds = (
+            _responsibility_bounds(y_positions, options.tile_patch, height)
+            if ownership == TILE_OWNERSHIP_CENTER_VORONOI
+            else []
+        )
         detections: list[Detection] = []
 
         for xi, x0 in enumerate(x_positions):
@@ -1219,22 +1304,36 @@ class Yolo26CombinedDetector:
                 )
                 for box, score, cls_id in zip(boxes, scores, classes):
                     left, top, right, bottom = box
-                    if xi != 0 and left < options.tile_margin:
-                        continue
-                    if (
-                        xi != len(x_positions) - 1
-                        and right > options.tile_patch - options.tile_margin
-                    ):
-                        continue
-                    if yi != 0 and top < options.tile_margin:
-                        continue
-                    if (
-                        yi != len(y_positions) - 1
-                        and bottom > options.tile_patch - options.tile_margin
-                    ):
-                        continue
+                    global_box = [
+                        left + x0,
+                        top + y0,
+                        right + x0,
+                        bottom + y0,
+                    ]
+                    if ownership == TILE_OWNERSHIP_CENTER_VORONOI:
+                        center_x = (global_box[0] + global_box[2]) / 2
+                        center_y = (global_box[1] + global_box[3]) / 2
+                        if not _center_owned_by_interval(center_x, x_bounds, xi):
+                            continue
+                        if not _center_owned_by_interval(center_y, y_bounds, yi):
+                            continue
+                    else:
+                        if xi != 0 and left < options.tile_margin:
+                            continue
+                        if (
+                            xi != len(x_positions) - 1
+                            and right > options.tile_patch - options.tile_margin
+                        ):
+                            continue
+                        if yi != 0 and top < options.tile_margin:
+                            continue
+                        if (
+                            yi != len(y_positions) - 1
+                            and bottom > options.tile_patch - options.tile_margin
+                        ):
+                            continue
                     detection = self.to_detection(
-                        box=[left + x0, top + y0, right + x0, bottom + y0],
+                        box=global_box,
                         score=float(score),
                         cls_id=int(cls_id),
                         adapter=adapter,
@@ -1424,6 +1523,7 @@ class Yolo26CombinedDetector:
                 str(candidate_path)
                 for candidate_path in _candidate_model_paths(spec)
             ],
+            "tileOwnership": spec.tile_ownership,
         }
 
     def to_detection(

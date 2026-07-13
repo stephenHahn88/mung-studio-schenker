@@ -11,6 +11,8 @@ extraction, this directory should contain the files and folders listed below.
 
 YOLO model weights:
 
+- yolo26l_all9_fixed_ep100_large_ep100.pt
+- yolo26l_all9_fixed_ep100_tiled_ep100.pt
 - yolo26l_large_fullwidth_7pages_pre.pt
 - yolo26l_tiled_7pages_pre.pt
 - yolo26l_large_fullwidth_9pages_pre_ep300.pt
@@ -28,6 +30,30 @@ models/detr_tiled_9pages_plus50/model/
 ```
 
 These files are intentionally not tracked by git.
+
+Learned edge model bundle:
+
+```
+models/edge_all9_production/
+  COMPLETE
+  bundle.json
+  direction.joblib
+  incidence.pth
+  incidence_initialization.pth
+  proposal.pth
+  vcnn.pth
+```
+
+The backend verifies the production marker, the no-rules inference contract,
+and every declared artifact size and SHA-256 before loading this bundle. The
+directory can be overridden with `EDGE_LEARNED_BUNDLE_DIR`.
+
+The two fixed-epoch-100 files are the default detector pair. They must be
+present before enabling detection; the backend lists missing models but does
+not silently fall back. Override their directory with
+`YOLO26_ALL9_FIXED_EP100_MODELS_DIR`, or override each file with
+`YOLO26_ALL9_FIXED_EP100_LARGE_MODEL` and
+`YOLO26_ALL9_FIXED_EP100_TILED_MODEL`.
 
 The backend checks local paths first and then falls back to the server paths
 registered in `simple-php-backend/yolo26_inference.py`:

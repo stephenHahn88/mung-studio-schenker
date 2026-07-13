@@ -189,15 +189,6 @@ function buildAvailabilityMap(
   return availability;
 }
 
-function findFirstAvailableModelKey(
-  models: readonly DetectionModelMetadata[],
-  role: "large" | "small",
-): string | null {
-  return (
-    models.find((model) => model.role === role && model.available)?.key ?? null
-  );
-}
-
 export function RecognitionQuickAction() {
   const { mainMenuController, recognitionRegionController } =
     useContext(EditorContext);
@@ -260,18 +251,6 @@ export function RecognitionQuickAction() {
         }
         const availability = buildAvailabilityMap(models);
         setModelAvailability(availability);
-        const fallbackLarge = findFirstAvailableModelKey(models, "large");
-        const fallbackSmall = findFirstAvailableModelKey(models, "small");
-        setLargeModelKey((current) =>
-          availability[current] === false && fallbackLarge !== null
-            ? fallbackLarge
-            : current,
-        );
-        setSmallModelKey((current) =>
-          availability[current] === false && fallbackSmall !== null
-            ? fallbackSmall
-            : current,
-        );
       })
       .catch(() => {
         // The detection buttons still surface backend connection errors.

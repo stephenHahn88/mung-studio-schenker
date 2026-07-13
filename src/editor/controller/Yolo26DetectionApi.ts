@@ -53,6 +53,7 @@ export interface DetectionModelMetadata {
   readonly path?: string;
   readonly available?: boolean;
   readonly candidatePaths?: readonly string[];
+  readonly tileOwnership?: "legacy_margin" | "center_voronoi" | null;
 }
 
 export interface DetectionModelOption {
@@ -63,6 +64,18 @@ export interface DetectionModelOption {
 }
 
 export const DETECTION_MODEL_OPTIONS: DetectionModelOption[] = [
+  {
+    key: "yolo26l_all9_fixed_ep100_large",
+    label: "YOLO26L all-9 fixed epoch 100",
+    role: "large",
+    backend: "yolo",
+  },
+  {
+    key: "yolo26l_all9_fixed_ep100_tiled",
+    label: "YOLO26L all-9 fixed epoch 100 (center-owned tiles)",
+    role: "small",
+    backend: "yolo",
+  },
   {
     key: "yolo26l_large_fullwidth_7pages_pre",
     label: "YOLO26L, 7 pages",
@@ -155,9 +168,11 @@ export const DETECTION_MODEL_OPTIONS: DetectionModelOption[] = [
   },
 ];
 
-export const DEFAULT_LARGE_DETECTION_MODEL_KEY = "musvit_large_ensemble";
+export const DEFAULT_LARGE_DETECTION_MODEL_KEY =
+  "yolo26l_all9_fixed_ep100_large";
 
-export const DEFAULT_SMALL_DETECTION_MODEL_KEY = "yolo26l_tiled_9pages_ep200";
+export const DEFAULT_SMALL_DETECTION_MODEL_KEY =
+  "yolo26l_all9_fixed_ep100_tiled";
 
 export interface Yolo26DetectionOptions {
   readonly largeConf: number;
@@ -295,9 +310,9 @@ export class Yolo26DetectionApi {
   }
 
   /**
-   * Predict syntax edges among the SMALL symbols of a saved document, using the
-   * server-side small-symbol edge model. Returns node-id pairs to link.
-   * Note: predicts on the document's last-saved mung.xml.
+   * Predict directed syntax edges among all symbols of a saved document, using
+   * the server-side learned relation model. Returns node-id pairs to link.
+   * Note: inference only reads the document's last-saved mung.xml.
    */
   public async assembleEdges(
     documentName: string,
