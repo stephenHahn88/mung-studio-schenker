@@ -286,6 +286,9 @@ export class MainMenuController implements IController {
       this.setYolo26Status(
         `Added ${added} predicted edge(s) from ${result.edges.length} candidates` +
           (threshold !== undefined ? ` (threshold ${threshold})` : "") +
+          ((result.skippedInvalidNodeCount ?? 0) > 0
+            ? `; skipped ${result.skippedInvalidNodeCount} unclassified symbol(s)`
+            : "") +
           ".",
       );
     } catch (err) {

@@ -297,6 +297,8 @@ export class Yolo26DetectionApi {
     edgeCount?: number;
     smallCount?: number;
     pairCount?: number;
+    skippedInvalidNodeCount?: number;
+    skippedInvalidNodeIds?: number[];
   }> {
     let url =
       this.buildUrl("assemble-edges") +

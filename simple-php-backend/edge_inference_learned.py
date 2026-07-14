@@ -641,6 +641,26 @@ def _direct_edges(
     return out
 
 
+def _partition_classified_nodes(nodes: list) -> tuple[list, list[int]]:
+    """Return the inference-safe node view without changing the MuNG objects.
+
+    ``mung.io`` represents an empty ``<ClassName/>`` as ``None``.  The learned
+    models require a semantic class, so an unclassified node cannot be scored
+    safely.  Exclude only those malformed nodes from this inference request and
+    report their IDs to the caller; non-empty unseen classes remain eligible and
+    continue through the normal ``otherText`` fallback.
+    """
+    classified = []
+    skipped_ids: list[int] = []
+    for node in nodes:
+        class_name = getattr(node, "class_name", None)
+        if isinstance(class_name, str) and class_name.strip():
+            classified.append(node)
+        else:
+            skipped_ids.append(int(node.id))
+    return classified, skipped_ids
+
+
 def _predict_page(
     state: dict[str, Any],
     name: str,
@@ -655,12 +675,20 @@ def _predict_page(
         adjacency_threshold = float(threshold)
         if not math.isfinite(adjacency_threshold) or not 0.0 < adjacency_threshold <= 1.0:
             raise ValueError("edge threshold must be in (0,1]")
+    input_node_count = len(nodes)
+    nodes, skipped_invalid_node_ids = _partition_classified_nodes(nodes)
     all_pairs = len(nodes) * (len(nodes) - 1) // 2
+    node_diagnostics = {
+        "nodeCount": input_node_count,
+        "eligibleNodeCount": len(nodes),
+        "smallCount": len(nodes),
+        "skippedInvalidNodeCount": len(skipped_invalid_node_ids),
+        "skippedInvalidNodeIds": skipped_invalid_node_ids,
+    }
     if len(nodes) < 2:
         return {
             "edges": [],
-            "nodeCount": len(nodes),
-            "smallCount": len(nodes),
+            **node_diagnostics,
             "pairCount": all_pairs,
             "proposalCount": 0,
             "edgeCount": 0,
@@ -703,8 +731,7 @@ def _predict_page(
         )
     return {
         "edges": directed_edges,
-        "nodeCount": len(nodes),
-        "smallCount": len(nodes),
+        **node_diagnostics,
         "pairCount": all_pairs,
         "proposalCount": len(candidate_edges),
         "edgeCount": len(directed_edges),
