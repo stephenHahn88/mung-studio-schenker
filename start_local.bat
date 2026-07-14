@@ -5,11 +5,11 @@ set BACKEND_PORT=8080
 set FRONTEND_PORT=1234
 set DOCUMENTS_PATH=%cd%\documents
 
-if not exist models\yolo26l_large_fullwidth_7pages_pre.pt if not exist models\yolo26l_large_fullwidth_9pages_pre_ep300.pt if not exist models\detr_large_9pages_plus50\model\model.safetensors (
+if not exist models\detr_large_9pages_plus50\model\model.safetensors (
   echo No large-symbol detector model was found. See models\README.md.
 )
 
-if not exist models\yolo26l_tiled_7pages_pre.pt if not exist models\yolo26l_tiled_9pages_pre_ep300.pt if not exist models\detr_tiled_9pages_plus50\model\model.safetensors (
+if not exist models\yolo26l_all9_fixed_ep100_tiled_ep100.pt if not exist models\yolo26l_tiled_9pages_pre_ep200.pt if not exist models\detr_tiled_9pages_plus50\model\model.safetensors (
   echo No small-symbol detector model was found. See models\README.md.
 )
 

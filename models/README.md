@@ -12,10 +12,6 @@ extraction, this directory should contain the files and folders listed below.
 YOLO model weights:
 
 - yolo26l_all9_fixed_ep100_tiled_ep100.pt
-- yolo26l_large_fullwidth_7pages_pre.pt
-- yolo26l_tiled_7pages_pre.pt
-- yolo26l_large_fullwidth_9pages_pre_ep300.pt
-- yolo26l_tiled_9pages_pre_ep300.pt
 - yolo26l_tiled_9pages_pre_ep200.pt
 
 Place local DETR model directories in this shape:
@@ -54,12 +50,18 @@ model but does not silently fall back. Override its directory with
 `YOLO26_ALL9_FIXED_EP100_TILED_MODEL`. Large-symbol detection defaults to the
 5-model MuSViT ensemble registered in `simple-php-backend/yolo26_inference.py`.
 
-The backend checks local paths first and then falls back to the server paths
-registered in `simple-php-backend/yolo26_inference.py`:
+The epoch-200 tiled file backs two selectable small-symbol recipes: the legacy
+margin-ownership option (`yolo26l_tiled_9pages_ep200`) and the optional
+center/Voronoi-ownership option
+(`yolo26l_tiled_9pages_ep200_center_voronoi`). They share the same learned
+weights; only the tile-ownership/stitching method differs. The center/Voronoi
+recipe is available for explicit selection and is not the default.
 
-- YOLO26L, 7 pages
-- YOLO26L, 9 pages, 300 epochs
-- YOLO26L, 9 pages, 200 epochs
+For models with registered server paths, the backend checks local paths first
+and then falls back to the paths in
+`simple-php-backend/yolo26_inference.py`:
+
+- YOLO26L, 9 pages, 200 epochs (shared by the legacy and center/Voronoi recipes)
 - DETR, 9 pages, 90 epochs
 - DETR box-focused, 9 pages, 200 epochs
 - DETR copy-paste, 9 pages, 50 epochs

@@ -153,10 +153,8 @@ Windows:
 After extraction, these paths should exist:
 
 ```text
-models/yolo26l_large_fullwidth_7pages_pre.pt
-models/yolo26l_tiled_7pages_pre.pt
-models/yolo26l_large_fullwidth_9pages_pre_ep300.pt
-models/yolo26l_tiled_9pages_pre_ep300.pt
+models/yolo26l_all9_fixed_ep100_tiled_ep100.pt
+models/yolo26l_tiled_9pages_pre_ep200.pt
 models/detr_large_9pages_plus50/model/model.safetensors
 models/detr_tiled_9pages_plus50/model/model.safetensors
 ```
@@ -176,11 +174,15 @@ shasum -a 256 mung-studio-symbol-detector-models.zip
 Supported YOLO model files:
 
 ```text
-models/yolo26l_large_fullwidth_7pages_pre.pt
-models/yolo26l_tiled_7pages_pre.pt
-models/yolo26l_large_fullwidth_9pages_pre_ep300.pt
-models/yolo26l_tiled_9pages_pre_ep300.pt
+models/yolo26l_all9_fixed_ep100_tiled_ep100.pt
+models/yolo26l_tiled_9pages_pre_ep200.pt
 ```
+
+The epoch-200 tiled file is exposed as two selectable small-symbol recipes.
+`yolo26l_tiled_9pages_ep200` uses legacy margin ownership, while
+`yolo26l_tiled_9pages_ep200_center_voronoi` uses center/Voronoi ownership.
+Both recipes use the same learned weights; only the tile-ownership/stitching
+method differs. The center/Voronoi recipe is optional and is not the default.
 
 Supported DETR model directories:
 
@@ -206,10 +208,9 @@ If model files live outside `models/`, set environment variables before
 starting the backend:
 
 ```bash
-export YOLO26_LARGE_MODEL=/path/to/yolo26l_large_fullwidth_7pages_pre.pt
-export YOLO26_TILED_MODEL=/path/to/yolo26l_tiled_7pages_pre.pt
-export YOLO26_LARGE_9PAGES_EP300_MODEL=/path/to/yolo26l_large_fullwidth_9pages_pre_ep300.pt
-export YOLO26_TILED_9PAGES_EP300_MODEL=/path/to/yolo26l_tiled_9pages_pre_ep300.pt
+export YOLO26_ALL9_FIXED_EP100_MODELS_DIR=/path/to/models
+export YOLO26_ALL9_FIXED_EP100_TILED_MODEL=/path/to/yolo26l_all9_fixed_ep100_tiled_ep100.pt
+export YOLO26_TILED_9PAGES_EP200_MODEL=/path/to/yolo26l_tiled_9pages_pre_ep200.pt
 export DETR_LARGE_9PAGES_PLUS50_MODEL=/path/to/detr_large_9pages_plus50/model
 export DETR_TILED_9PAGES_PLUS50_MODEL=/path/to/detr_tiled_9pages_plus50/model
 ```
@@ -564,7 +565,8 @@ The backend cannot find that model file or directory.
 Check `models/README.md` and confirm the path exists. For example:
 
 ```bash
-ls models/yolo26l_large_fullwidth_9pages_pre_ep300.pt
+ls models/yolo26l_all9_fixed_ep100_tiled_ep100.pt
+ls models/yolo26l_tiled_9pages_pre_ep200.pt
 ls models/detr_large_9pages_plus50/model/model.safetensors
 ```
 

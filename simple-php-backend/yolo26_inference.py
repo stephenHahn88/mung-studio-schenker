@@ -28,9 +28,6 @@ if not MODELS_DIR.is_absolute():
     MODELS_DIR = PROJECT_ROOT / MODELS_DIR
 MODELS_DIR = MODELS_DIR.resolve()
 
-DEFAULT_LARGE_MODEL = MODELS_DIR / "yolo26l_large_fullwidth_7pages_pre.pt"
-DEFAULT_TILED_MODEL = MODELS_DIR / "yolo26l_tiled_7pages_pre.pt"
-
 FIXED100_MODELS_DIR = Path(
     os.environ.get(
         "YOLO26_ALL9_FIXED_EP100_MODELS_DIR",
@@ -45,14 +42,18 @@ YOLO26_ALL9_FIXED_EP100_TILED_MODEL = Path(
 )
 YOLO26_ALL9_FIXED_EP100_TILED_KEY = "yolo26l_all9_fixed_ep100_tiled"
 
-LOCAL_YOLO26_LARGE_9PAGES_EP300_MODEL = (
-    MODELS_DIR / "yolo26l_large_fullwidth_9pages_pre_ep300.pt"
-)
-LOCAL_YOLO26_TILED_9PAGES_EP300_MODEL = (
-    MODELS_DIR / "yolo26l_tiled_9pages_pre_ep300.pt"
-)
 LOCAL_YOLO26_TILED_9PAGES_EP200_MODEL = (
     MODELS_DIR / "yolo26l_tiled_9pages_pre_ep200.pt"
+)
+YOLO26_TILED_9PAGES_EP200_LEGACY_KEY = "yolo26l_tiled_9pages_ep200"
+YOLO26_TILED_9PAGES_EP200_CENTER_KEY = (
+    "yolo26l_tiled_9pages_ep200_center_voronoi"
+)
+YOLO26_TILED_9PAGES_EP200_KEYS = frozenset(
+    {
+        YOLO26_TILED_9PAGES_EP200_LEGACY_KEY,
+        YOLO26_TILED_9PAGES_EP200_CENTER_KEY,
+    }
 )
 LOCAL_DETR_LARGE_9PAGES_PLUS50_MODEL = (
     MODELS_DIR / "detr_large_9pages_plus50" / "model"
@@ -70,12 +71,6 @@ LOCAL_DETR_TILED_9PAGES_PLUS50_MODEL = (
     MODELS_DIR / "detr_tiled_9pages_plus50" / "model"
 )
 
-REMOTE_YOLO26_LARGE_9PAGES_EP300_MODEL = Path(
-    "/home/users/yh477/lab/Schenkerian_OMR/trained_models/yolo26l_large_fullwidth_9pages_pre_ep300.pt"
-)
-REMOTE_YOLO26_TILED_9PAGES_EP300_MODEL = Path(
-    "/home/users/yh477/lab/Schenkerian_OMR/trained_models/yolo26l_tiled_9pages_pre_ep300.pt"
-)
 REMOTE_YOLO26_TILED_9PAGES_EP200_MODEL = Path(
     "/home/users/yh477/lab/Schenkerian_OMR/trained_models/yolo26l_tiled_9pages_pre_ep200.pt"
 )
@@ -95,18 +90,6 @@ REMOTE_DETR_TILED_9PAGES_PLUS50_MODEL = Path(
     "/home/users/yh477/lab/Schenkerian_OMR/outputs/mdetr_style_9pages_final_plus50_from_large150_tiled120_pre/tiled_9pages_pre/model"
 )
 
-YOLO26_LARGE_9PAGES_EP300_MODEL = Path(
-    os.environ.get(
-        "YOLO26_LARGE_9PAGES_EP300_MODEL",
-        LOCAL_YOLO26_LARGE_9PAGES_EP300_MODEL,
-    )
-)
-YOLO26_TILED_9PAGES_EP300_MODEL = Path(
-    os.environ.get(
-        "YOLO26_TILED_9PAGES_EP300_MODEL",
-        LOCAL_YOLO26_TILED_9PAGES_EP300_MODEL,
-    )
-)
 YOLO26_TILED_9PAGES_EP200_MODEL = Path(
     os.environ.get(
         "YOLO26_TILED_9PAGES_EP200_MODEL",
@@ -225,7 +208,7 @@ RFDETR_ALL9_MUSVIT_WARMFT_MODEL = Path(os.environ.get(
 #     the normal dedup fuse them. Beats YOLO alone on held-out (F1 0.835 vs 0.820). ---
 RFDETR_SMALL_ENSEMBLE_KEY = "yolo_rfdetr_small_ensemble"
 RFDETR_SMALL_ENSEMBLE_YOLO_KEY = os.environ.get(
-    "RFDETR_SMALL_ENSEMBLE_YOLO_KEY", "yolo26l_tiled_9pages_ep200"
+    "RFDETR_SMALL_ENSEMBLE_YOLO_KEY", YOLO26_TILED_9PAGES_EP200_LEGACY_KEY
 )
 RFDETR_SMALL_CKPT = os.environ.get(
     "RFDETR_SMALL_CKPT",
@@ -664,42 +647,21 @@ DETECTION_MODEL_SPECS = [
         tile_ownership=TILE_OWNERSHIP_CENTER_VORONOI,
     ),
     DetectionModelSpec(
-        key="yolo26l_large_fullwidth_7pages_pre",
-        label="YOLO26L, 7 pages",
-        role="large",
-        backend="yolo",
-        path=Path(os.environ.get("YOLO26_LARGE_MODEL", DEFAULT_LARGE_MODEL)),
-    ),
-    DetectionModelSpec(
-        key="yolo26l_tiled_7pages_pre",
-        label="YOLO26L, 7 pages",
-        role="small",
-        backend="yolo",
-        path=Path(os.environ.get("YOLO26_TILED_MODEL", DEFAULT_TILED_MODEL)),
-    ),
-    DetectionModelSpec(
-        key="yolo26l_large_fullwidth_9pages_ep300",
-        label="YOLO26L, 9 pages, 300 epochs",
-        role="large",
-        backend="yolo",
-        path=YOLO26_LARGE_9PAGES_EP300_MODEL,
-        fallback_paths=(REMOTE_YOLO26_LARGE_9PAGES_EP300_MODEL,),
-    ),
-    DetectionModelSpec(
-        key="yolo26l_tiled_9pages_ep300",
-        label="YOLO26L, 9 pages, 300 epochs",
-        role="small",
-        backend="yolo",
-        path=YOLO26_TILED_9PAGES_EP300_MODEL,
-        fallback_paths=(REMOTE_YOLO26_TILED_9PAGES_EP300_MODEL,),
-    ),
-    DetectionModelSpec(
-        key="yolo26l_tiled_9pages_ep200",
-        label="YOLO26L, 9 pages, 200 epochs",
+        key=YOLO26_TILED_9PAGES_EP200_LEGACY_KEY,
+        label="YOLO26L, 9 pages, 200 epochs (legacy tile margins)",
         role="small",
         backend="yolo",
         path=YOLO26_TILED_9PAGES_EP200_MODEL,
         fallback_paths=(REMOTE_YOLO26_TILED_9PAGES_EP200_MODEL,),
+    ),
+    DetectionModelSpec(
+        key=YOLO26_TILED_9PAGES_EP200_CENTER_KEY,
+        label="YOLO26L, 9 pages, 200 epochs (center-owned tiles; held-out best)",
+        role="small",
+        backend="yolo",
+        path=YOLO26_TILED_9PAGES_EP200_MODEL,
+        fallback_paths=(REMOTE_YOLO26_TILED_9PAGES_EP200_MODEL,),
+        tile_ownership=TILE_OWNERSHIP_CENTER_VORONOI,
     ),
     DetectionModelSpec(
         key="detr_large_fullwidth_9pages_ep90",
@@ -1257,7 +1219,11 @@ class Yolo26CombinedDetector:
         width, height = canvas.size
         x_positions = _tile_positions(width, options.tile_patch, options.tile_step)
         y_positions = _tile_positions(height, options.tile_patch, options.tile_step)
-        ownership = adapter.spec.tile_ownership or TILE_OWNERSHIP_LEGACY_MARGIN
+        # Ownership is a property of the selected recipe, not of the cached adapter.
+        # Multiple recipes can safely share one loaded checkpoint (for example the
+        # ep200 legacy-margin and center-Voronoi options below).
+        selected_spec = DETECTION_MODEL_SPECS_BY_KEY[model_key]
+        ownership = selected_spec.tile_ownership or TILE_OWNERSHIP_LEGACY_MARGIN
         if ownership not in {
             TILE_OWNERSHIP_LEGACY_MARGIN,
             TILE_OWNERSHIP_CENTER_VORONOI,
@@ -1325,6 +1291,7 @@ class Yolo26CombinedDetector:
                         adapter=adapter,
                         source="small",
                         image_size=canvas.size,
+                        provenance_spec=selected_spec,
                     )
                     if detection is not None:
                         detections.append(detection)
@@ -1481,6 +1448,20 @@ class Yolo26CombinedDetector:
         if not path.exists():
             raise FileNotFoundError(f"Missing {spec.label} model: {path}")
 
+        # These two recipes intentionally share the exact same learned YOLO
+        # checkpoint and differ only in tiled post-processing. Keep this allowlist
+        # narrow because other adapters can derive runtime settings from spec.key.
+        if model_key in YOLO26_TILED_9PAGES_EP200_KEYS:
+            for cached_key, cached_adapter in tuple(self.model_cache.items()):
+                if (
+                    cached_key in YOLO26_TILED_9PAGES_EP200_KEYS
+                    and cached_adapter.path == path
+                    and cached_adapter.spec.backend == spec.backend == "yolo"
+                    and cached_adapter.spec.role == spec.role == "small"
+                ):
+                    self.model_cache[model_key] = cached_adapter
+                    return cached_adapter
+
         if spec.backend == "yolo":
             adapter = YoloModelAdapter(spec, path)
         elif spec.backend == "detr":
@@ -1520,6 +1501,7 @@ class Yolo26CombinedDetector:
         adapter: DetectionModelAdapter,
         source: str,
         image_size: tuple[int, int],
+        provenance_spec: DetectionModelSpec | None = None,
     ) -> Detection | None:
         image_width, image_height = image_size
         raw_name = adapter.get_raw_class_name(int(cls_id))
@@ -1536,6 +1518,7 @@ class Yolo26CombinedDetector:
         right = max(left + 1, min(right, image_width))
         bottom = max(top + 1, min(bottom, image_height))
 
+        provenance = provenance_spec or adapter.spec
         return Detection(
             left=left,
             top=top,
@@ -1546,9 +1529,9 @@ class Yolo26CombinedDetector:
             class_name=class_name,
             confidence=float(score),
             source=source,
-            model_key=adapter.spec.key,
-            model_label=adapter.spec.label,
-            backend=adapter.spec.backend,
+            model_key=provenance.key,
+            model_label=provenance.label,
+            backend=provenance.backend,
         )
 
     def offset_detection(
