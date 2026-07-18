@@ -22,6 +22,12 @@ from io import BytesIO
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOCUMENTS_PATH = os.environ.get("MUNG_DOCUMENTS_PATH", os.path.join(PROJECT_ROOT, "documents"))
 AUDIT_LOG_PATH = os.path.join(DOCUMENTS_PATH, "audit_log.txt")
+DOCUMENT_STATUSES = frozenset({
+    "not-started",
+    "in-progress",
+    "pending-review",
+    "done",
+})
 
 # Absolute path to the built frontend (parcel `dist/`). When set, the server
 # also serves the single-page app so the whole thing lives on one origin.
@@ -317,7 +323,10 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 with open(path) as f:
                     d = json.load(f)
-                return {"status": str(d.get("status", "not-started")),
+                status = str(d.get("status", "not-started"))
+                if status not in DOCUMENT_STATUSES:
+                    status = "not-started"
+                return {"status": status,
                         "annotator": str(d.get("annotator", ""))}
             except Exception:
                 pass
@@ -341,7 +350,7 @@ class Handler(BaseHTTPRequestHandler):
         except Exception:
             body = {}
         status = str(body.get("status", "not-started"))
-        if status not in {"not-started", "in-progress", "done"}:
+        if status not in DOCUMENT_STATUSES:
             self._send_json({"error": "Invalid status."}, status=400)
             return
         annotator = str(body.get("annotator", ""))[:80]

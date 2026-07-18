@@ -1,6 +1,10 @@
 import { SimpleBackendConnection } from "./SimpleBackendConnection";
 
-export type DocStatus = "not-started" | "in-progress" | "done";
+export type DocStatus =
+  | "not-started"
+  | "in-progress"
+  | "pending-review"
+  | "done";
 
 export interface Document {
   readonly name: string;
@@ -74,14 +78,17 @@ export class SimpleBackendApi {
     status: DocStatus,
     annotator: string,
   ): Promise<void> {
-    const response = await fetch(this.buildUrl("set-doc-status", documentName), {
-      method: "POST",
-      headers: {
-        Authorization: "Bearer " + this.connection.userToken,
-        "Content-Type": "application/json",
+    const response = await fetch(
+      this.buildUrl("set-doc-status", documentName),
+      {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + this.connection.userToken,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status, annotator }),
       },
-      body: JSON.stringify({ status, annotator }),
-    });
+    );
     if (response.status === 401) {
       throw new Error("Invalid user token.");
     }
@@ -90,7 +97,11 @@ export class SimpleBackendApi {
     }
   }
 
-  public async backupDocuments(): Promise<{ ok: boolean; log?: string; error?: string }> {
+  public async backupDocuments(): Promise<{
+    ok: boolean;
+    log?: string;
+    error?: string;
+  }> {
     const response = await fetch(this.buildUrl("backup-documents"), {
       method: "POST",
       headers: { Authorization: "Bearer " + this.connection.userToken },

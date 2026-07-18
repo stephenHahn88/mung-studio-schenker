@@ -213,11 +213,30 @@ Request has no body, response contains all documents on the server:
         {
             "name": "foobar",
             "hasImage": true,
-            "modifiedAt": "2024-10-07T14:23:54Z"
+            "modifiedAt": "2024-10-07T14:23:54Z",
+            "status": "pending-review",
+            "annotator": "John Doe"
         }
     ]
 }
 ```
+
+`status` is one of `not-started`, `in-progress`, `pending-review`, or `done`.
+If a document does not yet have a status file, the API reports `not-started`
+without creating or modifying any files.
+
+
+### `/?action=set-doc-status&document=docname` Set document status
+
+```bash
+curl -v -X POST -H "Authorization: Bearer 123456789" \
+    -H "Content-Type: application/json" \
+    -d '{"status":"pending-review","annotator":"John Doe"}' \
+    "localhost:8080/?action=set-doc-status&document=docname"
+```
+
+The JSON body must contain a supported `status`; `annotator` may be empty.
+Status metadata is stored separately from the document's MuNG annotation.
 
 
 ### `/?action=get-document-mung&document=docname` Get document MuNG file

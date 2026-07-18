@@ -19,10 +19,11 @@ import { classNameToHue } from "../../mung/classNameToHue";
 
 const STATUS_META: Record<
   DocStatus,
-  { label: string; color: "neutral" | "warning" | "success" }
+  { label: string; color: "neutral" | "warning" | "primary" | "success" }
 > = {
   "not-started": { label: "Not started", color: "neutral" },
   "in-progress": { label: "In progress", color: "warning" },
+  "pending-review": { label: "Pending review", color: "primary" },
   done: { label: "Done", color: "success" },
 };
 
@@ -125,6 +126,7 @@ export function DocumentsList(props: DocumentsListProps) {
               >
                 <Option value="not-started">Not started</Option>
                 <Option value="in-progress">In progress</Option>
+                <Option value="pending-review">Pending review</Option>
                 <Option value="done">Done</Option>
               </Select>
               <Input
