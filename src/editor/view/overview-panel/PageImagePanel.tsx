@@ -12,10 +12,7 @@ import { useContext } from "react";
 import { EditorContext } from "../../EditorContext";
 import { PageImageMode } from "../../model/EditorStateStore";
 
-/**
- * The primary page-background switcher. It intentionally lives outside the
- * collapsible View panel so reviewers can find it immediately.
- */
+/** Selects the page image shown in the canvas. */
 export function PageImagePanel() {
   const { editorStateStore, backgroundImageStore } = useContext(EditorContext);
   const [pageImageMode, setPageImageMode] = useAtom(

@@ -32,13 +32,12 @@ export interface OverviewPanelProps {
 /**
  * The left panel which contains an overview of all nodes in the scene
  * in a list-like view. This panel provides non-visual navigation
- * and orientation in the scene to the user. The whole panel can be
- * collapsed to a thin bar to give the canvas more room.
+ * and orientation in the scene to the user. The panel can be collapsed.
  */
 export function OverviewPanel(props: OverviewPanelProps) {
   const [collapsed, setCollapsed] = useState(false);
 
-  // Collapsed: a thin bar with only an "expand" button, so the canvas is wide.
+  // collapsed: a thin bar with an expand button
   if (collapsed) {
     return (
       <Sheet
@@ -120,8 +119,7 @@ export function OverviewPanel(props: OverviewPanelProps) {
         <PageImagePanel />
       </Sheet>
 
-      {/* Model actions (symbols, syntax links, time groups, precedence links,
-          conversion), collapsible so they can be tucked away while annotating. */}
+      {/* Model actions */}
       <AccordionGroup>
         <Accordion defaultExpanded={true}>
           <AccordionSummary>

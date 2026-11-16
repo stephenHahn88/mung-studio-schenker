@@ -7,21 +7,12 @@ import { ToolbeltController } from "../ToolbeltController";
 import { EditorTool } from "../../model/EditorTool";
 import { NodeEditingController } from "./NodeEditingController";
 
-/**
- * Drags shorter than this (in scene-space pixels) are treated as a click and
- * ignored, so an accidental Ctrl+click does not create a degenerate node.
- */
+/** Shorter drags (scene-space pixels) are ignored. */
 const MIN_QUICK_RECT_SIZE = 4;
 
 /**
- * Implements the "quick rectangle" annotation gesture: holding Ctrl (or Cmd)
- * and dragging the mouse sweeps out a rectangle that becomes the bounding box
- * of a brand-new node directly (a full-rectangle mask), and then jumps straight
- * into the class-name selection. This is a fast alternative to drawing a polygon
- * for symbols that have a regular, box-like shape.
- *
- * Works while the Pointer or Node Editing tool is active. The actual node
- * creation is delegated to the NodeEditingController.
+ * Ctrl/Cmd + drag in the Pointer or Node Editing tool creates a node whose
+ * bounding box is the dragged rectangle.
  */
 export class QuickRectNodeController implements IController {
   public readonly controllerName = "QuickRectNodeController";
@@ -63,10 +54,6 @@ export class QuickRectNodeController implements IController {
   private dragEndX = 0;
   private dragEndY = 0;
 
-  /**
-   * True when the quick-rectangle modifier (Ctrl on Win/Linux, Cmd on Mac) is
-   * being held. We accept both so the gesture works across platforms.
-   */
   private isQuickModifier(e: MouseEvent): boolean {
     return e.ctrlKey || e.metaKey;
   }

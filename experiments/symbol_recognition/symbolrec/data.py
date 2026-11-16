@@ -1,13 +1,11 @@
 """Evaluation and training inputs from per-split COCO files.
 
-HandSchA: the per-split files written by make_coco.py from a split file (train/val/test.coco.json, image file names
-relative to the data folder). MUSCIMA++: the files written by muscima/convert_muscima.py.
+HandSchA: the per-split files written by make_coco.py from a split file (image file names relative to the data
+folder). MUSCIMA++: the files written by muscima/convert_muscima.py.
 
-Ground truth of a page = its annotated symbols (the "eligible" boxes, in file order) plus ignore regions.
-Ignore regions are the HandSchA MuNG nodes whose class is empty, "unknown" or "unclassified" (29 boxes on 9
-pages, data/ignore_regions.json); they are not symbols and are excluded from the 30,780 annotations. A prediction
-that is not matched to a symbol but overlaps an ignore region at the IoU threshold is not counted as a false
-positive. MUSCIMA++ has no ignore regions.
+Ground truth of a page = its annotated symbols (the "eligible" boxes, in file order) plus ignore regions: the
+HandSchA MuNG nodes whose class is empty, "unknown" or "unclassified" (data/ignore_regions.json). A prediction that
+is not matched to a symbol but overlaps an ignore region at the IoU threshold is not counted as a false positive.
 """
 import xml.etree.ElementTree as ET
 from pathlib import Path

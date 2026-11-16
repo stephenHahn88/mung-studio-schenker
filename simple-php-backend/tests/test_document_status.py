@@ -120,7 +120,7 @@ class DocumentStatusTest(unittest.TestCase):
             with mock.patch.object(server, "DOCUMENTS_PATH", tmp):
                 result = handler._read_doc_status("score-page")
 
-            # A legacy single-status file is read as the recognition stage.
+            # top-level status and annotator are read as the recognition stage
             self.assertEqual(result["status"], "pending-review")
             self.assertEqual(
                 result["stages"]["recognition"],

@@ -630,7 +630,7 @@ test("global removal works with no active group and counts only selected valid m
 });
 
 test("global cross-group removal ignores a different active group and is one complete undo/redo", (t) => {
-  // Browser ImageData is absent in Node; keep actual pixel arrays in the fixture.
+  // ImageData stub for Node
   const previousImageData = Object.getOwnPropertyDescriptor(
     globalThis,
     "ImageData",

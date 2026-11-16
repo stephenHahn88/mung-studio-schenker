@@ -1,4 +1,4 @@
-"""Synthetic-only workflow API tests; never imports production credentials/data."""
+"""Tests of the document workflow and its API."""
 import concurrent.futures
 import contextlib
 import importlib.util
@@ -23,8 +23,7 @@ from document_workflow import (
     read_document_workflow,
 )
 
-# Import the actual Handler only with a clean synthetic environment. No production
-# config, credentials, documents, dotenv loader, or inference module is opened.
+# import the server with a temporary documents folder and test users
 _IMPORT_ROOT = tempfile.TemporaryDirectory(prefix="mung-workflow-import-")
 _SYNTHETIC_AUTH = "workflow-test-identity"
 with mock.patch.dict(os.environ, {

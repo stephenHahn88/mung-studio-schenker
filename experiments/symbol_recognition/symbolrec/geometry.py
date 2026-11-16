@@ -1,13 +1,11 @@
-"""Crop layouts of the two branches (Fig. 4).
+"""Crop layouts of the two branches.
 
-YOLOv8L: square 1216 x 1216 tiles with stride 960 (256-pixel overlap); the last tile in each direction is
-shifted to the page edge, and pages shorter than a tile are padded with black. Each tile owns the region
-between the midpoints of neighbouring tile centres (half-open intervals, the last one closed), and a
-prediction is kept by a tile only if its box centre lies in that region. A prediction "touches an interior
-tile edge" when its box comes within 128 pixels of a tile side that is not a page side.
+YOLOv8L: square 1216 x 1216 tiles with stride 960; the last tile in each direction is shifted to the page edge, and
+pages shorter than a tile are padded with black. Each tile owns the region between the midpoints of neighbouring
+tile centres, and a prediction is kept by a tile only if its box centre lies in that region. A prediction touches an
+interior tile edge when its box comes within 128 pixels of a tile side that is not a page side.
 
-RF-DETR: full-width horizontal strips of height 768 with stride 384; the last strip is shifted to the page
-bottom. A training target is kept in a strip when at least 90% of its area is visible in the strip.
+RF-DETR: full-width strips of height 768 with stride 384; the last strip is shifted to the page bottom.
 """
 
 PATCH, STEP, MARGIN = 1216, 960, 128

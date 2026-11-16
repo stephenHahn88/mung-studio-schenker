@@ -50,10 +50,8 @@ export interface TimeGroupMemberMarker {
 }
 
 /**
- * One display-only indicator per member, even when several groups share it.
- * The ellipse contains the complete bounding box plus a clear margin; neither
- * its strokes nor the badge cover the member's ink. Only annotation padding,
- * stroke and badge sizes are fixed in screen pixels, not the musical object.
+ * One marker per group member: an ellipse around its box and a badge with the
+ * number of its groups. Padding, strokes and badges are sized in screen pixels.
  */
 export function layoutTimeGroupMemberMarkers(
   inputs: readonly TimeGroupMemberInput[],
@@ -90,8 +88,7 @@ export function layoutTimeGroupMemberMarkers(
       badgeText,
       cx: node.left + node.width / 2,
       cy: node.top + node.height / 2,
-      // sqrt(2) encloses the corners, unlike width / 2 + padding.
-      // A 2.5px clear box margin keeps the 3.4px halo off the ink.
+      // sqrt(2) makes the ellipse enclose the box corners
       rx: Math.SQRT2 * (node.width / 2 + 2.5 * pixel),
       ry: Math.SQRT2 * (node.height / 2 + 2.5 * pixel),
       badgeX: node.left + node.width + badgeRx,
@@ -103,7 +100,7 @@ export function layoutTimeGroupMemberMarkers(
   });
 }
 
-/** Complete ring/badge bounds for placing labels without covering indicators. */
+/** Bounds of the ellipse and badge of a marker. */
 export function timeGroupMemberBounds(
   marker: TimeGroupMemberMarker,
 ): TimeGroupDisplayBounds {

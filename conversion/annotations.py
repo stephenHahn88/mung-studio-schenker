@@ -1,7 +1,6 @@
 """Annotated symbols that fill the remaining fields of the JSON format.
 
-These fields are not part of Algorithm 1; they are copied from symbols that the
-annotators linked to noteheads, directly or through a stem:
+They are copied from symbols linked to noteheads, directly or through a stem:
 
 * ursatz: hollow noteheads;
 * flagged: noteheads with a linked flag;

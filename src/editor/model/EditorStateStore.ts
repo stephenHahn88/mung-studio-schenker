@@ -38,7 +38,7 @@ export class EditorStateStore {
     NodeDisplayMode.PolygonsAndMasks,
   );
 
-  // Browser-only view state. It is never serialized into the MuNG file.
+  // atom that manages which page image is shown
   public readonly pageImageModeAtom: PrimitiveAtom<PageImageMode> = atom(
     PageImageMode.ProcessedWithAnnotations,
   );
@@ -62,9 +62,7 @@ export class EditorStateStore {
     return this.displayPrecedenceLinksAtomWithEvent.event;
   }
 
-  // Temporarily hides every edge without changing the user's per-edge-type
-  // visibility choices. Turning this off restores the exact syntax and
-  // precedence visibility combination that was active before it.
+  // atom that hides all links; the per-type settings are kept
   private hideAllEdgesAtomWithEvent = AtomWithEvent.primitiveAtom(false);
   public get hideAllEdgesAtom() {
     return this.hideAllEdgesAtomWithEvent.atom;

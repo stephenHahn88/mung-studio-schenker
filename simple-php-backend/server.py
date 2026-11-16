@@ -63,8 +63,7 @@ CUSTOM_CLASS_REGISTRY = CustomClassRegistry(CUSTOM_CLASSES_PATH)
 REVIEW_COMMENT_STORE = ReviewCommentStore(DOCUMENTS_PATH)
 
 
-# Absolute path to the built frontend (parcel `dist/`). When set, the server
-# also serves the single-page app so the whole thing lives on one origin.
+# built frontend (parcel dist/); when set, the server also serves the app
 FRONTEND_PATH = os.environ.get("MUNG_FRONTEND_PATH") or None
 
 
@@ -168,7 +167,7 @@ def page_image_size(image_path):
 
 
 def find_original_image(doc_name):
-    """Return a pre-processing source image, never the annotation canvas."""
+    """Path of the original scan of a document, or None."""
     for filename in [
         "original.jpg",
         "original.jpeg",
@@ -312,8 +311,7 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps({"name": user["name"]}, indent=2).encode())
 
     def _action_version(self):
-        """Code version and fixed API capabilities (unauthenticated: exposes
-        only code/build identifiers)."""
+        """Return the code version and the API capabilities."""
         import subprocess
         try:
             sha = subprocess.run(
@@ -391,8 +389,7 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json({"models": MODELS.availability()})
 
     def _action_detect_symbols(self):
-        """Run the symbol detector on the page image (or a region of it).
-        Returns detections only; the editor decides what to insert."""
+        """Run the symbol detector on the page image (or a region of it) and return the detections."""
         user = self._authenticate()
         if not user:
             return
@@ -420,8 +417,7 @@ class Handler(BaseHTTPRequestHandler):
         self._run_model_action(run)
 
     def _action_predict_relations(self, kind):
-        """Run a relation model on the nodes sent by the editor.
-        Returns links or groups only; the editor decides what to insert."""
+        """Run a relation model on the nodes sent by the editor and return links or groups."""
         user = self._authenticate()
         if not user:
             return
@@ -481,7 +477,7 @@ class Handler(BaseHTTPRequestHandler):
 
     # ==================== real-time collaboration ====================
     def _auth_query_or_header(self, params):
-        """Auth that also accepts ?token= (EventSource/curl cannot set headers)."""
+        """Authenticate with the Authorization header or a ?token= parameter."""
         auth = self.headers.get("Authorization", "")
         token = (auth[7:].strip() if auth.startswith("Bearer ")
                  else (params.get("token", [None])[0]))
@@ -497,8 +493,7 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.flush()
 
     def _action_collab_stream(self, params):
-        """Long-lived SSE stream: replays ops since last save, then live ops +
-        presence for one document. Held open on its own thread per client."""
+        """SSE stream of one document: the operations since the last save, then live operations and presence."""
         user = self._auth_query_or_header(params)
         if not user:
             return
@@ -582,11 +577,11 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json({"ok": True})
 
     def _read_doc_status(self, doc_name):
-        """Read shared stage progress without migrating existing status files."""
+        """Read the stage progress of a document."""
         return read_document_workflow(os.path.join(DOCUMENTS_PATH, doc_name))
 
     def _action_set_doc_status(self, params):
-        """Patch one workflow stage; old clients still patch recognition only."""
+        """Patch one workflow stage (recognition if no stage is given)."""
         user = self._authenticate()
         if not user:
             return
@@ -618,8 +613,6 @@ class Handler(BaseHTTPRequestHandler):
             traceback.print_exc()
             self._send_json({"error": "Could not save workflow status."}, status=500)
             return
-        # Audit logging is best-effort after the atomic commit: a logging failure
-        # must not tell the client that an already committed update failed.
         stage = body.get("stage", "recognition")
         try:
             log_to_file(
@@ -630,7 +623,7 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json({"ok": True, **payload})
 
     def _action_list_custom_classes(self):
-        """Return the shared add-on vocabulary without touching annotations."""
+        """Return the shared custom classes."""
         user = self._authenticate()
         if not user:
             return
@@ -646,7 +639,7 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(snapshot)
 
     def _action_add_custom_class(self):
-        """Add one shared class definition; existing mung.xml files are unchanged."""
+        """Add one shared custom class."""
         user = self._authenticate()
         if not user:
             return
@@ -822,7 +815,7 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     def _action_get_document_original(self, params):
-        """Serve the original scan without changing it or the annotation image."""
+        """Serve the original scan of a document."""
         user = self._authenticate()
         if not user:
             return
@@ -1001,8 +994,7 @@ class Handler(BaseHTTPRequestHandler):
         log_to_file(f"{user['name']} has written this document.",
                     os.path.join(DOCUMENTS_PATH, doc_name, "write_log.txt"))
 
-        # Collab: this full-document save is now the durable snapshot, so the
-        # per-op replay log can be compacted (joiners will load this mung.xml).
+        # a full save clears the collaboration operation log
         try:
             from collab import HUB
             HUB.clear_oplog(doc_name)
@@ -1022,9 +1014,7 @@ class Handler(BaseHTTPRequestHandler):
     def _serve_static(self, url_path):
         """Serve the built single-page app from FRONTEND_PATH.
 
-        Maps the request path to a file under FRONTEND_PATH (guarding against
-        path traversal) and falls back to index.html for unknown paths, which
-        is what a hash-routed SPA needs.
+        Unknown paths without a file extension get index.html.
         """
         root = os.path.realpath(FRONTEND_PATH)
 
@@ -1057,7 +1047,6 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(data)))
-        # Hashed asset filenames are immutable; index.html must never be cached.
         if is_index:
             self.send_header("Cache-Control", "no-store")
         else:
@@ -1101,6 +1090,4 @@ if __name__ == "__main__":
     for action, info in MODELS.availability().items():
         state = "available" if info["available"] else info.get("reason", "unavailable")
         print(f"Model action {action}: {state}")
-    # ThreadingHTTPServer so a slow model action does not block document
-    # reads and saves from other annotators sharing this server.
     ThreadingHTTPServer((args.host, args.port), Handler).serve_forever()

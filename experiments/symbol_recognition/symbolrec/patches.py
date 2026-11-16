@@ -1,21 +1,12 @@
-"""Process-local changes to Ultralytics 8.4.18 and RF-DETR 1.8.3 that the training runs used.
+"""Process-local patches of Ultralytics 8.4.18 and RF-DETR 1.8.3 used for training.
 
-No installed package file is modified; each function patches the running process only.
+No installed package file is modified.
 
-1. fp32_detection_criterion (Ultralytics 8.4.18): the YOLOv8 detection loss and its target assignment are computed
-   in float32 while the network forward keeps automatic mixed precision. In the unpatched library the
-   mixed-dtype CIoU can return -inf for finite, positive-area boxes (the predicted area is rounded in float16
-   before it is combined with float32 targets). Loss formulas and assignment are unchanged; a non-finite loss
-   raises an error before the backward pass.
-2. seed_dataloader_rank (Ultralytics 8.4.18): Ultralytics seeds the training dataloader's generator from the
-   process RANK, not from the `seed` argument, so data order and augmentation do not change with `seed`. The
-   second-seed runs (HandSchA seed 20261104; MUSCIMA++ seed 20261104) set
-   ultralytics.data.build.RANK = 20261104 before training. The first-seed runs did not change it.
-3. corrected_rfdetr_module (RF-DETR 1.8.3): RFDETRModelModule.training_step returns loss / accumulate_grad_batches,
-   and PyTorch Lightning divides by the accumulation steps again. The subclass multiplies the returned loss back,
-   so the loss is averaged once over the 9 accumulated micro-batches.
-4. fixed_square_resize (RF-DETR 1.8.3): training images (strips or whole pages) are resized to exactly
-   2048 x 2048 with no random crop, flip or scale.
+1. fp32_detection_criterion: the YOLOv8 detection loss and its target assignment are computed in float32 while the
+   network forward keeps automatic mixed precision; a non-finite loss raises an error.
+2. seed_dataloader_rank: sets ultralytics.data.build.RANK, which seeds the training dataloader's generator.
+3. corrected_rfdetr_module: the RF-DETR training loss is averaged once over the accumulated micro-batches.
+4. fixed_square_resize: training images are resized to exactly 2048 x 2048 with no random crop, flip or scale.
 """
 import hashlib
 import inspect

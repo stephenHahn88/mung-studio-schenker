@@ -17,7 +17,6 @@ import { JotaiStore } from "./JotaiStore";
 import { NotationGraphStore } from "./notation-graph-store/NotationGraphStore";
 import { SelectionStore } from "./SelectionStore";
 
-/** A prospective addition never moves a note out of its other time groups. */
 export type TimeGroupSelectionOption = {
   group: TimeGroup;
   selectedMemberIds: readonly number[];
@@ -99,8 +98,8 @@ export type PredictedTimeGroupSummary = {
 };
 
 /**
- * Annotation of shared musical moments. Groups are created by annotators or
- * proposed by the time-group model (provenance "predicted").
+ * Time groups (noteheads with the same onset), created by annotators or by
+ * the time-group model (provenance "predicted").
  */
 export class TimeGroupStore {
   private readonly revisionAtom = atom(0);
@@ -120,7 +119,7 @@ export class TimeGroupStore {
     get(this.selection.selectedNodesAtom).filter(isNotehead),
   );
 
-  /** Include explicitly selected members even after their class is corrected. */
+  /** Selected nodes that are group members, whatever their class. */
   public readonly selectedGroupedMembersAtom: Atom<readonly Node[]> = atom(
     (get) => {
       const groupedIds = new Set(
@@ -192,7 +191,6 @@ export class TimeGroupStore {
   }
 
   private get groups(): readonly TimeGroup[] {
-    // Mutations use the live graph even before the next React notification.
     return collectTimeGroups(this.graph.nodes);
   }
 
@@ -258,7 +256,6 @@ export class TimeGroupStore {
     }
   }
 
-  /** Live classification also protects actions before the next UI notification. */
   public classifySelection(): TimeGroupSelectionAnalysis {
     return analyzeSelection(this.selectedNoteIds(), this.groups);
   }
@@ -295,10 +292,9 @@ export class TimeGroupStore {
   }
 
   /**
-   * Insert groups proposed by the time-group model in one undoable edit.
-   * Each proposal lists node ids; only existing noteheads that are not in any
-   * group yet become members, so manual groups are never changed. Proposals
-   * left without members are dropped.
+   * Inserts the groups proposed by the time-group model as one undoable edit.
+   * Only noteheads that are not in a group yet become members; empty proposals
+   * are dropped.
    */
   public addPredictedGroups(
     proposals: readonly (readonly number[])[],
@@ -339,7 +335,7 @@ export class TimeGroupStore {
     return { createdGroups, skippedNoteheads };
   }
 
-  /** Selecting a group never selects music nodes for destructive Delete. */
+  /** Makes a group active and clears the node selection. */
   public selectGroup(id: string): void {
     this.requireGroup(id);
     this.jotai.set(this.activeGroupIdAtom, id);
@@ -347,7 +343,6 @@ export class TimeGroupStore {
     this.selection.clearSelection();
   }
 
-  /** Finishing changes only editing focus, not memberships or save state. */
   public finishEditing(): void {
     this.jotai.set(this.activeGroupIdAtom, null);
     this.selection.clearSelection();
@@ -361,7 +356,7 @@ export class TimeGroupStore {
       throw new Error("Group names can contain at most 80 characters.");
     }
     if (normalized === group.label) return;
-    // Ensure an edit is newer even when two actions occur within one ms.
+    // strictly newer than the previous edit
     const updatedAt = new Date(
       Math.max(Date.now(), Date.parse(group.updatedAt) + 1),
     ).toISOString();
@@ -405,14 +400,12 @@ export class TimeGroupStore {
     this.graph.applyTimeGroupPatches(
       group.memberIds.map((nodeId) => ({
         nodeId,
-        // Retain the current shared label if its most recently edited member
-        // leaves the group after a collaborator added a stale-label member.
         data: { [timeGroupKey(id)]: selected.has(nodeId) ? null : value },
       })),
     );
   }
 
-  /** Remove every valid membership of the live selection in one undoable edit. */
+  /** Removes the selected nodes from all their groups as one undoable edit. */
   public removeSelectedFromAllGroups(): number {
     const selected = new Set(this.selection.selectedNodeIds);
     const removedMemberIds = new Set<number>();
@@ -428,7 +421,6 @@ export class TimeGroupStore {
           nodeId,
           data: {
             ...patches.get(nodeId)?.data,
-            // Carry the resolved label to survivors before its newest copy leaves.
             [key]: removing ? null : value,
           },
         });
@@ -540,7 +532,7 @@ export class TimeGroupStore {
     );
   }
 
-  /** Spatial navigation is only a review aid; it does not assign musical order. */
+  /** Selects the next ungrouped notehead (sorted by top, then left). */
   public selectNextUngrouped(): number | null {
     const report = checkTimeGroupCoverage(this.graph.nodes);
     const candidates = report.ungroupedNodeIds

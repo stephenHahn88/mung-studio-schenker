@@ -1,14 +1,11 @@
-"""YOLOv8L training and validation tiles (Table XI: 1216 x 1216 tiles, stride 960, fully contained targets).
+"""YOLOv8L training and validation tiles (1216 x 1216, stride 960; see symbolrec/geometry.py).
 
-Every training and validation page is cut into the tiles of symbolrec/geometry.py (black padding beyond the page).
-A symbol is a target of a tile only if its whole box lies inside the tile (and both sides are at least 1 pixel);
-this applies to all classes, so symbols longer than a tile are never YOLOv8L targets.
+A symbol is a target of a tile only if its whole box lies inside the tile.
 
-Training list: each tile with at least one target is repeated by the rarest class it contains,
-min(4, max(1, ceil(sqrt(64 / n)))) times, where n is the number of training-page instances of that class; empty
-tiles are added up to 15% of the number of non-empty tiles; the list is shuffled. All validation tiles are used once.
-The sampler is seeded with --sampler-seed (HandSchA: 20261021 for every run; MUSCIMA++: the training seed).
---dataset only selects the as-run tile naming and validation order, which affect the shuffled training order.
+Training list: each tile with at least one target is repeated min(4, max(1, ceil(sqrt(64 / n)))) times, where n is
+the number of training instances of the rarest class in the tile; randomly chosen empty tiles are added up to 15% of
+the number of non-empty tiles; the list is shuffled. The random choices use --sampler-seed. All validation tiles are
+used once. --dataset selects the tile naming and the validation order.
 
 usage:
   python prepare_yolo.py --dataset HandSchA --out work/tiles      # work/coco from make_coco.py, images in data/

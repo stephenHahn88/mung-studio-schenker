@@ -29,7 +29,6 @@ export interface Document {
 
 export interface ReviewComment {
   readonly id: string;
-  /** Missing on comments created before threaded replies were introduced. */
   readonly parentId?: string | null;
   readonly author: string;
   readonly text: string;

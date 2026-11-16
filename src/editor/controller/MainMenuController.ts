@@ -44,10 +44,7 @@ export interface ModelRunOptions {
   readonly scoreThreshold?: number | null;
 }
 
-/**
- * Throws when a model response refers to a different page size than the
- * annotation canvas, so predictions are never inserted in wrong coordinates.
- */
+/** Throws when a model response has a different page size than the canvas. */
 export function assertDetectionImageSize(
   actual: { readonly width: number; readonly height: number },
   expected: { readonly width: number; readonly height: number },
@@ -197,12 +194,9 @@ export class MainMenuController implements IController {
   }
 
   /**
-   * Switch the selected node(s) to their "Up" or "Down" sibling class — e.g.
-   * slurStructuralDown <-> slurStructuralUp. Generic: flips a trailing
-   * "Up"/"Down" in the class name, applied only when the resulting class
-   * actually exists (so it covers slur/beam/flag/grace/voiceExchange/etc.
-   * families and is a no-op on classes without an Up/Down sibling).
-   * Bound to Ctrl/Cmd+U (Up) and Ctrl/Cmd+D (Down).
+   * Ctrl/Cmd+U and Ctrl/Cmd+D: switch the selected nodes to the "Up" or "Down"
+   * variant of their class (e.g. slurStructuralDown -> slurStructuralUp) when
+   * that class exists.
    */
   private switchSelectedUpDown(direction: "Up" | "Down"): void {
     for (const id of this.selectionStore.selectedNodeIds) {
@@ -229,10 +223,9 @@ export class MainMenuController implements IController {
     return MUNG_CLASSES_BY_NAME[candidate] !== undefined ? candidate : null;
   }
 
-  // Internal clipboard for copy/paste of annotation boxes.
   private clipboardNodes: Node[] = [];
 
-  /** Ctrl/Cmd+C: copy the selected node(s) into the clipboard. */
+  /** Ctrl/Cmd+C: copy the selected nodes. */
   private copySelectedNodes(): void {
     const copied: Node[] = [];
     for (const id of this.selectionStore.selectedNodeIds) {
@@ -249,10 +242,8 @@ export class MainMenuController implements IController {
   }
 
   /**
-   * Ctrl/Cmd+V: paste copies of the clipboard node(s). Each copy keeps the
-   * class and box, gets a fresh id, is offset slightly so it is visible, and is
-   * selected in the pointer tool so it can be dragged/resized immediately.
-   * Handy for many similar symbols in nearby places: copy once, paste, drag.
+   * Ctrl/Cmd+V: insert copies of the copied nodes with new ids, offset by a few
+   * pixels, and select them.
    */
   private pasteNodes(): void {
     if (this.clipboardNodes.length === 0) return;
@@ -293,15 +284,12 @@ export class MainMenuController implements IController {
     );
   }
 
-  /** Live count of ALL syntax edges in the document (works across reloads). */
+  /** Number of syntax edges in the document. */
   public readonly syntaxEdgeCountAtom = atom((get) => {
     return get(this.notationGraphStore.syntaxLinksAtom).length;
   });
 
-  /**
-   * Removes ALL syntax edges from the document (predicted and hand-drawn
-   * alike), leaving every symbol untouched.
-   */
+  /** Removes all syntax edges and keeps the nodes. */
   public clearAllEdges(): void {
     const links = [...this.notationGraphStore.syntaxLinks];
     for (const link of links) {
@@ -684,8 +672,7 @@ export class MainMenuController implements IController {
         this.pageSize(),
         "Detection result",
       );
-      // A collaborator can annotate while the model request is in flight.
-      // Re-check immediately before the synchronous replacement.
+      // the page may have changed during the request
       if (this.protectTimeGroupsFromRecognition(region)) return;
       const removed = this.removePredictedSymbolNodes(region);
       const inserted = this.insertSymbolPredictions(
@@ -743,7 +730,7 @@ export class MainMenuController implements IController {
       const allowed = new Set(nodes.map((node) => node.id));
       let added = 0;
       for (const link of result.links) {
-        // A pair that is already linked (in either direction) keeps its link.
+        // pairs that are already linked in either direction are skipped
         if (
           link.source === link.target ||
           !allowed.has(link.source) ||
@@ -831,7 +818,7 @@ export class MainMenuController implements IController {
     this.setModelStatus(`Removed ${removedCount} predicted symbols.`);
   }
 
-  /** Replacement and clearing remove predicted nodes; grouped ones are kept. */
+  /** Reports and returns true if predicted nodes in the region are grouped. */
   private protectTimeGroupsFromRecognition(region: DOMRect | null): boolean {
     const protectedNodes = this.notationGraphStore.nodes.filter(
       (node) =>
@@ -850,10 +837,7 @@ export class MainMenuController implements IController {
     return true;
   }
 
-  /**
-   * Prevents requests for a model family that is disabled in this build.
-   * Returns true when the caller must stop.
-   */
+  /** Reports and returns true if the model family is disabled in this build. */
   private notifyInferenceUnavailable(
     enabled: boolean,
     unavailableMessage: string,
@@ -937,11 +921,7 @@ export class MainMenuController implements IController {
     ).length;
   }
 
-  /**
-   * Nodes inserted by the symbol detector carry the DataItem
-   * symbol_detector_prediction = "true". Pages annotated with earlier
-   * versions of the tool may carry yolo26_combined = "true" instead.
-   */
+  /** Nodes inserted by the symbol detector (DataItem set to "true"). */
   private isPredictedSymbolNode(node: Node): boolean {
     return (
       node.data["symbol_detector_prediction"]?.value === "true" ||

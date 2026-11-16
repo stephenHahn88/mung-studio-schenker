@@ -1,14 +1,11 @@
 """Page inference of the two branches, producing the rows that merge.py and the prediction files use.
 
-YOLOv8L: every 1216 x 1216 tile (PIL crop, black padding beyond the page) is predicted at image size 1216 with
-confidence floor 0.001, within-tile class-aware NMS at IoU 0.7 and at most 3000 boxes per tile. Rows keep all
-candidates with their ownership and interior-edge flags; no page-level filtering is applied here.
-On HandSchA the tile offset was added in float32 (the dtype of the model output) before conversion to Python
-floats; on MUSCIMA++ the boxes were converted to Python floats first. Both variants are kept (page_float32).
+YOLOv8L: every 1216 x 1216 tile (black padding beyond the page) is predicted with confidence floor 0.001, within-tile
+class-aware NMS at IoU 0.7 and at most 3000 boxes per tile. Rows keep all candidates with their ownership and
+interior-edge flags. page_float32=True adds the tile offset in float32 before conversion to Python floats.
 
-RF-DETR: each full-width strip (or the whole page) is resized to a 2048 x 2048 square inside RF-DETR and
-predicted with confidence floor 0.001. Boxes are mapped back to the page by translation only; predictions of
-all strips are pooled without clipping, ownership filtering or suppression.
+RF-DETR: each full-width strip (or the whole page) is resized to 2048 x 2048 and predicted with confidence floor
+0.001. Boxes are translated back to the page, and the predictions of all strips are pooled.
 """
 import math
 
@@ -73,7 +70,7 @@ def load_rfdetr(checkpoint, num_classes, num_queries, num_select, group_detr=Non
 def rfdetr_candidates(model, image, num_classes, strips=True, min_size=None):
     """Raw RF-DETR rows of one RGB page image: dicts with box, score, class_index (strip predictions pooled).
 
-    min_size: if given, keep only boxes with L > min_size (used for the MUSCIMA++ RF-DETR branch).
+    min_size: if given, keep only boxes with L > min_size.
     """
     width, height = image.size
     crops = strip_boxes(width, height) if strips else [(0, 0, width, height)]

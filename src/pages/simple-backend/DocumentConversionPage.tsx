@@ -36,10 +36,7 @@ function downloadJson(text: string, fileName: string): void {
   URL.revokeObjectURL(url);
 }
 
-/**
- * Read-only view of the converter output. The notation JSON can be
- * downloaded alone; the full output also lists unresolved notes and warnings.
- */
+/** Converter output with downloads of the notation JSON and the full output. */
 export function ConversionPreview({
   documentName,
   result,
@@ -270,7 +267,7 @@ function ConversionSession({
 export function DocumentConversionPage() {
   const documentName = useParams().documentName ?? "";
   const connection = useAtomValue(simpleBackendConnectionAtom);
-  // Unmount immediately on page/session changes, so stale results are never shown.
+  // remount on page or session change
   return (
     <ConversionSession
       key={JSON.stringify([

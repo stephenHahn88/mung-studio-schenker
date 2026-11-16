@@ -36,7 +36,7 @@ export interface EditorProps {
    */
   readonly backgroundImageUrl: string | null;
 
-  /** Coordinate-aligned scan before preprocessing, for in-canvas comparison. */
+  /** Original page scan, aligned with the annotation coordinates. */
   readonly originalBackgroundImageUrl?: string | null;
 
   /**
@@ -55,10 +55,7 @@ export interface EditorProps {
    */
   readonly fileName: string;
 
-  /**
-   * When provided, the editor joins a real-time collaboration session for
-   * this document (live op sync + presence + peer cursors). Optional.
-   */
+  /** Joins the collaboration session of this document when provided. */
   readonly collabConfig?: CollabConfig | null;
 
   /** Additional symbol classes shared by all annotators. */

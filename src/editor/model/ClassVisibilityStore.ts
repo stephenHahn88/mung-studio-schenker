@@ -246,18 +246,13 @@ export class ClassVisibilityStore {
   private _visibleClasses: ReadonlySet<string> = new Set<string>();
   private _hiddenClasses: ReadonlySet<string> = new Set<string>();
 
-  /**
-   * Temporary reviewer view. The base sets above are left untouched so
-   * disabling this mode restores the exact previous visibility state, even
-   * when graph classes change while the mode is active.
-   */
+  // Temporary views (Uncertain only, noteheads only); the sets above are kept.
   private _isUncertainOnly = false;
   private readonly uncertainOnlyVisibleClasses: ReadonlySet<string> = new Set([
     UNCERTAIN_CLASS_NAME,
   ]);
   private uncertainOnlyHiddenClasses: ReadonlySet<string> = new Set<string>();
 
-  /** A view filter, never a change to the graph or the base visibility sets. */
   private _isNoteheadsOnly = false;
   private resumeUncertainOnlyAfterNoteheads = false;
   private noteheadsOnlyVisibleClasses: ReadonlySet<string> = new Set<string>();
@@ -283,7 +278,7 @@ export class ClassVisibilityStore {
       : this._hiddenClasses;
   }
 
-  /** Whether the temporary uncertainty-review view is active. */
+  /** Whether only Uncertain nodes are shown. */
   public get isUncertainOnly(): boolean {
     return this._isUncertainOnly;
   }
@@ -314,8 +309,8 @@ export class ClassVisibilityStore {
   }
 
   /**
-   * Temporarily show all noteheads, regardless of their base visibility. An
-   * active uncertainty view is suspended until this focus mode is disabled.
+   * Shows only noteheads. An active Uncertain-only view resumes when this is
+   * turned off.
    */
   public setNoteheadsOnly(isEnabled: boolean) {
     if (this._isNoteheadsOnly === isEnabled) return;
@@ -340,13 +335,9 @@ export class ClassVisibilityStore {
     );
   }
 
-  /**
-   * Enables or disables the temporary uncertainty-review view without
-   * changing the user's underlying per-class visibility choices.
-   */
+  /** Shows only Uncertain nodes; the per-class visibility is kept. */
   public setUncertainOnly(isEnabled: boolean) {
     const leavesNoteheads = isEnabled && this._isNoteheadsOnly;
-    // An explicit uncertainty-view action supersedes any suspended state.
     this.resumeUncertainOnlyAfterNoteheads = false;
     if (this._isUncertainOnly === isEnabled && !leavesNoteheads) return;
     if (leavesNoteheads) this._isNoteheadsOnly = false;
@@ -355,11 +346,6 @@ export class ClassVisibilityStore {
     this.broadcastTemporaryViewChange();
   }
 
-  /**
-   * A manual class-visibility action supersedes the temporary reviewer view.
-   * Since the base visibility sets were never changed, no restoration work is
-   * needed here.
-   */
   private exitTemporaryViewsForManualVisibilityChange() {
     if (!this._isUncertainOnly && !this._isNoteheadsOnly) return;
     this._isUncertainOnly = false;
@@ -417,11 +403,7 @@ export class ClassVisibilityStore {
     this.setBaseClassVisibility(className, isVisible);
   }
 
-  /**
-   * Makes an edited node's class visible in the underlying view without
-   * leaving either temporary filter. This lets a reviewer
-   * resolve one Uncertain node and continue directly to the next one.
-   */
+  /** Makes a class visible without leaving a temporary view. */
   public ensureEditedClassIsVisible(className: string) {
     this.setBaseClassVisibility(className, true);
   }
@@ -547,7 +529,7 @@ export class ClassVisibilityStore {
     );
 
   /**
-   * Writable atom for the temporary uncertainty-review view.
+   * Writable atom for the Uncertain-only view.
    */
   public readonly isUncertainOnlyAtom: WritableAtom<boolean, [boolean], void> =
     atom(

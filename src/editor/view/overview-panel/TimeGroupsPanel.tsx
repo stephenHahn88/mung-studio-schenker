@@ -25,7 +25,7 @@ type OverlapReview = {
   revision: number;
 };
 
-/** Manual groups remain separate from ordinary symbol selection and edges. */
+/** Creates, edits and reviews time groups. */
 export function TimeGroupsPanel() {
   const {
     timeGroupStore,
@@ -115,7 +115,7 @@ export function TimeGroupsPanel() {
   useEffect(() => {
     const changed = () => {
       graphRevision.current += 1;
-      // An action-specific Undo must never undo a later, unrelated edit.
+      // the action-specific undo buttons apply only to the latest edit
       setUndoDeletion(null);
       setUndoRemoval(null);
       setOverlapReview(null);
@@ -244,8 +244,7 @@ export function TimeGroupsPanel() {
   }
 
   function returnFocusToPage() {
-    // The scene's existing focus gate otherwise consumes the next drag-start.
-    // Called only after button/switch actions, never while editing a text field.
+    // otherwise the scene ignores the next drag
     (document.activeElement as HTMLElement | null)?.blur();
   }
 
@@ -463,8 +462,7 @@ export function TimeGroupsPanel() {
                           classVisibilityStore.hiddenClasses.has(className),
                         )
                       ) {
-                        // Reviewing a reclassified member must not silently select an
-                        // invisible symbol which a subsequent Delete could remove.
+                        // show hidden member classes before selecting them
                         classVisibilityStore.setNoteheadsOnly(false);
                         classVisibilityStore.setUncertainOnly(false);
                         for (const className of memberClasses)

@@ -1,4 +1,4 @@
-"""Syntax-link model: PairCNN mask features, Table III geometry, incidence attention, losses, direction classifier."""
+"""Syntax-link model: PairCNN mask features, box geometry, incidence attention, losses, direction classifier."""
 from __future__ import annotations
 import math
 from dataclasses import dataclass
@@ -93,7 +93,7 @@ class PageGraph:
 
 
 def node_geometry(nodes, width: float, height: float) -> np.ndarray:
-    """Box geometry g_i (Table III)."""
+    """Box geometry of each symbol."""
     out = np.zeros((len(nodes), NODE_GEO_DIM), dtype=np.float32)
     for i, n in enumerate(nodes):
         cx, cy = center(n)
@@ -105,7 +105,7 @@ def node_geometry(nodes, width: float, height: float) -> np.ndarray:
 
 
 def pair_geometry(a, b, width: float, height: float) -> np.ndarray:
-    """Symmetric pair geometry r_e (Table III); exchanging a and b does not change it."""
+    """Pair geometry that does not change when a and b are exchanged."""
     acx, acy = center(a)
     bcx, bcy = center(b)
     aw = max(float(a.right - a.left), 1.0)
@@ -133,7 +133,7 @@ def pair_geometry(a, b, width: float, height: float) -> np.ndarray:
 
 
 def directed_geometry(a, b, width: float, height: float) -> np.ndarray:
-    """Incidence geometry delta_{a->b} (Table III), clipped to [-10, 10]."""
+    """Directed incidence geometry from a to b, clipped to [-10, 10]."""
     acx, acy = center(a)
     bcx, bcy = center(b)
     aw = max(float(a.right - a.left), 1.0)
@@ -176,7 +176,7 @@ def load_pair_cnn(checkpoint: str, device: str) -> PairCNN:
 @torch.inference_mode()
 def encode_pairs(model: PairCNN, graph: PageGraph, height: int, width: int, device: str,
                  batch_size: int = 256, workers: int = 4) -> tuple[np.ndarray, np.ndarray]:
-    """Frozen-CNN features v_e (float16) and logits b_e (float32) of every candidate.
+    """Frozen-CNN features (float16) and logits (float32) of every candidate.
 
     The page channel is left empty, so only the two box masks enter the CNN. Features
     are averaged over both mask orders and the logit is computed from the average.
@@ -268,7 +268,7 @@ class IncidenceNet(nn.Module):
         self.layers = nn.ModuleList([IncidenceAttentionLayer(hidden, ports) for _ in range(layers)])
         self.base_delta = nn.Sequential(nn.Linear(hidden, hidden), nn.GELU(), nn.Linear(hidden, 1))
         self.topology_delta = nn.Sequential(nn.Linear(hidden, hidden), nn.GELU(), nn.Linear(hidden, 1))
-        # Zero-initialized output layers: training starts from the CNN logit b_e.
+        # zero-initialized output layers: training starts from the CNN logit
         nn.init.zeros_(self.base_delta[-1].weight)
         nn.init.zeros_(self.base_delta[-1].bias)
         nn.init.zeros_(self.topology_delta[-1].weight)

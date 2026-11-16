@@ -1,13 +1,9 @@
-"""COCO-initialized YOLOv8L with a 128-class HandSchA head.
+"""COCO-initialized YOLOv8L with a new class head for the HandSchA classes.
 
-Every tensor of the official Ultralytics COCO YOLOv8L (yolov8l.pt, release v8.4.0 asset,
-sha256 64c9115303f6a25575f82200d1b22ec409fa6bd7d08d0313884fc20d919478cd) whose shape matches is copied; the three
-final classification convolutions (80 versus 128 outputs) keep the initialization of a new DetectionModel built
-with torch.manual_seed(20261021). No music-trained weights are used.
+Tensors of the official Ultralytics COCO yolov8l.pt are copied where the shapes match; the final classification
+convolutions are newly initialized. MUSCIMA++ training starts from yolov8l.pt directly.
 
-On MUSCIMA++ the training starts from yolov8l.pt directly and Ultralytics builds the 73-class head itself.
-
-usage: python init_yolo.py --coco yolov8l.pt --out work/yolov8l_coco_handscha128.pt     # classes of data/categories.json
+usage: python init_yolo.py --coco yolov8l.pt --out work/yolov8l_coco_handscha128.pt
 """
 import argparse
 import copy

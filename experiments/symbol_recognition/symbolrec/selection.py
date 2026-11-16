@@ -1,15 +1,10 @@
-"""Checkpoint selection on validation pages.
+"""Checkpoint selection of the HandSchA RF-DETR branch on validation pages.
 
-RF-DETR branch (HandSchA): each candidate checkpoint predicts the whole validation pages (strips pooled).
-Its rows (score >= 0.001) are rounded to integer pixel boxes clamped to the page and passed twice through a greedy
-duplicate removal (in descending confidence: drop a box whose IoU with a kept box of the same class is >= 0.3 and
-whose area ratio to it is >= 0.5, then drop a box whose IoU with a kept box of another class is >= 0.75 and whose
-area ratio is >= 0.7). The score is the pooled AP50 over the branch classes and symbols with L > 200: every
-prediction of the validation pages enters one precision-recall curve (descending confidence; ties share one
-point), integrated over 101 recall points. Matching is one-to-one within a page and class (the unmatched ground
-truth box with the highest IoU, the last one on equal IoU, at IoU >= 0.5); an unmatched prediction that overlaps
-an ignore region or an out-of-scope ground truth box at IoU >= 0.5 is skipped. The highest score wins; ties go to
-the earlier epoch.
+Each candidate checkpoint predicts the whole validation pages (strips pooled). Its rows are rounded to integer pixel
+boxes clamped to the page and de-duplicated (integer_dedup). The score is the AP50 over the branch classes and
+symbols with L > 200, with all predictions of the validation pages pooled into one precision-recall curve
+integrated over 101 recall points. Unmatched predictions that overlap an ignore region or an out-of-scope ground
+truth box at IoU >= 0.5 are skipped.
 """
 from collections import defaultdict
 from itertools import groupby

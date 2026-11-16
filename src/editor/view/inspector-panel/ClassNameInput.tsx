@@ -34,8 +34,7 @@ export interface ClassNameInputProps {
  * https://mui.com/joy-ui/react-autocomplete/#users-created-option
  */
 export function ClassNameInput(props: ClassNameInputProps) {
-  // Put the review workflow class first so annotators do not have to know or
-  // search for its canonical MuNG name (`unclassified`).
+  // the Uncertain class (`unclassified`) is listed first
   const options = props.options ?? [
     UNCERTAIN_CLASS_NAME,
     ...MUNG_CLASS_NAMES.filter(

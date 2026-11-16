@@ -4,9 +4,7 @@ The split is a JSON file with three lists of page ids (data/split.json is the sp
 
   {"train": ["<page_id>", ...], "val": ["<page_id>", ...], "test": ["<page_id>", ...]}
 
-For each partition P in train/val/test this writes <out>/<P>.coco.json: the images of the partition (sorted by
-image id, i.e. by page id) and their annotations from data/symbols.coco.json, with annotation ids renumbered from 1
-inside the file. Image file names stay relative to the data folder.
+For each partition P this writes <out>/<P>.coco.json with the images and annotations of that partition.
 
 usage:
   python make_coco.py                                   # data/split.json -> work/coco

@@ -1,10 +1,8 @@
 const falseValues = new Set(["0", "false", "no", "off"]);
 
 /**
- * Resolve a scoped inference flag.
- *
- * A scoped value wins when supplied. Otherwise MUNG_ENABLE_INFERENCE is used
- * as the fallback. If neither value is configured, inference is enabled.
+ * Resolve an inference flag: the scoped value, else MUNG_ENABLE_INFERENCE,
+ * else enabled.
  */
 export function resolveInferenceFlag(
   scopedValue: string | undefined,

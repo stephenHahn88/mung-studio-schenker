@@ -39,10 +39,7 @@ function readNodeFromXmlElement(element: Element): Node {
   const height = parseInt(element.querySelector("Height")?.innerHTML || "NaN");
   const maskString = element.querySelector("Mask")?.textContent || null;
 
-  // A single malformed mask must NOT block the whole document from loading.
-  // Some nodes get saved with an empty/degenerate RLE mask (covers 0 pixels);
-  // decode defensively and drop just that mask, keeping the node (its bbox,
-  // class and links are intact). The node is fully usable without a pixel mask.
+  // a mask that cannot be decoded is dropped; the node is kept
   let decodedMask: ImageData | null = null;
   if (maskString !== null) {
     try {

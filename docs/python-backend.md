@@ -131,8 +131,7 @@ returns the workflow `stages` and comment counts of each document.
 | `detect-symbols`, `predict-syntax-links`, `predict-time-groups`, `predict-precedence`, `convert-document` | POST | model actions, see [model-actions.md](model-actions.md) |
 | `version` | GET | code version and capabilities (no token needed) |
 
-`set-doc-status` without `stage` changes the recognition stage. Status changes
-never modify `mung.xml`.
+`set-doc-status` without `stage` changes the recognition stage.
 
 
 ## Tests
@@ -141,4 +140,4 @@ never modify `mung.xml`.
 npm run test-backend     # python3 -m unittest discover -s simple-php-backend/tests
 ```
 
-The tests use temporary folders and stand-in model modules only.
+The tests do not need the models.

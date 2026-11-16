@@ -93,7 +93,7 @@ The editor component defines these top-level state stores:
 - `SelectionStore` Stores the set of selected nodes and links. Allows manipulation with the selection. Observes the `NotationGraphStore` so that it automatically handles node and link removals (removing them from the selection).
 - `ClassVisibilityStore` Stores the set of visible and hidden node class names (underlies the class visibility settings available in the left overview panel of the editor).
 - `EditorStateStore` Stores various temporary preferences and state of the editor component, such as the currently equipped tool, display options for nodes and links, selection laziness, etc.
-- `HistoryStore` (To be added!) Will observe changes in other stores and make snapshots for undo/redo functionality. (I already implemented a similar store in the DocMarker tool [here](https://github.com/Jirka-Mayer/doc-marker/blob/main/src/state/historyStore.js))
+- `HistoryStore` Observes changes to the `NotationGraphStore` and keeps the undo/redo history.
 - `AutosaveStore` Observes changes to the `NotationGraphStore` and emits the `onAutosave` event, as well as exposing an `isDirty` Jotai atom. The editor component handles this event and performs saving.
 
 

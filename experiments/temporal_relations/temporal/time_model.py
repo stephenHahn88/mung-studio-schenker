@@ -1,11 +1,8 @@
 """Time groups: page loader, 13 pair features, a histogram gradient-boosting pair classifier, average-linkage
 decoding and pooled pair counts.
 
-Evaluation domain: the explicitly grouped noteheads of a page (target node_ids). Noteheads that belong to no
-annotated group are left out of the inputs, the medians and the scores.
-
-Candidates are notehead pairs with |dx| <= 4 median notehead widths. Over the 37 annotated pages they contain
-5,527 of the 5,529 annotated same-group pairs; the remaining two count as false negatives.
+Only the explicitly grouped noteheads of a page (target node_ids) are used. Candidates are notehead pairs with
+|dx| <= 4 median notehead widths.
 """
 import itertools
 import json
@@ -15,7 +12,7 @@ from scipy.spatial.distance import squareform
 from sklearn.ensemble import HistGradientBoostingClassifier
 
 HGB = dict(max_iter=300, learning_rate=0.05, max_leaf_nodes=31, l2_regularization=1.0, early_stopping=False)
-# Decoding thresholds in search order; validation ties go to the first (smallest) value.
+# average-linkage thresholds in search order
 THRESHOLDS = np.r_[np.arange(0.05, 0.90, 0.05), np.arange(0.90, 0.995, 0.01)]
 FEATURES = ['abs_dx_widths', 'abs_dy_heights', 'abs_dy_page_height', 'page_aspect_H_over_W', 'median_width_over_W',
             'median_height_over_H', 'same_stem', 'adjacent_pitch', 'noteheads_between', 'noteheads_in_column',

@@ -16,7 +16,7 @@ import {
   TIME_GROUP_MEMBER_STROKES,
 } from "./TimeGroupMemberMarkers";
 
-/** Display-only geometry; activation changes UI state, never music data. */
+/** Time-group rails, handles, labels and member markers on the page. */
 export function TimeGroupsOverlay() {
   const {
     timeGroupStore,
@@ -33,8 +33,6 @@ export function TimeGroupsOverlay() {
   const [scale, setScale] = useState(zoomController.currentTransform.k);
   const handlePress = useRef<string | null>(null);
   useEffect(() => {
-    // A rectangle drag that starts elsewhere may end over a handle. Do not
-    // consume its mouseup or leave the native selection controller dragging.
     const reset = () => {
       handlePress.current = null;
     };
@@ -58,9 +56,7 @@ export function TimeGroupsOverlay() {
   const memberMarkers = layoutTimeGroupMemberMarkers(inputs, activeId, scale);
   const layouts = layoutTimeGroupOverlays(inputs, scale, {
     memberMarkers,
-    // Protect ungrouped noteheads and text too: a new clickable handle must
-    // not hide the very note the annotator is trying to add. Long connector
-    // and staff bboxes mostly contain empty space, so are not label barriers.
+    // all nodes except long connectors and staff objects
     extraObstacles: notationGraphStore.nodes
       .filter(
         (node) => !/^(?:beam|slur|tie|staff|system)/i.test(node.className),
@@ -80,8 +76,7 @@ export function TimeGroupsOverlay() {
     ...layouts.filter(({ group }) => group.id === activeId),
   ];
 
-  // Capture is intentional: the scene binds native mouse handlers directly to
-  // the ancestor SVG, before React's ordinary bubbling handlers would run.
+  // capture phase: the scene handles mouse events on the ancestor SVG
   const isolate = (event: SyntheticEvent) => {
     event.stopPropagation();
     event.preventDefault();
@@ -116,7 +111,6 @@ export function TimeGroupsOverlay() {
       isolate(event);
       if (readOnlyView || event.button !== 0) return;
       timeGroupStore.selectGroup(id);
-      // Return focus after mouse activation so the next Shift click/drag works.
       (document.activeElement as HTMLElement | null)?.blur();
     },
     onKeyDownCapture: (event) => {
@@ -124,8 +118,6 @@ export function TimeGroupsOverlay() {
       isolate(event);
       if (readOnlyView) return;
       timeGroupStore.selectGroup(id);
-      // Keyboard activation must release the same scene focus gate as a
-      // mouse click, so the very next Shift click can add a missed note.
       (document.activeElement as HTMLElement | null)?.blur();
     },
     onKeyUpCapture: (event) => {
@@ -203,7 +195,6 @@ export function TimeGroupsOverlay() {
         );
       })}
       {memberMarkers.map((marker) => {
-        // Membership and current editing focus are separate visual meanings.
         const color = TIME_GROUP_MEMBER_COLORS.grouped;
         const ellipse = {
           cx: marker.cx,
@@ -288,7 +279,7 @@ export function TimeGroupsOverlay() {
           </g>
         );
       })}
-      {/* Labels are last, so neither rails nor ellipses can paint over text. */}
+      {/* Labels are drawn last */}
       <g data-time-group-label-layer="true">
         {ordered
           .filter((layout) => layout.labelVisible)

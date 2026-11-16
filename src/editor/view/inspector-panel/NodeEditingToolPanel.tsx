@@ -49,11 +49,8 @@ export function NodeEditingToolPanel() {
 }
 
 /**
- * The class-name input wired to the edited node's class. It also registers a
- * focuser with the controller so the quick-rectangle gesture can jump focus
- * straight into it. It is a separate component so the focuser is registered
- * exactly while the input is actually mounted (i.e. the node editing tool is
- * active).
+ * Class-name input of the edited node; registers its focus method with the
+ * controller while mounted.
  */
 function FocusableClassNameInput(props: {
   readonly nodeEditingController: NodeEditingController;

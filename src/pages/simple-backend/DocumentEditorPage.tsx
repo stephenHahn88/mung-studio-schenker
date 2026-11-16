@@ -56,11 +56,10 @@ export function DocumentEditorPage() {
           const who = await api.whoami();
           setUserName(who.name);
         } catch {
-          /* non-fatal: presence just shows a generic name */
+          /* presence then shows a generic name */
         }
 
-        // The class registry is global and intentionally separate from the
-        // document annotation file.
+        // shared class registry
         const [mungXmlString, imageBlob, originalImageBlob, classCatalog] =
           await Promise.all([
             api.getDocumentMung(documentName),
@@ -90,8 +89,7 @@ export function DocumentEditorPage() {
     })();
   }, [connection.backendUrl, connection.userToken, documentName]);
 
-  // Keep already-open annotation tabs in sync when another annotator adds a
-  // class. The registry is tiny, so a low-frequency refresh is sufficient.
+  // refresh the shared class registry periodically
   useEffect(() => {
     if (connection.userToken === null) return;
     let isActive = true;

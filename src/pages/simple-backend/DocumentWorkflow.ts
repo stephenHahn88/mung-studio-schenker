@@ -76,7 +76,7 @@ function readStage(value: unknown): DocumentStageState {
   return { status: status as DocStatus, annotator };
 }
 
-/** Legacy records have progress for recognition only; never infer later stages. */
+/** Per-stage progress (only recognition when the record has no stages). */
 export function readDocumentStages(value: {
   readonly status?: unknown;
   readonly annotator?: unknown;
@@ -100,7 +100,6 @@ export function readDocumentStages(value: {
   return {
     recognition: readStage(stages.recognition),
     assembly: readStage(stages.assembly),
-    // Older three-stage records retain their progress; syntax needs a separate review.
     syntax: Object.prototype.hasOwnProperty.call(stages, "syntax")
       ? readStage(stages.syntax)
       : { status: "not-started", annotator: "" },
@@ -108,7 +107,7 @@ export function readDocumentStages(value: {
   };
 }
 
-/** A successful HTTP response alone is not proof that all stages were saved. */
+/** Stages confirmed by the server in a status update response. */
 export function readSavedDocumentStages(value: unknown): DocumentStages {
   if (
     typeof value !== "object" ||

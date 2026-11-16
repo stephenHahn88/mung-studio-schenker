@@ -1,4 +1,4 @@
-"""Merging the YOLOv8L and RF-DETR branches (Section V-A).
+"""Merging the YOLOv8L and RF-DETR branches.
 
 Inputs are page-coordinate rows {box: [x1, y1, x2, y2], score, category_id, class_name, ...}. YOLOv8L rows
 (branch "small") also carry owned_by_center and touches_interior_tile_edge from tiled inference; rows that are

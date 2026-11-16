@@ -5,13 +5,13 @@ export const TIME_GROUP_PREFIX = "schenker_time_group_v1_";
 
 export interface TimeGroupPatch {
   readonly nodeId: number;
-  /** Only TIME_GROUP_PREFIX keys; null removes this one membership. */
+  /** TIME_GROUP_PREFIX keys only; null removes the membership. */
   readonly data: Readonly<Record<string, DataItems[string] | null>>;
 }
 
 /**
- * "manual": created by an annotator. "predicted": created by the time-group
- * model and not yet reviewed as a whole. Annotators may edit either kind.
+ * "manual": created by an annotator; "predicted": created by the time-group
+ * model.
  */
 export type TimeGroupProvenance = "manual" | "predicted";
 
@@ -41,7 +41,6 @@ export interface TimeGroupCoverageReport {
   readonly overlappingNodeIds: readonly number[];
   readonly nonNoteheadMemberIds: readonly number[];
   readonly malformedRecords: number;
-  /** Membership coverage only, never a claim of musical correctness. */
   readonly allNoteheadsGrouped: boolean;
 }
 
@@ -116,12 +115,11 @@ function laterMetadata(
   const difference = Date.parse(second.updatedAt) - Date.parse(first.updatedAt);
   if (difference > 0) return second;
   if (difference < 0) return first;
-  // A stale collaborator adding a member must not revert a newer group label.
-  // Same-timestamp conflicts resolve consistently on every client.
+  // equal timestamps: deterministic choice
   return JSON.stringify(second) > JSON.stringify(first) ? second : first;
 }
 
-/** Groups are a view of memberships, never synthetic music-symbol nodes. */
+/** Time groups read from the time-group DataItems of the nodes. */
 export function collectTimeGroups(
   nodes: readonly Node[],
 ): readonly TimeGroup[] {
@@ -184,7 +182,7 @@ export function countMalformedTimeGroupItems(nodes: readonly Node[]): number {
   );
 }
 
-/** Evaluate the actual graph, including hidden classes and singleton groups. */
+/** Notehead coverage of the time groups. */
 export function checkTimeGroupCoverage(
   nodes: readonly Node[],
 ): TimeGroupCoverageReport {

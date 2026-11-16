@@ -1,8 +1,7 @@
 """Train the YOLOv8L branch on prepared tiles (Ultralytics 8.4.18; settings in configs/yolov8l.json).
 
-The validation metric is Ultralytics' mAP50:95 on the validation tiles. Training stops after `patience` epochs
-(15 on HandSchA, 20 on MUSCIMA++) without an improvement of at least 0.001, or after 120 epochs; best.pt holds the
-epoch with the highest validation mAP50:95.
+Training stops after `patience` epochs without an improvement of at least 0.001 in the validation mAP50:95, or
+after 120 epochs; best.pt holds the best epoch.
 
 usage:
   python train_yolo.py --dataset HandSchA --tiles work/tiles --init work/yolov8l_coco_handscha128.pt --seed 20261021 \
@@ -46,7 +45,7 @@ def main():
     parser.add_argument('--tiles', type=Path, required=True, help='output folder of prepare_yolo.py')
     parser.add_argument('--init', type=Path, required=True, help='init_yolo.py output (HandSchA) or yolov8l.pt (MUSCIMA++)')
     parser.add_argument('--seed', type=int, required=True)
-    parser.add_argument('--dataloader-rank', type=int, help='set ultralytics.data.build.RANK (second-seed runs: 20261104)')
+    parser.add_argument('--dataloader-rank', type=int, help='set ultralytics.data.build.RANK')
     parser.add_argument('--out', type=Path, required=True)
     parser.add_argument('--device', default='0')
     parser.add_argument('--epochs', type=int, help='override the 120-epoch limit (short checks only)')

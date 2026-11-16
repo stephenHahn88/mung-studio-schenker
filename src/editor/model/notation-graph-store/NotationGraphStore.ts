@@ -68,13 +68,12 @@ export class NotationGraphStore {
   private linkAtomsView: LinkAtomsView;
 
   /**
-   * Real-time collaboration hook. When set (by the CollabController), every
-   * local graph mutation is emitted as an operation descriptor so it can be
-   * broadcast to other clients. Null = no collaboration (default).
+   * Receives every local graph mutation as an operation (set by the
+   * CollabController); null without collaboration.
    */
   public opSink: ((op: any) => void) | null = null;
 
-  /** While true, mutations are NOT re-emitted (used while applying remote ops). */
+  /** True while remote operations are applied (they are not re-emitted). */
   private _suppressOps = false;
 
   private _isApplyingTimeGroupPatches = false;
@@ -95,7 +94,7 @@ export class NotationGraphStore {
     return this._afterTimeGroupPatches.asEvent();
   }
 
-  /** Ordinary remote node edits do not own the separately patched group fields. */
+  /** Keeps current time-group fields on a remotely replaced node. */
   private preserveCurrentTimeGroups(node: Node): Node {
     if (!this.hasNode(node.id)) return node;
     const data = { ...node.data };
@@ -112,9 +111,8 @@ export class NotationGraphStore {
   }
 
   /**
-   * Applies an operation received from another collaborator, without
-   * re-broadcasting it. Idempotent: safe to replay an op already reflected in
-   * the graph (e.g. one that raced a save-snapshot).
+   * Applies an operation from another collaborator without re-emitting it.
+   * Replaying an operation that is already applied has no effect.
    */
   public applyRemoteOp(op: any): void {
     this._suppressOps = true;
@@ -352,7 +350,7 @@ export class NotationGraphStore {
     this.emitOp({ t: "updateNode", node: newValue });
   }
 
-  /** Validate the complete batch before changing anything, then publish one op. */
+  /** Validates all patches, applies them and emits one operation. */
   public applyTimeGroupPatches(patches: readonly TimeGroupPatch[]): void {
     if (!Array.isArray(patches))
       throw new Error("Time-group patches must be an array.");
@@ -399,7 +397,6 @@ export class NotationGraphStore {
     const changed: TimeGroupPatch[] = [];
     const nodes: Node[] = [];
     for (const [nodeId, patchData] of merged) {
-      // A remotely deleted member stays deleted; never create a replacement.
       if (!this.hasNode(nodeId)) continue;
       const node = this.getNode(nodeId);
       const data = { ...node.data };

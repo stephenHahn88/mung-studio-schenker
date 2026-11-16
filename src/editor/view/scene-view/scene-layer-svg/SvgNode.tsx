@@ -32,7 +32,7 @@ export function SvgNode(props: SvgNodeProps) {
   );
   const isVisible =
     useAtomValue(classVisibilityStore.getIsClassVisibleAtom(node.className)) ||
-    (isSelected && !isUncertainOnly && !isNoteheadsOnly); // strict focus views also hide selected nodes
+    (isSelected && !isUncertainOnly && !isNoteheadsOnly); // except in temporary views
 
   // decide on how to display
   const colorOverrides = useAtomValue(

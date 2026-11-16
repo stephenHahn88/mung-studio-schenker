@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """Encode frozen PairCNN features of every 64-NN candidate of the pages in a split file.
 
-Only the two box masks enter the CNN (the page channel is empty), so page images are not needed.
-Features are stored as float16 and logits as float32, one file per page.
+Only the two box masks enter the CNN, so page images are not needed. One file per page.
 
   python encode_features.py --cnn work/pair_cnn/split/pair_cnn.pth --output work/features
 """

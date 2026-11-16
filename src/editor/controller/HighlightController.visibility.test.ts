@@ -40,8 +40,7 @@ function fixture(initializeVisibility = true) {
   const visibility = new ClassVisibilityStore(graph, jotai);
   if (initializeVisibility) visibility.showAllClasses();
   const pointerEvents = new SimpleEventDispatcher<DOMPointReadOnly>();
-  // Only the pointer event source needs a seam; graph, visibility, toolbelt,
-  // staff geometry, atoms and controller subscriptions are the real classes.
+  // only the pointer event source is stubbed
   const pointer = {
     onScenePointerChange: pointerEvents.asEvent(),
   } as MousePointerController;

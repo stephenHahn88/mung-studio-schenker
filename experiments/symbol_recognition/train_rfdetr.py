@@ -2,9 +2,8 @@
 
 --config branch_HandSchA   branch on strips; regular-weight snapshots every 10 epochs and at the end
 --config branch_MUSCIMA++  branch on whole pages; the selected checkpoint is checkpoint_best_regular.pth
-The classes are those of the prepared dataset (prepare_rfdetr.py).
-Training stops after 20 epochs without an improvement of at least 0.001 in the native validation mAP50:95, or after
-120 epochs. The accumulation correction and the fixed 2048 x 2048 resize of symbolrec/patches.py are applied.
+Training stops after 20 epochs without an improvement of at least 0.001 in the validation mAP50:95, or after
+120 epochs. The patches of symbolrec/patches.py are applied.
 
 usage:
   python train_rfdetr.py --config branch_HandSchA --dataset work/rf_branch --init work/rf_branch/init.pth --seed 42 --out runs/rf_seed42

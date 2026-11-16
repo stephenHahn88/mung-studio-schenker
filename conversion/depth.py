@@ -1,18 +1,15 @@
-"""Algorithm 1, lines 16-18: structural depth from stem tips.
+"""Structural depth from stem tips.
 
-Line 16 gives depth 0 to noteheads without a stem. Line 17 layers the stems of
-the upper voices (T, IT) and of the lower voices (IB, B) separately: the length
-of a stem is the distance from the centre of its notehead to the stem tip, the
-end of the stem farther from the notehead, in staff spaces, and a tip farther
-from its notehead marks a deeper level. Line 18 aligns the two sets of levels
-so that their deepest levels coincide.
+Noteheads without a stem get depth 0. The stems of the upper voices (T, IT) and
+of the lower voices (IB, B) are layered separately by stem length (notehead
+centre to the far end of the stem, in staff spaces); a longer stem marks a
+deeper level. The two sets of levels are aligned at their deepest level.
 """
 from __future__ import annotations
 
 from .mung import center, is_notehead, stems_of
 
-# Tie-breaking rule 6: stems are sorted by length and a new level starts where
-# a stem is more than LEVEL_RATIO times as long as the next shorter stem.
+# a new level starts where a stem is more than LEVEL_RATIO times as long as the next shorter one
 LEVEL_RATIO = 1.25
 MAX_DEPTH = 12
 UPPER, LOWER = ("T", "IT"), ("IB", "B")
@@ -26,7 +23,7 @@ def stem_length(head, stem, spacing):
 
 
 def layer(lengths):
-    """Line 17 for one group: level 1 for the shortest stems, higher for longer ones."""
+    """Level 1 for the shortest stems of one group, higher for longer ones."""
     levels, level, previous = {}, 0, None
     for length, key in sorted(lengths):
         if previous is None or length > previous * LEVEL_RATIO:
@@ -37,7 +34,7 @@ def layer(lengths):
 
 
 def assign_depths(graph, lane, spacing):
-    """Lines 16-18.
+    """Depth of every notehead.
 
     ``lane`` maps each notehead to the voice of its sequence (T, IT, IB or B),
     ``spacing`` maps each notehead to the line spacing of its staff in pixels.

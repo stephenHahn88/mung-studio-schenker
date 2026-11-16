@@ -24,10 +24,7 @@ interface PendingRegionRun {
   readonly options: ModelRunOptions;
 }
 
-/**
- * Handles the temporary drag-to-run area tool: the annotator drags a
- * rectangle on the page and the chosen model action runs on that region.
- */
+/** Runs a model action on a rectangle dragged on the page. */
 export class RecognitionRegionController implements IController {
   public readonly controllerName = "RecognitionRegionController";
 

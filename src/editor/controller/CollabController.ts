@@ -3,9 +3,7 @@ import { JotaiStore } from "../model/JotaiStore";
 import { NotationGraphStore } from "../model/notation-graph-store/NotationGraphStore";
 import { SelectionStore } from "../model/SelectionStore";
 
-/**
- * Configuration needed to join a document's real-time collaboration session.
- */
+/** Configuration for joining the collaboration session of a document. */
 export interface CollabConfig {
   /** Backend base URL ending with "/" (e.g. "https://host/"). */
   readonly backendUrl: string;
@@ -26,7 +24,6 @@ export interface Peer {
   readonly selection?: readonly number[] | null;
 }
 
-// Stable, distinct colors assigned round-robin to joiners.
 const PALETTE = [
   "#e5484d",
   "#0091ff",
@@ -47,14 +44,9 @@ function randomId(): string {
 }
 
 /**
- * Real-time collaboration engine (Overleaf-style). Streams operations and
- * presence to/from the backend for a single document:
- *   - emits every local graph mutation as an operation (via store.opSink),
- *   - applies remote operations to the local graph,
- *   - broadcasts the local cursor + selection, and exposes peers as an atom.
- *
- * Entirely optional: if no CollabController is constructed, the editor behaves
- * exactly as before. Reconnects automatically (1.5s backoff) if the stream drops.
+ * Real-time collaboration on one document: sends local graph operations and
+ * presence to the backend, applies remote operations and exposes the other
+ * collaborators. Reconnects after 1.5 s when the stream drops.
  */
 export class CollabController {
   private readonly clientId = randomId();
@@ -63,7 +55,7 @@ export class CollabController {
   private abort: AbortController | null = null;
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
-  // throttled node-update coalescing (drags fire many updateNode ops)
+  // node updates coalesced during drags
   private pendingUpdates = new Map<number, any>();
   private updateFlushTimer: ReturnType<typeof setTimeout> | null = null;
   private postQueue: Promise<void> = Promise.resolve();
@@ -75,11 +67,11 @@ export class CollabController {
   private unsubSelection: (() => void) | null = null;
 
   private readonly peersBaseAtom = atom<readonly Peer[]>([]);
-  /** Read-only atom of the OTHER collaborators on this document. */
+  /** Read-only atom of the other collaborators on this document. */
   public readonly peersAtom: Atom<readonly Peer[]> = atom((get) =>
     get(this.peersBaseAtom),
   );
-  /** The local client's assigned color (for consistent self-highlighting). */
+  /** The local client's color. */
   public get selfColor(): string {
     return this.color;
   }
@@ -93,7 +85,7 @@ export class CollabController {
     private readonly selectionStore: SelectionStore,
     private readonly config: CollabConfig,
   ) {
-    // color seeded from clientId so it's stable for this browser session
+    // color derived from the client id
     let h = 0;
     for (const c of this.clientId) h = (h * 31 + c.charCodeAt(0)) >>> 0;
     this.color = PALETTE[h % PALETTE.length];
@@ -158,8 +150,7 @@ export class CollabController {
 
   private postOp(op: any): void {
     if (this.stopped) return;
-    // Freeze this operation now and serialize submissions. A group batch must
-    // arrive between the preceding/following drag ops, never be coalesced away.
+    // Submissions are sent one at a time, in order.
     const body = JSON.stringify({ clientId: this.clientId, op });
     this.postQueue = this.postQueue
       .then(async () => {
@@ -177,8 +168,6 @@ export class CollabController {
           );
       })
       .catch((error) => {
-        // Persistence is still handled by autosave. Do not hide a failed relay
-        // or log its request body/authentication headers.
         console.warn(
           "Could not synchronize an edit; check the saved document before continuing collaboration.",
           error,
@@ -252,8 +241,7 @@ export class CollabController {
 
   private handleEvent(ev: any): void {
     if (ev.type === "init") {
-      // Snapshot logs may have a compacted prefix. On reconnect, replay only
-      // entries newer than this editor's watermark, including our group acks.
+      // On reconnect, replay only entries newer than the last applied seq.
       const entries = [...(ev.oplog ?? [])].sort((a, b) => a.seq - b.seq);
       for (const entry of entries) {
         if (!Number.isSafeInteger(entry.seq) || entry.seq <= this.lastSeenSeq)
@@ -279,8 +267,7 @@ export class CollabController {
   }
 
   private drainServerOperations(): void {
-    // The backend allocates seq under a lock but broadcasts after releasing
-    // it, so two requests can reach SSE subscribers in the opposite order.
+    // Operations can arrive out of order; apply them in seq order.
     while (this.pendingServerOps.has(this.lastSeenSeq + 1)) {
       const seq = this.lastSeenSeq + 1;
       const entry = this.pendingServerOps.get(seq);
@@ -291,10 +278,7 @@ export class CollabController {
   }
 
   private applyServerOperation(entry: any): void {
-    // Group edits are optimistic locally, then replayed in the server's total
-    // order. Ignoring our own acknowledgement would let concurrent same-field
-    // writes settle differently on the two clients. Remote application emits
-    // no echo and does not add a local group undo item.
+    // Time-group patches, including our own, are applied in server order.
     if (entry.op?.t === "patchTimeGroups" || entry.clientId !== this.clientId) {
       this.notationGraphStore.applyRemoteOp(entry.op);
     }

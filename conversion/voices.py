@@ -1,13 +1,10 @@
-"""Algorithm 1, lines 4-15: voices from structural marks.
+"""Voices from structural marks.
 
-Line 4 traces sequences along the precedence links between noteheads. Lines
-5-14 give each sequence a role from its first hollow notehead or beamed note:
-outer treble (T), outer bass (B) or inner. Line 15 places the inner voices in
-the inner treble (IT) and inner bass (IB) lanes in the order of their average
-relative vertical position, and every notehead takes the voice of its sequence.
-
-The rules that the paper leaves open are marked "Tie-breaking rule" below and
-listed in the README.
+Sequences are traced along the precedence links between noteheads. Each sequence
+takes a role from its first hollow notehead or beamed note: outer treble (T),
+outer bass (B) or inner. Inner voices are placed in the inner treble (IT) and
+inner bass (IB) lanes by their average relative vertical position, and every
+notehead takes the voice of its sequence.
 """
 from __future__ import annotations
 
@@ -41,13 +38,10 @@ def is_beamed(graph, head_id):
 
 
 def trace_sequences(graph, time):
-    """Line 4. Split the notehead precedence graph into sequences.
+    """Split the notehead precedence graph into sequences.
 
-    Tie-breaking rule 1: a sequence follows a precedence link only where the
-    voice neither divides nor merges, i.e. the earlier notehead has no other
-    successor and the later notehead has no other predecessor. Every notehead
-    therefore lies in exactly one sequence; where voices divide or merge, the
-    sequence ends and new sequences begin.
+    A sequence follows a precedence link only where the earlier notehead has no
+    other successor and the later notehead has no other predecessor.
     """
     nodes = graph["nodes"]
     heads = sorted(i for i, n in nodes.items() if is_notehead(n))
@@ -90,7 +84,7 @@ def count_above_below(index, sequences, time, y):
 
 
 def sequence_role(graph, index, sequences, time, y, position):
-    """Lines 5-14 for one sequence."""
+    """Role (T, B or inner) of one sequence."""
     nodes = graph["nodes"]
     sequence = sequences[index]
     mark = next((n for n in sequence if is_hollow(nodes[n]) or is_beamed(graph, n)), None)
@@ -102,8 +96,7 @@ def sequence_role(graph, index, sequences, time, y, position):
         if len(directions) == 1:
             role = "T" if directions == {"up"} else "B"
             return {**record, "mark": "hollow", "role": role, "rule": f"hollow notehead, {directions.pop()}ward stem"}
-        # Tie-breaking rule 2: a hollow notehead without a stem, or with stems in
-        # both directions, is treated like a beamed note.
+        # no single stem direction: treated like a beamed note
         kind = "hollow (no single stem direction)"
     else:
         kind = "beamed"
@@ -112,14 +105,13 @@ def sequence_role(graph, index, sequences, time, y, position):
         role = "T" if above > below else "B"
         rule = "more often above other sequences" if above > below else "more often below other sequences"
     else:
-        # Tie-breaking rule 3: without a majority, the staff of the mark decides.
         role = "T" if position[mark] <= .5 else "B"
         rule = "as often above as below; mark is on the " + ("treble" if role == "T" else "bass") + " staff"
     return {**record, "mark": kind, "role": role, "rule": rule, "above": above, "below": below}
 
 
 def assign_voices(graph, time, staves):
-    """Lines 4-15. Returns the voice of every notehead and how it was obtained."""
+    """Return the voice of every notehead and how it was obtained."""
     nodes = graph["nodes"]
     heads = sorted(i for i, n in nodes.items() if is_notehead(n))
     y = {n: center(nodes[n])[1] for n in heads}
@@ -128,10 +120,8 @@ def assign_voices(graph, time, staves):
     records = [sequence_role(graph, k, sequences, time, y, position) for k in range(len(sequences))]
     role = {n: r["role"] for r in records for n in r["notes"]}
 
-    # Tie-breaking rule 4: each time position has one outer treble and one outer
-    # bass note. When several notes there carry the outer treble role, the
-    # highest keeps it; for the outer bass role, the lowest keeps it. The others
-    # are handled as inner-voice notes.
+    # At each time position only the highest T note and the lowest B note keep
+    # their role; the others become inner-voice notes.
     by_time = defaultdict(list)
     for n in heads:
         by_time[time[n]].append(n)
@@ -160,15 +150,9 @@ def assign_voices(graph, time, staves):
                 inner.append(run)
                 run = []
 
-    # Line 15 with tie-breaking rule 5. Inner voices are ordered by their average
-    # relative vertical position. One whose average lies in the upper half of the
-    # grand staff prefers IT, one in the lower half prefers IB. They are placed
-    # from the outside in, so of two overlapping inner voices on the treble side
-    # the higher one gets IT and the lower one IB, and on the bass side the lower
-    # one gets IB and the higher one IT. A voice takes its preferred lane if that
-    # lane is free at all of its time positions, else the other lane if that one
-    # is, else the lane where fewer of its notes collide. A note whose time
-    # position is already taken in that lane stays without a voice.
+    # Inner voices are placed from the outside in: the preferred lane if it is free
+    # at all of their time positions, else the other lane if it is, else the lane
+    # with fewer collisions. Colliding notes stay without a voice.
     voices_inner, average = [], {}
     for k, notes in enumerate(inner):
         average[k] = mean(position[n] for n in notes)

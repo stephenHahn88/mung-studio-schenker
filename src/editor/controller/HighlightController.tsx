@@ -124,7 +124,6 @@ export class HighlightController implements IController {
       return;
     }
 
-    // The same ID can now have another class, geometry, or link data.
     this.setHighlightedNode(
       this.isHighlightedClassVisible(updatedNode) ? updatedNode : null,
     );
@@ -140,8 +139,7 @@ export class HighlightController implements IController {
     ) {
       return false;
     }
-    // Base visibility is initialized lazily by rendered class atoms. An
-    // uninitialized class still follows the normal default visibility.
+    // classes without a visibility entry yet follow the default visibility
     return (
       !this.classVisibilityStore.hiddenClasses.has(node.className) &&
       !DEFAULT_HIDDEN_CLASSES.has(node.className)

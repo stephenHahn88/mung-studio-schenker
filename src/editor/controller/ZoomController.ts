@@ -192,14 +192,7 @@ export class ZoomController {
       this.d3SvgElement = svgElement;
       this.d3ZoomBehavior = zoom;
 
-      // d3 stores its transform independently on each bound element in the
-      // private `__zoom` property. The interaction SVG is replaced when the
-      // user switches between the editable view and Original only. The scene
-      // layers still render our controller transform, but a newly-mounted SVG
-      // otherwise starts from d3.zoomIdentity; the next wheel event would then
-      // make the view jump to the image origin. Seed every replacement SVG
-      // with the controller's existing transform so the visible view and d3's
-      // interaction state remain identical.
+      // a newly mounted SVG starts from the current transform, not the identity
       svgElement.call(zoom.transform, this._currentTransform);
 
       return () => {

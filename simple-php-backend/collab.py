@@ -1,20 +1,9 @@
-"""Real-time collaboration hub for MuNG Studio (Overleaf-style co-editing).
+"""Real-time collaboration hub for MuNG Studio.
 
-In-memory, per-document:
-  * an ordered OPERATION LOG (insertNode / updateNode / removeNode / links / ...)
-    so late joiners replay everything since the last saved snapshot;
-  * SSE SUBSCRIBER queues (one per connected browser) that ops + presence are
-    pushed to;
-  * PRESENCE sessions (who is on the page, their colour, cursor, selection).
-
-Durability is unchanged: clients still autosave the whole mung.xml. That save is
-the compaction checkpoint -- when it lands, the server clears the op log because
-the ops are now baked into disk. So a joiner loads mung.xml (disk) then replays
-only the ops that happened after the last save. Ops are applied idempotently on
-the client, so a rare double-apply (op racing a save) is harmless.
-
-This is a dumb relay: the server never parses the graph. Fine for a handful of
-concurrent annotators; the ThreadingHTTPServer gives one thread per SSE client.
+Per document, in memory: an ordered operation log, SSE subscriber queues (one per connected browser) and presence
+sessions (name, colour, cursor, selection). Clients save the whole mung.xml; each save clears the operation log, so
+a joining client loads mung.xml and replays the operations made since the last save. The server does not parse the
+graph.
 """
 import itertools
 import queue
@@ -82,7 +71,7 @@ class CollabHub:
         return seq
 
     def clear_oplog(self, doc):
-        """Compaction: called after a full-document save lands on disk."""
+        """Clear the operation log after a full-document save."""
         with self._lock:
             d = self._docs.get(doc)
             if d:

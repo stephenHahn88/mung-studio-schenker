@@ -1,18 +1,15 @@
 """Page-level inference with the saved time-group and precedence classifiers.
 
 A node is a dict with keys id (int), class_name, left, top, width, height (pixels). image_size is (width, height).
-The features are computed exactly as in training (temporal/time_model.py, temporal/precedence_model.py); the
-decoding parameters are the validation-selected values stored in the model file (average-linkage threshold for
-time groups, the two successor-selection thresholds for precedence links).
+The decoding thresholds are read from the model file.
 
   predict_time_groups(nodes, image_size, model_path) -> [[node_id, ...], ...]
-      Time groups over the nodes whose class starts with 'notehead' (every such node is in exactly one group;
-      singletons included). Stems ('stem*') and clefs ('*Clef*') among the nodes are used as features.
+      Time groups over the nodes whose class starts with 'notehead' (singletons included). Stems ('stem*') and
+      clefs ('*Clef*') among the nodes are used as features.
   predict_precedence(nodes, image_size, model_path) -> [{'source_id', 'target_id', 'score'}, ...]
       Directed precedence links among all nodes; score is the classifier probability of the link.
 
-Ties in the decodings follow the order of the input nodes, so give the nodes in a fixed order (for example sorted by
-id) to obtain reproducible output.
+Ties follow the order of the input nodes; give the nodes in a fixed order (e.g. sorted by id).
 
 Command line:
   python inference.py time|precedence --model MODEL.joblib --page PAGE.json

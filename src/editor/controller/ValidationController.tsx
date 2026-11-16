@@ -64,8 +64,7 @@ export class ValidationController {
     // when it finishes
     promise
       .then((issues: ValidationIssue[]) => {
-        // Custom classes are an intentional extension of the built-in MuNG
-        // alphabet, so do not report them as accidental unknown spellings.
+        // custom classes are not reported as unknown class names
         const customClasses = new Set(
           this.jotaiStore.get(this.classCatalogStore.customClassNamesAtom),
         );

@@ -68,7 +68,7 @@ export function DocumentsPage() {
     stage: DocumentStage,
     patch: DocumentStagePatch,
   ) => {
-    // Lock synchronously: React has not necessarily rendered disabled controls yet.
+    // one request per document at a time
     if (pendingRequests.current.has(name) || connection.userToken === null)
       return;
     const document = documents?.find((item) => item.name === name);
@@ -85,7 +85,6 @@ export function DocumentsPage() {
       const api = new SimpleBackendApi(connection);
       const stages = await api.setDocumentStatus(name, stage, patch);
       if (generation !== sessionGeneration.current) return;
-      // Only the confirmed server result replaces progress; comments stay intact.
       setDocuments(
         (previous) =>
           previous?.map((item) =>

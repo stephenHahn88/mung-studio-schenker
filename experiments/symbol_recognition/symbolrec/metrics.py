@@ -1,17 +1,13 @@
-"""The eight symbol-detection metrics of Section VI-A.
+"""The eight symbol-detection metrics.
 
-All symbols: at each IoU threshold in 0.50:0.05:0.95 the Ultralytics one-to-one matcher
-(BaseValidator.match_predictions) pairs predictions with ground-truth boxes of the same class, favouring larger
-IoU; Ultralytics ap_per_class integrates each class's precision-recall curve over 101 recall points.
-mAP is the equal mean over classes with ground truth; w-mAP weights each class by its number of instances.
+All symbols: at each IoU threshold in 0.50:0.05:0.95 the Ultralytics matcher (BaseValidator.match_predictions)
+pairs predictions with ground-truth boxes of the same class; Ultralytics ap_per_class integrates each class's
+precision-recall curve over 101 recall points. mAP is the mean over classes with ground truth; w-mAP weights each
+class by its number of instances.
 
 Size subsets (L > 400 and L > 800): COCO-style matching in events(); AP50 over classes with in-range ground truth.
 
 Ignore regions (see data.py) remove unmatched predictions that overlap them at the IoU threshold.
-
-Reproducibility note: match_predictions orders tied IoU values with numpy's default (unstable) argsort, and
-ap_per_class orders tied confidences the same way. This is kept as run. The tie order can depend on the CPU
-(see README.md).
 """
 from collections import Counter, defaultdict
 from types import SimpleNamespace
@@ -131,10 +127,10 @@ def size_subset(pred, truth, names, pages, minimum):
 
 
 def table_metrics(pred, split):
-    """The eight table values in percent for page predictions {page_id: [{box, class_name, score}, ...]}.
+    """The eight metrics in percent for page predictions {page_id: [{box, class_name, score}, ...]}.
 
-    `split` is the dict returned by data.load_split. For the all-symbol columns, predictions whose L is not
-    positive (degenerate boxes) are left out, as in the published scoring. A size column is NaN if the test pages have no symbol above that size.
+    `split` is the dict returned by data.load_split. For the all-symbol metrics, predictions with L <= 0 (degenerate
+    boxes) are left out. A size subset is NaN if the test pages have no symbol above that size.
     """
     names, truth, pages = split['names'], split['truth'], split['pages']
     rows = {p: [dict(box=[float(v) for v in r['box']], class_name=r['class_name'], score=float(r['score']))

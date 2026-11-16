@@ -31,7 +31,7 @@ import {
 } from "../../../mung/classNameToColor";
 import { classNameToDisplayName } from "../../../mung/classNameToDisplayName";
 
-/** Always-visible shared class management in the right inspector column. */
+/** Shared custom classes and class colors. */
 export function SymbolClassesPanel() {
   const { classCatalogStore } = useContext(EditorContext);
   const canAdd = useAtomValue(classCatalogStore.canAddClassesAtom);

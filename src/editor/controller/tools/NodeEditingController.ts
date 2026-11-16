@@ -233,25 +233,13 @@ export class NodeEditingController implements IController {
   // Quick rectangle node creation //
   ///////////////////////////////////
 
-  /**
-   * Callback registered by the class-name input in the inspector panel, used to
-   * move keyboard focus into that input. Null when the input is not mounted
-   * (i.e. when the node editing tool's panel is not shown).
-   */
+  /** Focuses the class-name input; null while the input is not mounted. */
   private focusClassInputCallback: (() => void) | null = null;
 
-  /**
-   * Set when a focus request arrives before the class-name input has mounted
-   * (e.g. right after switching into the node editing tool). The input focuses
-   * itself as soon as it registers its callback.
-   */
+  /** A focus request waiting for the class-name input to mount. */
   private pendingClassInputFocus = false;
 
-  /**
-   * Called by the class-name input component to (un)register its focus method.
-   * Pass null on unmount. If a focus was requested while no input was mounted,
-   * registering one here fulfills that pending request immediately.
-   */
+  /** Called by the class-name input on mount (and with null on unmount). */
   public registerClassInputFocuser(focuser: (() => void) | null): void {
     this.focusClassInputCallback = focuser;
     if (focuser !== null && this.pendingClassInputFocus) {
@@ -260,10 +248,6 @@ export class NodeEditingController implements IController {
     }
   }
 
-  /**
-   * Requests keyboard focus to move into the class-name input. If the input is
-   * not mounted yet, the request is remembered and fulfilled once it mounts.
-   */
   private requestClassInputFocus(): void {
     if (this.focusClassInputCallback !== null) {
       this.focusClassInputCallback();
@@ -273,16 +257,11 @@ export class NodeEditingController implements IController {
   }
 
   /**
-   * Creates a new node whose mask is exactly the given rectangle (a plain
-   * bounding box, with no painted pixel mask), selects it, switches into the
-   * node editing tool and focuses the class-name input for immediate typing.
-   *
-   * This powers the "quick rectangle" gesture (Ctrl/Cmd + drag) — a fast way to
-   * annotate symbols with a regular, box-like shape without drawing a polygon.
-   * The rectangle is given in scene-space coordinates.
+   * Creates a node with the given scene-space rectangle as its box and no mask,
+   * selects it and focuses the class-name input (Ctrl/Cmd + drag).
    */
   public createRectangularNodeFromSceneRect(sceneRect: DOMRect): void {
-    // mung requires integer pixel coordinates, so snap to the grid
+    // integer pixel coordinates
     const rect = snapGrowRectangle(sceneRect);
     if (rect.width < 1 || rect.height < 1) return;
 
@@ -297,7 +276,6 @@ export class NodeEditingController implements IController {
       syntaxInlinks: [],
       precedenceOutlinks: [],
       precedenceInlinks: [],
-      // a null mask means the symbol occupies the entire bounding box
       decodedMask: null,
       textTranscription: null,
       data: {},
@@ -305,11 +283,8 @@ export class NodeEditingController implements IController {
     };
     this.notationGraphStore.insertNode(node);
 
-    // make sure the new node's class is visible
     this.classVisibilityStore.ensureEditedClassIsVisible(node.className);
 
-    // enter the node editing tool (so the class-name panel is shown), select
-    // the new node and jump straight into choosing its class
     this.toolbeltController.setCurrentTool(EditorTool.NodeEditing);
     this.selectionStore.changeSelection([node.id]);
     this.requestClassInputFocus();

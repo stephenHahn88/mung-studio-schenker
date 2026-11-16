@@ -3,14 +3,7 @@ import { useAtomValue } from "jotai";
 import { EditorContext } from "../../EditorContext";
 import { UNCERTAIN_CLASS_NAME } from "../../../mung/ontology/mungClasses";
 
-/**
- * Transparent, click-through overlay that draws every collaborator's live
- * cursor and their current selection, mapped through the scene's zoom/pan
- * transform so they stay pinned to the document as you navigate.
- *
- * Mounted inside the SceneView container (which is position:relative and fills
- * the viewport), so screen coordinates here match the d3 zoom transform.
- */
+/** Cursors and selections of the other collaborators. */
 export function CollabOverlay() {
   const {
     collabController,
@@ -48,7 +41,7 @@ export function CollabOverlay() {
       {peers.map((peer) => {
         const els: React.ReactNode[] = [];
 
-        // --- peer selection: outline each selected node's bbox ---
+        // selection: outline of each selected node
         for (const nodeId of peer.selection ?? []) {
           if (!notationGraphStore.hasNode(nodeId)) continue;
           const n = notationGraphStore.getNode(nodeId);
@@ -73,7 +66,7 @@ export function CollabOverlay() {
           );
         }
 
-        // --- peer cursor: arrow + name label ---
+        // cursor: arrow and name
         if (peer.cursor) {
           const [cx, cy] = toScreen(peer.cursor.x, peer.cursor.y);
           els.push(

@@ -95,8 +95,7 @@ test("full bbox and stroke clearance fit within the ellipse at every tested zoom
         scale,
       );
       const haloRadius = TIME_GROUP_MEMBER_STROKES.lightHalo / 2 / scale;
-      // All corners of a rectangle expanded by the halo radius must remain
-      // strictly inside the ellipse, keeping even rectangular masks uncovered.
+      // the box expanded by the halo radius lies inside the ellipse
       for (const x of [
         node.left - haloRadius,
         node.left + width + haloRadius,

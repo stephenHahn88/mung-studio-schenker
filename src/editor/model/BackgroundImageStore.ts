@@ -18,7 +18,7 @@ export class BackgroundImageStore {
    */
   public readonly imageUrl: string | null;
 
-  /** Aligned scan before ink/staff preprocessing, used for display and raw-page recognition. */
+  /** Original page scan, aligned with the annotation coordinates. */
   public readonly originalImageUrl: string | null;
 
   public readonly isReadyAtom = atom<boolean>(false);

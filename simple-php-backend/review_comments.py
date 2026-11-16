@@ -1,8 +1,6 @@
-"""Thread-safe review comments stored beside each document.
+"""Review comments stored beside each document.
 
-The store deliberately never reads or writes ``mung.xml``. Each document's
-review workflow lives in its own ``review_comments.json`` file so comments can
-be backed up with the document without changing annotation data.
+Each document's comments are kept in its own ``review_comments.json``, separate from ``mung.xml``.
 """
 
 from __future__ import annotations

@@ -14,7 +14,7 @@ def write_json(path, payload):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="python -m conversion",
-                                     description="Convert an annotated MuNG page into SchenkerNote JSON (Algorithm 1).")
+                                     description="Convert an annotated MuNG page into SchenkerNote JSON.")
     parser.add_argument("mung", type=Path, help="MuNG XML file with syntax links, precedence links and time groups")
     parser.add_argument("-o", "--output", type=Path, required=True, help="where to write the SchenkerNote JSON")
     parser.add_argument("--image", type=Path, help="page image (default: an image next to the XML file)")

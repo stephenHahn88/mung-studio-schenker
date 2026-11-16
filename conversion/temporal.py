@@ -1,11 +1,10 @@
-"""Algorithm 1, lines 1-2: time positions from time groups and precedence links.
+"""Time positions from time groups and precedence links.
 
-Line 1 maps precedence links between structural stems to the noteheads that the
-stems are attached to through syntax links. Line 2 orders the time groups
-topologically along the resulting notehead precedence links. When several
-groups are ready at the same step, the group with the smaller median
-horizontal notehead position comes first. The index of a group in this order
-is the time position of its noteheads.
+Precedence links between stems are mapped to the noteheads linked to those
+stems, and the time groups are ordered topologically along the notehead
+precedence links (among ready groups, the smaller median horizontal notehead
+position first). The index of a group in this order is the time position of
+its noteheads.
 """
 from __future__ import annotations
 
@@ -55,7 +54,7 @@ def read_time_groups(graph):
 
 
 def notehead_precedence(graph, group_of):
-    """Line 1: precedence links between noteheads, including those mapped from stems.
+    """Precedence links between noteheads, including those mapped from stems.
 
     A stem endpoint is replaced by the noteheads linked to that stem. The link is
     kept when those noteheads lie in a single time group. Precedence links of
@@ -87,7 +86,7 @@ def notehead_precedence(graph, group_of):
 
 
 def order_time_groups(graph):
-    """Lines 1-2. Returns time groups in order and the time index of each notehead."""
+    """Return the time groups in order and the time index of each notehead."""
     nodes = graph["nodes"]
     groups, group_of, warnings = read_time_groups(graph)
     links, link_warnings = notehead_precedence(graph, group_of)

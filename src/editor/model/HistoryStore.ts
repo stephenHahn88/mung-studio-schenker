@@ -19,11 +19,8 @@ type HistorySnapshot = readonly Node[];
 const MAX_HISTORY_SIZE = 100;
 
 /**
- * Snapshot-based undo/redo history for notation graph changes.
- *
- * Graph operations often perform multiple synchronous node/link edits in a
- * row. The history store records at the end of the current microtask so those
- * edits become a single undoable operation.
+ * Undo/redo history of the notation graph. Edits made in the same microtask
+ * form one history entry.
  */
 export class HistoryStore {
   private readonly notationGraphStore: NotationGraphStore;
@@ -59,7 +56,7 @@ export class HistoryStore {
     this.notationGraphStore.onAfterTimeGroupPatches.subscribe(({ remote }) => {
       if (this.isApplyingSnapshot) return;
       if (remote) {
-        // Rebase the next local history entry. Remote groups are never local undo items.
+        // remote time-group changes are not undo items
         this.currentSnapshot = this.takeSnapshot();
       } else {
         this.recordCurrentSnapshot();
@@ -116,7 +113,7 @@ export class HistoryStore {
       const current =
         this.notationGraphStore.getNode(change.nodeId).data[change.key] ?? null;
       const expected = forward ? change.before : change.after;
-      // A collaborator's newer value owns this field. Undo only our still-current changes.
+      // skip fields that have changed since
       if (!this.areDataValuesEqual(current, expected)) continue;
       patches.push({
         nodeId: change.nodeId,
@@ -131,7 +128,6 @@ export class HistoryStore {
     } finally {
       this.isApplyingSnapshot = false;
     }
-    // Redo only the fields that undo actually changed; never resurrect skipped conflicts.
     return { kind: "timeGroups", changes: applied };
   }
 
@@ -177,8 +173,7 @@ export class HistoryStore {
   private applySnapshot(snapshot: HistorySnapshot): void {
     this.isApplyingSnapshot = true;
     try {
-      // Ordinary graph undo still uses snapshots, but must not erase newer groups
-      // on surviving nodes. Deleted/restored nodes keep their historical memberships.
+      // existing nodes keep their current time-group memberships
       const nodes = this.cloneSnapshot(snapshot).map((node) => {
         if (!this.notationGraphStore.hasNode(node.id)) return node;
         const data = { ...node.data };

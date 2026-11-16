@@ -1,4 +1,4 @@
-"""Graph-to-JSON conversion of one annotated page (Algorithm 1)."""
+"""Graph-to-JSON conversion of one annotated page."""
 from __future__ import annotations
 
 from collections import Counter
@@ -23,7 +23,7 @@ def find_image(mung_xml_path):
     for candidate in candidates:
         if candidate.is_file():
             return candidate
-    raise ConversionError(f"No page image found next to {path.name}; Algorithm 1 needs the page image "
+    raise ConversionError(f"No page image found next to {path.name}; the converter needs the page image "
                           "to detect staff lines. Pass the image path explicitly.")
 
 
@@ -55,7 +55,6 @@ def convert_page(mung_xml_path, image_path=None):
     nodes = graph["nodes"]
     heads = sorted(i for i, n in nodes.items() if is_notehead(n))
 
-    # Lines 1-3.
     temporal = order_time_groups(graph)
     time = temporal["time"]
     pitch = infer_pitches(graph, image_path, time)
@@ -64,9 +63,7 @@ def convert_page(mung_xml_path, image_path=None):
         raise ConversionError("A treble staff above a bass staff could not be found on the page image "
                               f"(found staves: {[s['name'] for s in staves] or 'none'}).")
 
-    # Lines 4-15.
     voices = assign_voices(graph, time, staves)
-    # Lines 16-18.
     staff_by_id = {s["id"]: s for s in staves}
     spacing = {n: staff_by_id[pitch["notes"][n]["staff_id"]]["spacing"] for n in heads}
     depths = assign_depths(graph, voices["lane"], spacing)

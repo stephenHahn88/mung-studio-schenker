@@ -87,13 +87,13 @@ export function SceneView() {
         <ForegroundLayer />
       )}
 
-      {/* Live collaborator cursors + selection (click-through) */}
+      {/* Cursors and selections of other collaborators */}
       {!isOriginalOnly && collabController !== null && <CollabOverlay />}
     </div>
   );
 }
 
-/** Keeps pan/zoom available while guaranteeing that no editing controller runs. */
+/** Pan and zoom without editing controllers. */
 function OriginalPreviewInteractionLayer() {
   const { zoomController } = useContext(EditorContext);
   const svgRef = useRef<SVGSVGElement | null>(null);

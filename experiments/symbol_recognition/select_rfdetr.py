@@ -1,10 +1,9 @@
 """Choose the checkpoint of the HandSchA RF-DETR branch on validation pages (symbolrec/selection.py) and write
 selection.json.
 
-Candidates: the snapshots of train_rfdetr.py (every 10 epochs and the last epoch) and the best native-validation
-checkpoint (checkpoint_best_regular.pth); identical files are scored once. The score is the pooled AP50 of the
-branch classes (read from the checkpoint) over symbols with L > 200 on whole validation pages; the higher score
-wins, ties go to the earlier epoch. The MUSCIMA++ branch uses checkpoint_best_regular.pth and needs no selection.
+Candidates: the snapshots of train_rfdetr.py and checkpoint_best_regular.pth. The score is the pooled AP50 of the
+branch classes over symbols with L > 200 on whole validation pages; ties go to the earlier epoch. The MUSCIMA++
+branch uses checkpoint_best_regular.pth.
 
 usage:
   python select_rfdetr.py --run runs/rf_seed42                      # validation pages of work/coco, data/

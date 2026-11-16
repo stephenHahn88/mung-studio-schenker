@@ -64,11 +64,7 @@ const ACTIONS: readonly {
   },
 ];
 
-/**
- * Panel with the model actions: every model can run on the whole page or on
- * an area dragged on the page. Predictions are proposals that the annotator
- * corrects; they are saved only through the normal autosave.
- */
+/** Model actions, each on the whole page or on a dragged area. */
 export function ModelActionsPanel() {
   const { mainMenuController, recognitionRegionController, autosaveStore } =
     useContext(EditorContext);
@@ -112,7 +108,7 @@ export function ModelActionsPanel() {
         if (!cancelled) setAvailability(models);
       })
       .catch(() => {
-        // The action buttons still report backend connection errors.
+        // errors are reported when an action runs
       });
     return () => {
       cancelled = true;

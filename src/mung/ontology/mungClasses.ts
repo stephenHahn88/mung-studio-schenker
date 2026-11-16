@@ -6,12 +6,8 @@
 import { MungClass } from "./MungClass";
 
 /**
- * Standard MuNG class used as a temporary "needs review" label when an
- * annotator can locate a symbol but cannot determine its final class yet.
- *
- * Keep the persisted value as `unclassified`: it is already part of the MuNG
- * ontology and validation grammar. The UI presents it as "Uncertain" so its
- * intended annotation workflow is clear.
+ * MuNG class for symbols whose class is not decided yet; shown as "Uncertain"
+ * in the UI.
  */
 export const UNCERTAIN_CLASS_NAME = "unclassified";
 

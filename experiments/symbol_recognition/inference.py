@@ -1,30 +1,18 @@
-"""Page-level symbol detection with YOLOv8L + RF-DETR (Section V-A).
+"""Page-level symbol detection with YOLOv8L + RF-DETR.
 
     from inference import detect_symbols
-    M = '../../models/symbol_recognition/'   # model release, downloaded as in models/README.md
+    M = '../../models/symbol_recognition/'
     symbols = detect_symbols('page.jpg', M + 'yolov8l/HandSchA_seed20261021.pt', M + 'rfdetr_branch/HandSchA_seed43.pth', class_names)
 
-Pipeline:
-  1. YOLOv8L on overlapping 1216 x 1216 tiles (stride 960); all tile candidates with confidence >= 0.001 are kept
-     with their tile ownership and interior-tile-edge flags;
-  2. the RF-DETR branch on overlapping full-width strips of height 768 (stride 384), each resized to
-     2048 x 2048; strip predictions with confidence >= 0.001 are mapped to the page and pooled;
-  3. the merge rule of symbolrec/merge.py: YOLOv8L rows outside their tile region are dropped; RF-DETR rows need
-     confidence >= 0.2; class-wise NMS (IoU 0.5) per branch; YOLOv8L fragments of long RF-DETR symbols near
-     interior tile edges are removed; class-wise NMS (IoU 0.5) over both branches.
+YOLOv8L runs on overlapping tiles and RF-DETR on overlapping full-width strips; the two outputs are merged with
+symbolrec/merge.py.
 
-class_names: the vocabulary of the YOLOv8L model in model index order (data/categories.json for
-HandSchA). The RF-DETR class names are read from its checkpoint and must be a subset.
+class_names: the YOLOv8L vocabulary in model index order (data/categories.json for HandSchA). The RF-DETR class
+names, read from its checkpoint, must be a subset.
+region: optional (left, top, right, bottom) in page pixels; only that region is searched.
+score_threshold: optional minimum confidence of the returned boxes.
 
-region: optional (left, top, right, bottom) in page pixels. The crop layouts are then laid over that region only,
-boxes are returned in page coordinates, and L (used by the fragment rule) is still measured on the full page.
-The evaluated setting is region=None (whole page).
-
-score_threshold: optional minimum confidence applied to the merged output (None keeps every merged box down to
-the 0.001 floor, as evaluated).
-
-Returns a list of dicts: class_name, left, top, width, height, score (page pixels, floats), in descending
-confidence order.
+Returns a list of dicts: class_name, left, top, width, height, score (page pixels), in descending confidence order.
 """
 from pathlib import Path
 

@@ -18,7 +18,7 @@ corrects; they are saved with the normal autosave.
   `symbol_detector_prediction`. Detections below the score threshold (default 0.6; the *Symbol score threshold*
   field overrides it for one run, `0` keeps every detection) are dropped.
 - **Syntax and precedence links.** A predicted link is added only between two symbols that are not linked yet by a
-  link of the same type; existing links are never removed.
+  link of the same type; existing links are kept.
 - **Time groups.** Predicted groups are stored like manual groups with `"provenance": "predicted"` and take only
   noteheads that are in no group yet.
 - **Convert to JSON** saves the page and opens the output of `convert_page` in a new tab.

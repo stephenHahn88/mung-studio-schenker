@@ -4,13 +4,10 @@ import {
   readDocumentStages,
 } from "./DocumentWorkflow";
 
-/**
- * Result of the backend action convert-document, which runs the graph-to-JSON
- * conversion (conversion/ in this repository) on the saved MuNG file.
- */
+/** Result of the backend action convert-document. */
 export interface DocumentConversionResult {
   readonly document: string;
-  /** JSON produced by the converter, as returned by convert_page. */
+  /** Output of convert_page. */
   readonly result: unknown;
 }
 
@@ -25,7 +22,7 @@ export class DocumentConversionError extends Error {
   }
 }
 
-/** Require confirmed stage records, including when the directory has legacy data. */
+/** Why the page cannot be converted yet, or null when all stages are done. */
 export function conversionUnavailableReason(
   document: {
     readonly stages?: unknown;
@@ -47,7 +44,7 @@ export function conversionUnavailableReason(
   return "Complete Symbol Recognition, Precedence Links, Syntax Links, and Temporal Structure first.";
 }
 
-/** Only directory filters are carried through navigation, never arbitrary URLs. */
+/** The stage and status filters of a directory URL. */
 function filterSuffix(search: string | URLSearchParams): string {
   const source = new URLSearchParams(search);
   const filtered = new URLSearchParams();
@@ -89,10 +86,7 @@ export function readDocumentConversion(
   return { document: data.document, result: data.result };
 }
 
-/**
- * The notation JSON inside a converter result: the "schenkernote" field when
- * the converter returns a report around it, otherwise the whole result.
- */
+/** The "schenkernote" field of a converter result, or the whole result. */
 export function conversionNotationJson(
   result: DocumentConversionResult,
 ): unknown {
@@ -113,7 +107,7 @@ export function conversionJsonText(value: unknown): string {
   return JSON.stringify(value, null, 2) + "\n";
 }
 
-/** Download name derived from the document name, without path characters. */
+/** Download file name derived from the document name. */
 export function conversionFileName(
   documentName: string,
   suffix: string = "",
@@ -143,12 +137,11 @@ export async function readConversionError(
     else if (typeof body.error === "string" && body.error.trim())
       detail = body.error;
   } catch {
-    // Proxy errors may be HTML; do not display their response body to the user.
+    // not a JSON body
   }
   const fallback =
     defaults[response.status] ?? "Conversion failed. Please try again.";
-  // Authentication and lookup errors always state the next step; converter
-  // errors (422) and an unconfigured converter (503) report the server detail.
+  // the server message is shown except for these statuses
   const message = [401, 403, 404, 409].includes(response.status)
     ? fallback
     : (detail ?? fallback);

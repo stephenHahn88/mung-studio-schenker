@@ -1,7 +1,6 @@
 """Model actions of the MuNG Studio backend.
 
-Each action calls an inference function released with the experiment code of
-this repository:
+Each action calls an inference function of this repository:
 
     action       HTTP action            function
     symbols      detect-symbols         experiments/symbol_recognition/inference.py   detect_symbols
@@ -10,14 +9,8 @@ this repository:
     precedence   predict-precedence     experiments/temporal_relations/inference.py   predict_precedence
     conversion   convert-document       conversion/ (package)                         convert_page
 
-Every call runs in a new Python process (model_worker.py) that imports only
-the component it needs, with the component folder first on sys.path. The
-components therefore never share helper modules (experiments/syntax_links,
-for example, has top-level modules named common, graph and model), each
-component can use its own Python environment, and the server process itself
-needs only the standard library and Pillow. Without model files the tool
-works for manual annotation; the actions then report why they are not
-available.
+Every call runs in a new Python process (model_worker.py) that imports only the component it needs, so each
+component can use its own Python environment. Without model files the actions report that they are unavailable.
 
 The configuration is read from environment variables (ModelConfig.from_env).
 """
@@ -51,10 +44,7 @@ LABELS = {
     "conversion": "Graph-to-JSON conversion",
 }
 
-# Model files used when the variables are not set, relative to
-# MUNG_MODELS_DIR: the released models (symbol detector: YOLOv8L seed 20261021
-# with RF-DETR seed 43, split experiments/symbol_recognition/data/split.json;
-# relation models: held-out split).
+# model files used when the variables are not set, relative to MUNG_MODELS_DIR
 DEFAULT_MODEL_FILES = {
     "MUNG_SYMBOL_YOLO_WEIGHTS": "symbol_recognition/yolov8l/HandSchA_seed20261021.pt",
     "MUNG_SYMBOL_RFDETR_WEIGHTS": "symbol_recognition/rfdetr_branch/HandSchA_seed43.pth",
@@ -63,7 +53,6 @@ DEFAULT_MODEL_FILES = {
     "MUNG_PRECEDENCE_MODEL": "temporal_relations/hgb/precedence_heldout_rachmaninov_seed43.joblib",
 }
 DEFAULT_SYMBOL_CATEGORIES = "experiments/symbol_recognition/data/categories.json"
-# Default detection score threshold of the annotation tool.
 DEFAULT_SCORE_THRESHOLD = 0.6
 
 PYTHON_VARIABLES = {
@@ -239,8 +228,8 @@ def load_class_names(path: Path) -> list[str]:
 
 def parse_nodes(value: Any) -> list[dict]:
     """Convert the nodes sent by the editor into the dicts passed to the
-    relation models, sorted by id so that the result does not depend on the
-    order of the nodes in the editor."""
+    relation models, sorted by id.
+    """
     if not isinstance(value, list) or len(value) > MAX_NODES:
         raise InvalidModelRequest(
             f"Nodes must be a list with at most {MAX_NODES} entries."
@@ -529,9 +518,7 @@ class ModelActions:
                 "links": convert_links(raw, {n["id"] for n in model_nodes})}
 
     def convert_page(self, mung_xml_path: str, image_path: Optional[str] = None) -> Any:
-        """Run conversion.convert_page. Pages the converter cannot convert are
-        reported with a ValueError (its ConversionError), which the server
-        returns as HTTP 422."""
+        """Run conversion.convert_page; a page that cannot be converted raises ValueError."""
         self._check("conversion")
         return self.call("conversion", mung_xml_path=str(mung_xml_path),
                          image_path=None if image_path is None else str(image_path))

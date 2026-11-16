@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
-"""Train the PairCNN of one split as a pairwise link classifier (Section VII-B).
+"""Train the PairCNN of one split as a pairwise link classifier.
 
-The CNN is trained from random initialization on the training pages of the split file only:
-40 epochs, Adam 1e-3, cosine decay, batch 256, label smoothing 0.1. Training pairs are the symbol
-pairs whose box gap is at most the gate of their class pair, learned from the same training pages:
-clip(1.2 x the 99.5th percentile of annotated link gaps for that class pair, 40, 900) pixels,
-and 60 pixels for class pairs without an annotated link. Each epoch samples up to 25,000
-positives and five negatives per sampled positive. The final epoch is saved.
+The CNN is trained from random initialization on the training pages of the split file: 40 epochs, Adam 1e-3, cosine
+decay, batch 256, label smoothing 0.1. Training pairs are the symbol pairs whose box gap is within the gate of their
+class pair (learn_gates; GATE_DEFAULT for class pairs without an annotated link). Each epoch samples up to 25,000
+positives and five negatives per positive. The final epoch is saved.
 
   python pair_cnn.py --output work/pair_cnn/split
 """

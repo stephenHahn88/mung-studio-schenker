@@ -1,5 +1,5 @@
 """Train the time-group and precedence-link classifiers on the training pages of the split and select their decoding
-thresholds on the validation pages (pooled F1; ties go to the first grid entry).
+thresholds on the validation pages (pooled F1).
 
   OMP_NUM_THREADS=1 python train.py --seed 42 --out runs
 

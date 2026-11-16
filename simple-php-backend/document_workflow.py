@@ -1,7 +1,7 @@
-"""Shared four-stage document progress, with legacy read/patch compatibility.
+"""Four-stage document progress, stored in each document's ``status.json``.
 
-Reads never migrate data. Writes change one stage under the same path lock and
-use the caller's atomic writer, preserving unrelated and unknown JSON fields.
+The top-level status and annotator are those of the recognition stage. A write changes one stage atomically and
+keeps all other JSON fields.
 """
 
 import copy
@@ -10,8 +10,7 @@ import json
 import os
 import threading
 
-# Keep the historical `assembly` storage key for the renamed Precedence Links
-# category. Syntax Links is independent and is never inferred from old progress.
+# the Precedence Links stage is stored under the key "assembly"
 STAGES = ("recognition", "assembly", "syntax", "temporal")
 DOCUMENT_STATUSES = frozenset({
     "not-started", "in-progress", "pending-review", "changes-requested", "done",
@@ -62,9 +61,7 @@ def _read_raw(path):
         raise InvalidStoredWorkflow("Stored workflow cannot be read safely.") from exc
     if not isinstance(data, dict):
         raise InvalidStoredWorkflow("Stored workflow must be an object.")
-    # Unknown fields must survive the next atomic write too. JSON parsing alone
-    # accepts overflowing floats and escaped lone surrogates, neither of which
-    # can be emitted as finite UTF-8 JSON without changing the saved value.
+    # the data must be writable back unchanged
     try:
         json.dumps(data, ensure_ascii=False, allow_nan=False).encode("utf-8")
     except (ValueError, UnicodeError, RecursionError) as exc:
@@ -88,7 +85,7 @@ def _stage(value):
 
 
 def _snapshot(data):
-    # Validate legacy fields as well: never silently overwrite unsupported data.
+    # the top-level fields are the default of the recognition stage
     legacy = _stage(data)
     staged = data.get("stages", {})
     if not isinstance(staged, dict):

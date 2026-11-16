@@ -6,7 +6,7 @@ onmessage = async (
   // https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Transferable_objects
   const [nodeId, [r, g, b], imageData] = e.data;
 
-  // set image data to use the shared display color for this class
+  // set image data to use the display color of the class
   for (let i = 0; i < imageData.data.length; i += 4) {
     imageData.data[i] = r;
     imageData.data[i + 1] = g;

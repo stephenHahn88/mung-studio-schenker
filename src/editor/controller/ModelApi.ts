@@ -2,17 +2,8 @@ import { resolveBackendUrl } from "../../pages/simple-backend/resolveBackendUrl"
 
 /**
  * Client for the model actions of the Python backend
- * (simple-php-backend/server.py and simple-php-backend/model_actions.py).
- *
- * Every action runs one of the models described in the paper on the page that
- * is open in the editor:
- *
- * - detect-symbols: symbol detector (YOLOv8L + RF-DETR)
- * - predict-syntax-links: syntax-link model
- * - predict-time-groups: time-group model
- * - predict-precedence: precedence-link model
- *
- * The client never writes MuNG data; the caller decides what to insert.
+ * (simple-php-backend/server.py): detect-symbols, predict-syntax-links,
+ * predict-time-groups and predict-precedence.
  */
 
 /** Rectangle in page pixel coordinates. */
@@ -83,7 +74,7 @@ export type ModelAvailabilityMap = Partial<
   Record<ModelActionId, ModelAvailability>
 >;
 
-/** Confidence inputs never silently substitute a different threshold. */
+/** A confidence in [0, 1]; null for empty or invalid input. */
 export function parseConfidence(text: string): number | null {
   if (text.trim() === "") return null;
   const value = Number(text);

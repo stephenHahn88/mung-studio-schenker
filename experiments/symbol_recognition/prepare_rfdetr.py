@@ -1,12 +1,11 @@
 """RF-DETR training data (roboflow COCO layout: <out>/train and <out>/valid, each with _annotations.coco.json).
 
-Targets are the symbols with L > 200 (Table XI). The branch learns every class that has at least one such target
-on the training pages; the class list (model index order = category id order) is written to <out>/classes.json.
+Targets are the symbols with L > 200. The branch learns every class that has at least one such target on the
+training pages; the class list (model index order) is written to <out>/classes.json.
 
---mode strips   HandSchA: each page is cut into full-width strips of height 768 (stride 384); a symbol with
-                L > 200 is a target of a strip when at least 90% of its area is visible in it (the box is clipped
-                to the strip). Pages are taken in page-id order. Class indices are 0..N-1.
---mode pages    MUSCIMA++: whole pages; every symbol with L > 200 is a target. Category ids of the source are kept.
+--mode strips   HandSchA: full-width strips of height 768 (stride 384); a symbol is a target of a strip when at
+                least 90% of its area is visible in it (the box is clipped to the strip).
+--mode pages    MUSCIMA++: whole pages; category ids of the source are kept.
 
 usage:
   python prepare_rfdetr.py --mode strips --out work/rf_branch       # work/coco from make_coco.py, images in data/

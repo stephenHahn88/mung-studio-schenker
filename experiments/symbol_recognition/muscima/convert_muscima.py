@@ -3,15 +3,12 @@
 Inputs:
   --muscima    folder with v2.0/data/annotations/*.xml and v2.0/specifications/mff-muscima-mlclasses-annot.xml
                (https://github.com/OMR-Research/muscima-pp/releases/download/v2.0/MUSCIMA-pp_v2.0.zip) and
-               datasets_r_staff/images/*.png (staff-removed CVC-MUSCIMA pages, as distributed for completeOMR);
-               not redistributed here (MUSCIMA++ and CVC-MUSCIMA are CC BY-NC-SA 4.0)
+               datasets_r_staff/images/*.png (staff-removed CVC-MUSCIMA pages, as distributed for completeOMR)
   --split      muscima/completeomr_split.json: the train/val/test page lists of completeOMR's splits/mob_split.yaml
                (https://github.com/guang-yng/completeOMR, commit 771e52f94091f98e979122ba3051cd5921d1c0fe)
   --classes    muscima/completeomr_classes.json: CLASS_LIST_ESSN of completeOMR's utils/constants.py (same commit)
-Output: <out>/{train,val,test}.coco.json, categories.json and images/ (links to the page images).
-Classes: the 73 classes of --classes ordered by their MUSCIMA++ schema id, numbered 0..72. Every node of those
-classes is a target (the box of the node); other classes are left out. MUSCIMA++ pages are binary images with white
-symbols on a black background.
+Output: <out>/{train,val,test}.coco.json, categories.json and images/ (links to the page images). The 73 classes are
+numbered 0..72 in the order of their MUSCIMA++ schema id; nodes of other classes are left out.
 
 usage: python muscima/convert_muscima.py --muscima MUSCIMA++ --out work/muscima_coco
 """

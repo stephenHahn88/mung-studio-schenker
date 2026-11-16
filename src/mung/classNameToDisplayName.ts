@@ -1,18 +1,12 @@
 import { UNCERTAIN_CLASS_NAME } from "./ontology/mungClasses";
 
-/**
- * Human-friendly class labels for the annotation UI. MuNG XML continues to
- * store the canonical class name, so display aliases never change the data.
- */
+/** Class name shown in the annotation UI ("Uncertain" for unclassified). */
 export function classNameToDisplayName(className: string): string {
   if (className === UNCERTAIN_CLASS_NAME) return "Uncertain";
   return className;
 }
 
-/**
- * Accept the friendly uncertainty label when entered through the free-form
- * class picker, while persisting the canonical MuNG class name.
- */
+/** Maps the typed label "Uncertain" to the MuNG class name. */
 export function normalizeClassNameInput(className: string): string {
   const normalized = className.trim().toLowerCase();
   if (

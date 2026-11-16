@@ -4,7 +4,6 @@ import Box from "@mui/joy/Box";
 import Tooltip from "@mui/joy/Tooltip";
 import { EditorContext } from "../../EditorContext";
 
-/** Initials for the little avatar circle. */
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
@@ -12,11 +11,7 @@ function initials(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-/**
- * Live "who's on this page" bar (top-right of the scene). Shows the local user
- * plus every other collaborator currently viewing/editing the document, each in
- * their assigned color.
- */
+/** The local user and the other collaborators on this document. */
 export function PresenceBar() {
   const { collabController } = useContext(EditorContext);
   const peers = useAtomValue(collabController!.peersAtom);

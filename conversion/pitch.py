@@ -1,4 +1,4 @@
-"""Algorithm 1, line 3: staff lines from the page image and pitch of each notehead.
+"""Staff lines from the page image and the pitch of each notehead.
 
 Staff lines are found as five evenly spaced long rows of dark pixels. The staff
 of each clef is the detected staff whose middle line is closest to the clef.
@@ -201,7 +201,7 @@ def spell(step, alter):
 
 
 def infer_pitches(graph, image_path, time):
-    """Line 3. Returns staves, key and per-notehead pitch with any warnings."""
+    """Return staves, key and per-notehead pitch with any warnings."""
     rgb, gray = load_gray(image_path)
     staves, warnings = staves_for_clefs(graph, detect_staves(gray))
     signatures, key_warnings = key_signatures(graph, staves) if staves else ([], [])

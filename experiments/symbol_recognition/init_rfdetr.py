@@ -1,24 +1,17 @@
-"""COCO-only RF-DETR Medium initializations with fresh class heads (no music-trained weights).
+"""RF-DETR Medium initializations from the official COCO checkpoint, with new class heads.
 
-Source: the official COCO RF-DETR Medium checkpoint
-  https://storage.googleapis.com/rfdetr/medium_coco/checkpoint_best_regular.pth
-  (sha256 749ff6071828aaffac63e204c4f4135ed3d6cdae4d702e086c360edc3b5768c8; rfdetr caches it as rf-detr-medium.pth).
+COCO checkpoint: https://storage.googleapis.com/rfdetr/medium_coco/checkpoint_best_regular.pth
+(rfdetr caches it as rf-detr-medium.pth).
 
---layout branch (HandSchA branch): every tensor is copied from COCO, keeping its 300 queries in 13 groups. The
-    class heads (class_embed and the 13 transformer.enc_out_class_embed layers, one row per class + background) are
-    fresh: with torch.manual_seed(0), each weight is a torch.nn.Linear default initialization drawn in checkpoint
-    key order, each bias is the focal prior logit(0.01); the background row of both is copied from the COCO
-    background row.
---layout repack (MUSCIMA++ branch): with torch.manual_seed(SEED), the first NUM_QUERIES COCO query rows are
-    repacked into one query group, the other groups' encoder-output layers are removed, and the class heads are a
-    fresh torch.nn.Linear with bias -log(99) (as in the RF-DETR model constructor). SEED is the training seed of the
-    run (20261027 or 20261104).
+--layout branch (HandSchA): all COCO tensors are copied; the class heads are newly initialized.
+--layout repack (MUSCIMA++): the first --num-queries COCO queries form one query group; the class heads are newly
+    initialized with seed --seed.
 
 usage:
   python init_rfdetr.py --coco rf-detr-medium.pth --classes work/rf_branch/classes.json --layout branch --out work/rf_branch/init.pth
   python init_rfdetr.py --coco rf-detr-medium.pth --classes work/rf_branch/M/classes.json --layout repack --num-queries 300 \
       --num-select 3000 --seed 20261027 --out init_muscima_seed20261027.pth
---classes is the classes.json written by prepare_rfdetr.py (class names in model index order).
+--classes is the classes.json written by prepare_rfdetr.py.
 """
 import argparse
 import json

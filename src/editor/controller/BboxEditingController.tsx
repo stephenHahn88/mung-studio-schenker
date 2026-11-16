@@ -48,13 +48,7 @@ const EMPTY_INTERACTION_STATE: BboxInteractionState = {
 
 const MIN_BBOX_SIZE = 2;
 
-/**
- * Lets annotators move and resize any node via bounding-box handles. Moving
- * carries the node's pixel mask along with the box; resizing keeps the mask
- * pixels that still fall inside the new box, drops those now outside it, and
- * leaves any newly-exposed area empty (see commitRect / cropMaskToRect). A node
- * with no mask (null) represents "fills the whole box" and stays that way.
- */
+/** Moves and resizes the selected node with bounding-box handles. */
 export class BboxEditingController implements IController {
   public readonly controllerName = "BboxEditingController";
 
@@ -138,8 +132,7 @@ export class BboxEditingController implements IController {
 
   public onMouseDown(e: MouseEvent): void {
     if (e.button !== 0) return;
-    // Ctrl/Cmd + Shift + click is reserved for edge creation; don't start a
-    // bbox move/resize drag on that gesture.
+    // Ctrl/Cmd + Shift + click creates edges.
     if ((e.ctrlKey || e.metaKey) && e.shiftKey) return;
 
     const node = this.getEditableSelectedNode();
@@ -197,9 +190,6 @@ export class BboxEditingController implements IController {
   }
 
   private isEditableBboxNode(_node: Node): boolean {
-    // Every node can be moved/resized via the bounding-box handles. The pixel
-    // mask (if any) is carried/cropped to the new box on edit (see commitRect),
-    // so it stays in sync with the box dimensions.
     return true;
   }
 
@@ -218,11 +208,6 @@ export class BboxEditingController implements IController {
     const dimsChanged =
       normalized.width !== node.width || normalized.height !== node.height;
 
-    // Re-anchor the pixel mask to the new bounding box:
-    //  - move (size unchanged): the mask travels with the box (unchanged);
-    //  - resize: keep mask pixels still inside the new box, drop those now
-    //    outside it, and leave any newly-exposed area empty.
-    // A null mask means "fills the whole box" and stays null.
     let decodedMask = node.decodedMask;
     if (decodedMask !== null && dimsChanged) {
       decodedMask = this.cropMaskToRect(decodedMask, oldRect, normalized);
@@ -239,12 +224,8 @@ export class BboxEditingController implements IController {
   }
 
   /**
-   * Re-expresses a node's pixel mask for a resized bounding box. The mask is
-   * treated as anchored in absolute scene coordinates: a pixel stays ink iff
-   * its absolute position is still inside the new box. Cells of the new box
-   * that lie outside the old box are left empty (transparent). The returned
-   * ImageData has exactly the new box's dimensions, so it stays consistent with
-   * the box (a hard requirement of the MuNG mask format).
+   * Crops a mask to a resized box in scene coordinates. Area of the new box
+   * outside the old box is left empty.
    */
   private cropMaskToRect(
     mask: ImageData,
@@ -258,7 +239,6 @@ export class BboxEditingController implements IController {
     const out = new ImageData(nw, nh); // zero-filled => expanded area is empty
     const src = mask.data;
     const dst = out.data;
-    // old index for a new pixel (x,y): absolute (newLeft+x, newTop+y) - oldOrigin
     const dx = newRect.left - oldRect.left;
     const dy = newRect.top - oldRect.top;
     for (let y = 0; y < nh; y++) {

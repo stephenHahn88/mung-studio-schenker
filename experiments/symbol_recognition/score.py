@@ -1,7 +1,7 @@
-"""Score one set of YOLOv8L + RF-DETR test predictions with the eight metrics of Section VI-A.
+"""Score one set of YOLOv8L + RF-DETR test predictions with the eight symbol-detection metrics.
 
-The two prediction files (written by predict_yolo.py and predict_rfdetr.py) are merged with the rule of Section V-A
-(symbolrec/merge.py) and compared with the ground truth of the test pages of the split.
+The two prediction files (written by predict_yolo.py and predict_rfdetr.py) are merged with symbolrec/merge.py and
+compared with the ground truth of the test pages of the split.
 
 Example (HandSchA, split of data/split.json; work/coco written by make_coco.py, ignore regions from data/):
   python score.py --files pred/yolov8l/HandSchA_seed20261021_test.json.gz pred/rfdetr_branch/HandSchA_seed42_test.json.gz \

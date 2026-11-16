@@ -18,10 +18,10 @@ curl -L -o models/symbol_recognition/rfdetr_branch/MUSCIMA_M_seed20261027.pth $R
 | `symbol_recognition/rfdetr_branch/HandSchA_seed43.pth` | RF-DETR branch, HandSchA | `experiments/symbol_recognition/`, `data/split.json` |
 | `symbol_recognition/yolov8l/MUSCIMA_M_seed20261027.pt` | YOLOv8L branch, MUSCIMA++ | `experiments/symbol_recognition/`, `muscima/completeomr_split.json` |
 | `symbol_recognition/rfdetr_branch/MUSCIMA_M_seed20261027.pth` | RF-DETR branch, MUSCIMA++ | `experiments/symbol_recognition/`, `muscima/completeomr_split.json` |
-| `syntax_links/incidence/handscha/heldout/seed_42/` | syntax-link model folder | `experiments/syntax_links/`, `data/split.json` (held-out split) |
-| `syntax_links/pair_cnn/handscha/heldout_seed42.pth` | CNN of the syntax-link model folder (copied there as `pair_cnn.pth`) | `experiments/syntax_links/`, `data/split.json` (held-out split) |
-| `temporal_relations/hgb/time_groups_heldout_rachmaninov_seed42.joblib` | time-group model | `experiments/temporal_relations/`, `data/split.json` (held-out split) |
-| `temporal_relations/hgb/precedence_heldout_rachmaninov_seed43.joblib` | precedence-link model | `experiments/temporal_relations/`, `data/split.json` (held-out split) |
+| `syntax_links/incidence/handscha/heldout/seed_42/` | syntax-link model folder | `experiments/syntax_links/`, `data/split.json` |
+| `syntax_links/pair_cnn/handscha/heldout_seed42.pth` | CNN of the syntax-link model folder (copied there as `pair_cnn.pth`) | `experiments/syntax_links/`, `data/split.json` |
+| `temporal_relations/hgb/time_groups_heldout_rachmaninov_seed42.joblib` | time-group model | `experiments/temporal_relations/`, `data/split.json` |
+| `temporal_relations/hgb/precedence_heldout_rachmaninov_seed43.joblib` | precedence-link model | `experiments/temporal_relations/`, `data/split.json` |
 
 The annotation tool uses the two HandSchA symbol checkpoints and these relation models ([`docs/model-actions.md`](../docs/model-actions.md)).
 

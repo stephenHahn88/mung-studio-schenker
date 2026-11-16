@@ -1,14 +1,9 @@
 """Precedence links: rightward same-family candidates, 19 pair features, a histogram gradient-boosting pair
 classifier, and successor selection with two thresholds.
 
-Families used for the candidates (family()): all notehead classes, all stem classes (stemStructural), Arabic
-numerals (numeral1-9), Roman numerals (numeralRoman*), letters (character*) and accidentals (accidental*) each form
-one family, and every other class is its own family. Every symbol of a page gets candidates. Annotated links between
-different families are never candidates and count as false negatives.
-
-The rank features use NumPy's default (unstable) argsort. Symbols of one family can share an exact center x, and the
-order of such ties depends on the SIMD sort kernels NumPy selects for the CPU, so results can differ slightly between
-CPUs with and without AVX-512.
+Families (family()): all notehead classes, all stem classes, Arabic numerals (numeral1-9), Roman numerals
+(numeralRoman*), letters (character*) and accidentals (accidental*) each form one family; every other class is its
+own family.
 """
 import collections
 import json
@@ -120,8 +115,7 @@ def decode(p, I, J, prob, t1, t2):
 
 
 def counts(items, t1, t2):
-    """Pooled directed-edge TP, FP, FN; items = [(page, I, J, prob), ...]. Annotated links that are not candidates
-    are false negatives."""
+    """Pooled directed-edge TP, FP, FN; items = [(page, I, J, prob), ...]."""
     tp = fp = fn = 0
     for p, I, J, prob in items:
         P = decode(p, I, J, prob, t1, t2); tp += len(P & p['truth']); fp += len(P - p['truth']); fn += len(p['truth'] - P)
@@ -129,6 +123,6 @@ def counts(items, t1, t2):
 
 
 def grid():
-    """Decoding grid (t1, t2) in search order; validation ties go to the first entry."""
+    """Decoding grid (t1, t2) in search order."""
     ts = list(np.arange(0.05, 0.95, 0.05)) + [0.97, 0.99]
     return [(a, b) for a in ts for b in (0.5, 0.7, 0.8, 0.9, 0.95, 0.99, 1.01) if b >= a]

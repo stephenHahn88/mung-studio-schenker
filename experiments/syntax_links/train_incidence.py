@@ -2,9 +2,8 @@
 """Train the incidence-attention syntax-link model on the training pages of one split.
 
 The CNN features of all pages must have been written by encode_features.py with the given PairCNN.
-After every epoch the model scores the validation pages; the checkpoint with the highest validation
-directed-link average precision is kept, and its threshold maximizes pooled validation micro-F1
-(ties: recall, then the larger threshold). The output folder is a model folder for inference.py:
+The checkpoint with the highest validation directed-link average precision is kept, with the threshold that
+maximizes pooled validation micro-F1. The output folder is a model folder for inference.py:
 incidence.pt, direction.pkl, pair_cnn.pth, categories.json and model.json, plus the training
 records CONFIG.json, HISTORY.json and RESULT.json.
 

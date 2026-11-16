@@ -112,11 +112,8 @@ export class SelectionController implements IController {
   public onMouseDown(e: MouseEvent) {
     if (e.button !== 0) return; // LMB only
 
-    // Ctrl/Cmd + Shift + click on a node toggles a syntax edge between the
-    // currently selected node(s) and the clicked node. (Plain ctrl+click is
-    // taken by the ctrl+drag quick-rectangle node gesture, so the edge gesture
-    // lives on ctrl+shift.) The selection is kept, so you can connect one
-    // source to several targets by ctrl+shift+clicking each of them.
+    // Ctrl/Cmd + Shift + click toggles syntax edges from the selected nodes to
+    // the clicked node; the selection is kept.
     if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
       const target = this.highlighter.highlightedNode;
       if (target !== null) {
@@ -133,9 +130,7 @@ export class SelectionController implements IController {
       return;
     }
 
-    // Ctrl/Cmd + drag is reserved for quick-rectangle creation in Pointer
-    // mode. Do not swallow the modifier in Syntax/Precedence mode: those link
-    // tools intentionally use Ctrl/Cmd + click/drag to select their targets.
+    // Ctrl/Cmd + drag creates a quick rectangle in Pointer mode.
     if (
       (e.ctrlKey || e.metaKey) &&
       this.toolbeltController.currentTool === EditorTool.Pointer

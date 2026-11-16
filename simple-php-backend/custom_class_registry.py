@@ -1,9 +1,7 @@
-"""Persistent, shared custom symbol classes for MuNG Studio.
+"""Shared custom symbol classes for MuNG Studio.
 
-The registry is deliberately separate from per-document ``mung.xml`` files:
-adding a class makes it available to annotators without rewriting any existing
-annotation.  Writes are atomic and serialized because the Python backend is a
-threaded HTTP server.
+The classes are stored in one JSON file, separate from the documents' ``mung.xml`` files. Writes are atomic and
+serialized.
 """
 
 from __future__ import annotations

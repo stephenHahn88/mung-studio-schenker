@@ -29,7 +29,7 @@ export class AutosaveStore {
   private currentRevision = 0;
   private saveInFlight = false;
 
-  /** Capture immediately before serializing a manual save. */
+  /** Current revision of the graph. */
   public get revision(): number {
     return this.currentRevision;
   }

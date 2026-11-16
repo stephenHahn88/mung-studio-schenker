@@ -25,9 +25,9 @@ export interface TimeGroupOverlayGeometry extends TimeGroupOverlayInput {
 
 export interface TimeGroupOverlayLayoutOptions {
   readonly memberMarkers?: readonly TimeGroupMemberMarker[];
-  /** Annotation bboxes that handles/labels must not cover, including ungrouped notes. */
+  /** Boxes that handles and labels must not cover. */
   readonly extraObstacles?: readonly TimeGroupDisplayBounds[];
-  /** Omit for all labels. An empty set draws none, leaving every diamond. */
+  /** Groups whose labels are shown (all when omitted). */
   readonly visibleLabelIds?: ReadonlySet<string>;
 }
 
@@ -40,7 +40,7 @@ function intersects(
   );
 }
 
-/** Wrap the complete user label, including long words and CJK text. */
+/** Splits a group label into lines. */
 export function wrapTimeGroupLabel(label: string): readonly string[] {
   const lines: string[] = [];
   let line: string[] = [];
@@ -64,9 +64,7 @@ export function wrapTimeGroupLabel(label: string): readonly string[] {
 }
 
 /**
- * Display-only layout. Rails connect actual member coordinates; their positions
- * and the order in which labels are placed express no musical time or depth.
- * All annotation dimensions remain constant in screen pixels as the page zooms.
+ * Places the rail, handle and label of each group. Sizes are in screen pixels.
  */
 export function layoutTimeGroupOverlays(
   inputs: readonly TimeGroupOverlayInput[],
@@ -99,8 +97,7 @@ export function layoutTimeGroupOverlays(
       markerY = Math.min(markerY, bounds.top - 12 * pixel);
     }
 
-    // A second group sharing notes gets its own adjacent rail, instead of
-    // concealing the first group's marker or implying a second note position.
+    // groups sharing notes get adjacent rails
     while (
       placed.some(
         (other) =>
@@ -112,8 +109,7 @@ export function layoutTimeGroupOverlays(
       railX -= 14 * pixel;
     }
 
-    // Keep the small diamond target clear of every member ring/badge. The
-    // diamond and rail never move merely because a group becomes active.
+    // keep the handle clear of member markers
     let markerCollision: TimeGroupDisplayBounds | undefined;
     while (
       (markerCollision = obstacles.find((bounds) =>
@@ -136,8 +132,7 @@ export function layoutTimeGroupOverlays(
       Math.max(
         ...labelLines.map(
           (line) =>
-            // Conservative width at 11px includes wide Latin letters and CJK;
-            // actual text is rendered at its normal width, never stretched.
+            // upper bound of the label width at 11px per character
             Array.from(line).length * 11,
         ),
       ) * pixel;
@@ -160,8 +155,7 @@ export function layoutTimeGroupOverlays(
       labelVisible,
     });
   }
-  // Place labels after all diamonds are known so no label hides another
-  // group's clickable target. Hidden labels reserve no page space.
+  // labels are placed after all handles
   const labelObstacles = [
     ...obstacles,
     ...placed.map((other) => ({

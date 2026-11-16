@@ -3,10 +3,7 @@ export function resolveBackendUrl(configuredUrl?: string): string | undefined {
     return undefined;
   }
 
-  // SAME_ORIGIN: the backend serves both the API and this built frontend, so
-  // talk to whatever origin the page was loaded from. This keeps the hosted
-  // deployment working even when the public URL changes, because
-  // nothing about the origin is baked into the build.
+  // SAME_ORIGIN: the backend also serves the frontend
   if (configuredUrl === "SAME_ORIGIN") {
     return trimTrailingSlash(window.location.origin);
   }

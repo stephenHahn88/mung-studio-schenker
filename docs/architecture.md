@@ -42,7 +42,7 @@ The react pages currently have these responsibilities:
 - Provide access (read only, or writable) to MuNG documents from various sources. These might be:
     - Uploaded documents stored in browser's local storage (called **in-memory**)
     - Documents from a simple PHP backend server
-    - Documents from a complex python backend with OMR capabilities (to be added)
+    - Documents from the Python backend with model actions ([python-backend.md](python-backend.md))
     - Documents from the local filesystem when deployed as desktop app via Electron (to be added)
 
 The first page the user lands on is the `src/ui/HomePage.tsx`, which provides quick access to all document sources, plus some introduction and metadata about MuNG Studio itself.
