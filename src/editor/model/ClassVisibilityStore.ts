@@ -3,6 +3,9 @@ import { NotationGraphStore } from "./notation-graph-store/NotationGraphStore";
 import { SignalAtomWrapper } from "./SignalAtomWrapper";
 import { SignalAtomCollection } from "./SignalAtomCollection";
 import { ISimpleEvent, SimpleEventDispatcher } from "strongly-typed-events";
+import { UNCERTAIN_CLASS_NAME } from "../../mung/ontology/mungClasses";
+import { JotaiStore } from "./JotaiStore";
+import { isNotehead } from "../../mung/TimeGroups";
 
 /**
  * Class names that should be hidden in the default visibility state.
@@ -203,12 +206,16 @@ export class ClassVisibilityStore {
   /**
    * Jotai store used to access atoms from plain JS
    */
-  private readonly jotaiStore = getDefaultStore();
+  private readonly jotaiStore: JotaiStore;
 
   private readonly notationGraphStore: NotationGraphStore;
 
-  constructor(notationGraphStore: NotationGraphStore) {
+  constructor(
+    notationGraphStore: NotationGraphStore,
+    jotaiStore: JotaiStore | null = null,
+  ) {
     this.notationGraphStore = notationGraphStore;
+    this.jotaiStore = jotaiStore ?? getDefaultStore();
 
     this.notationGraphStore.onClassNameCountsChange.subscribe(
       this.onClassNamesCountsChange.bind(this),
@@ -216,6 +223,10 @@ export class ClassVisibilityStore {
   }
 
   private onClassNamesCountsChange() {
+    if (this._isUncertainOnly) {
+      this.recomputeUncertainOnlyHiddenClasses();
+    }
+    if (this._isNoteheadsOnly) this.recomputeNoteheadsOnlyClasses();
     for (const className of this.notationGraphStore.classNames) {
       this.ensureHasClass(className);
     }
@@ -236,17 +247,131 @@ export class ClassVisibilityStore {
   private _hiddenClasses: ReadonlySet<string> = new Set<string>();
 
   /**
+   * Temporary reviewer view. The base sets above are left untouched so
+   * disabling this mode restores the exact previous visibility state, even
+   * when graph classes change while the mode is active.
+   */
+  private _isUncertainOnly = false;
+  private readonly uncertainOnlyVisibleClasses: ReadonlySet<string> = new Set([
+    UNCERTAIN_CLASS_NAME,
+  ]);
+  private uncertainOnlyHiddenClasses: ReadonlySet<string> = new Set<string>();
+
+  /** A view filter, never a change to the graph or the base visibility sets. */
+  private _isNoteheadsOnly = false;
+  private resumeUncertainOnlyAfterNoteheads = false;
+  private noteheadsOnlyVisibleClasses: ReadonlySet<string> = new Set<string>();
+  private noteheadsOnlyHiddenClasses: ReadonlySet<string> = new Set<string>();
+
+  /**
    * Returns the set of visible class names
    */
   public get visibleClasses(): ReadonlySet<string> {
-    return this._visibleClasses;
+    if (this._isNoteheadsOnly) return this.noteheadsOnlyVisibleClasses;
+    return this._isUncertainOnly
+      ? this.uncertainOnlyVisibleClasses
+      : this._visibleClasses;
   }
 
   /**
    * Returns the set of hidden class names
    */
   public get hiddenClasses(): ReadonlySet<string> {
-    return this._hiddenClasses;
+    if (this._isNoteheadsOnly) return this.noteheadsOnlyHiddenClasses;
+    return this._isUncertainOnly
+      ? this.uncertainOnlyHiddenClasses
+      : this._hiddenClasses;
+  }
+
+  /** Whether the temporary uncertainty-review view is active. */
+  public get isUncertainOnly(): boolean {
+    return this._isUncertainOnly;
+  }
+
+  public get isNoteheadsOnly(): boolean {
+    return this._isNoteheadsOnly;
+  }
+
+  private getKnownClassNames(): readonly string[] {
+    return [
+      ...new Set([
+        ...this.notationGraphStore.classNames,
+        ...this._visibleClasses,
+        ...this._hiddenClasses,
+        UNCERTAIN_CLASS_NAME,
+      ]),
+    ];
+  }
+
+  private recomputeNoteheadsOnlyClasses() {
+    const classes = this.getKnownClassNames();
+    this.noteheadsOnlyVisibleClasses = new Set(
+      classes.filter((className) => isNotehead({ className })),
+    );
+    this.noteheadsOnlyHiddenClasses = new Set(
+      classes.filter((className) => !isNotehead({ className })),
+    );
+  }
+
+  /**
+   * Temporarily show all noteheads, regardless of their base visibility. An
+   * active uncertainty view is suspended until this focus mode is disabled.
+   */
+  public setNoteheadsOnly(isEnabled: boolean) {
+    if (this._isNoteheadsOnly === isEnabled) return;
+    this._isNoteheadsOnly = isEnabled;
+    if (isEnabled) {
+      this.resumeUncertainOnlyAfterNoteheads = this._isUncertainOnly;
+      this._isUncertainOnly = false;
+      this.recomputeNoteheadsOnlyClasses();
+    } else {
+      this._isUncertainOnly = this.resumeUncertainOnlyAfterNoteheads;
+      this.resumeUncertainOnlyAfterNoteheads = false;
+      if (this._isUncertainOnly) this.recomputeUncertainOnlyHiddenClasses();
+    }
+    this.broadcastTemporaryViewChange();
+  }
+
+  private recomputeUncertainOnlyHiddenClasses() {
+    this.uncertainOnlyHiddenClasses = new Set(
+      this.getKnownClassNames().filter(
+        (className) => className !== UNCERTAIN_CLASS_NAME,
+      ),
+    );
+  }
+
+  /**
+   * Enables or disables the temporary uncertainty-review view without
+   * changing the user's underlying per-class visibility choices.
+   */
+  public setUncertainOnly(isEnabled: boolean) {
+    const leavesNoteheads = isEnabled && this._isNoteheadsOnly;
+    // An explicit uncertainty-view action supersedes any suspended state.
+    this.resumeUncertainOnlyAfterNoteheads = false;
+    if (this._isUncertainOnly === isEnabled && !leavesNoteheads) return;
+    if (leavesNoteheads) this._isNoteheadsOnly = false;
+    this._isUncertainOnly = isEnabled;
+    if (isEnabled) this.recomputeUncertainOnlyHiddenClasses();
+    this.broadcastTemporaryViewChange();
+  }
+
+  /**
+   * A manual class-visibility action supersedes the temporary reviewer view.
+   * Since the base visibility sets were never changed, no restoration work is
+   * needed here.
+   */
+  private exitTemporaryViewsForManualVisibilityChange() {
+    if (!this._isUncertainOnly && !this._isNoteheadsOnly) return;
+    this._isUncertainOnly = false;
+    this._isNoteheadsOnly = false;
+    this.resumeUncertainOnlyAfterNoteheads = false;
+    this.broadcastTemporaryViewChange();
+  }
+
+  private broadcastTemporaryViewChange() {
+    this.broadcastVisibilityChange(this.getKnownClassNames());
+    this.uncertainOnlySignalAtom.signal(this.jotaiStore.set);
+    this.noteheadsOnlySignalAtom.signal(this.jotaiStore.set);
   }
 
   /**
@@ -275,6 +400,9 @@ export class ClassVisibilityStore {
       ]);
     }
 
+    if (this._isNoteheadsOnly) this.recomputeNoteheadsOnlyClasses();
+    if (this._isUncertainOnly) this.recomputeUncertainOnlyHiddenClasses();
+
     // broadcast change
     this._onChange.dispatch([className]);
     this.globalSignalAtom.signal(this.jotaiStore.set);
@@ -285,6 +413,20 @@ export class ClassVisibilityStore {
    * Sets visibility of a class name
    */
   public setClassVisibility(className: string, isVisible: boolean) {
+    this.exitTemporaryViewsForManualVisibilityChange();
+    this.setBaseClassVisibility(className, isVisible);
+  }
+
+  /**
+   * Makes an edited node's class visible in the underlying view without
+   * leaving either temporary filter. This lets a reviewer
+   * resolve one Uncertain node and continue directly to the next one.
+   */
+  public ensureEditedClassIsVisible(className: string) {
+    this.setBaseClassVisibility(className, true);
+  }
+
+  private setBaseClassVisibility(className: string, isVisible: boolean) {
     if (isVisible && this._visibleClasses.has(className)) return;
     if (!isVisible && this._hiddenClasses.has(className)) return;
 
@@ -301,6 +443,9 @@ export class ClassVisibilityStore {
     this._visibleClasses = newVisibleClasses;
     this._hiddenClasses = newHiddenClasses;
 
+    if (this._isNoteheadsOnly) this.recomputeNoteheadsOnlyClasses();
+    if (this._isUncertainOnly) this.recomputeUncertainOnlyHiddenClasses();
+
     // broadcast change
     this._onChange.dispatch([className]);
     this.globalSignalAtom.signal(this.jotaiStore.set);
@@ -311,6 +456,7 @@ export class ClassVisibilityStore {
    * Sets all classes to hidden
    */
   public hideAllClasses() {
+    this.exitTemporaryViewsForManualVisibilityChange();
     // change state
     this._visibleClasses = new Set<string>([]);
     this._hiddenClasses = new Set<string>(this.notationGraphStore.classNames);
@@ -327,6 +473,7 @@ export class ClassVisibilityStore {
    * Sets all classes to visible
    */
   public showAllClasses() {
+    this.exitTemporaryViewsForManualVisibilityChange();
     // change state
     this._visibleClasses = new Set<string>(this.notationGraphStore.classNames);
     this._hiddenClasses = new Set<string>([]);
@@ -343,6 +490,7 @@ export class ClassVisibilityStore {
    * Shows only listed classes and sets others to hidden
    */
   public showOnlyTheseClasses(classNames: Iterable<string>) {
+    this.exitTemporaryViewsForManualVisibilityChange();
     // change state
     this._visibleClasses = new Set<string>(classNames);
     this._hiddenClasses = new Set<string>(
@@ -363,6 +511,7 @@ export class ClassVisibilityStore {
    * Hides only listed classes and sets others to visible
    */
   public hideOnlyTheseClasses(classNames: Iterable<string>) {
+    this.exitTemporaryViewsForManualVisibilityChange();
     // change state
     this._hiddenClasses = new Set<string>(classNames);
     this._visibleClasses = new Set<string>(
@@ -385,6 +534,31 @@ export class ClassVisibilityStore {
 
   private readonly globalSignalAtom = new SignalAtomWrapper();
   private readonly classSignalAtoms = new SignalAtomCollection<string>();
+  private readonly uncertainOnlySignalAtom = new SignalAtomWrapper();
+  private readonly noteheadsOnlySignalAtom = new SignalAtomWrapper();
+
+  public readonly isNoteheadsOnlyAtom: WritableAtom<boolean, [boolean], void> =
+    atom(
+      (get) => {
+        this.noteheadsOnlySignalAtom.subscribe(get);
+        return this._isNoteheadsOnly;
+      },
+      (_get, _set, newValue: boolean) => this.setNoteheadsOnly(newValue),
+    );
+
+  /**
+   * Writable atom for the temporary uncertainty-review view.
+   */
+  public readonly isUncertainOnlyAtom: WritableAtom<boolean, [boolean], void> =
+    atom(
+      (get) => {
+        this.uncertainOnlySignalAtom.subscribe(get);
+        return this._isUncertainOnly;
+      },
+      (get, set, newValue: boolean) => {
+        this.setUncertainOnly(newValue);
+      },
+    );
 
   private isClassVisibleAtoms = new Map<
     string,
@@ -416,6 +590,14 @@ export class ClassVisibilityStore {
     }
 
     return this.isClassVisibleAtoms.get(className)!;
+  }
+
+  private broadcastVisibilityChange(classNames: readonly string[]) {
+    this._onChange.dispatch(classNames);
+    this.globalSignalAtom.signal(this.jotaiStore.set);
+    for (const className of classNames) {
+      this.classSignalAtoms.get(className).signal(this.jotaiStore.set);
+    }
   }
 
   ////////////

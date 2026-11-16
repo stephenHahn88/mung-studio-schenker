@@ -1,0 +1,13 @@
+{
+  "dataset": "handscha",
+  "k_neighbours": 64,
+  "pair_cnn": {
+    "file": "pair_cnn.pth",
+    "released_as": "pair_cnn/handscha/heldout_seed42.pth",
+    "sha256": "69087ba09b600a5d583124d5192307e423dddeb427c8962c9fc0f27514346ed0"
+  },
+  "seed": 42,
+  "selected_epoch": 57,
+  "split_file": "data/split.json",
+  "threshold": 0.44
+}

@@ -31,6 +31,8 @@ import { RecognitionRegionController } from "./controller/RecognitionRegionContr
 import { BboxEditingController } from "./controller/BboxEditingController";
 import { QuickRectNodeController } from "./controller/tools/QuickRectNodeController";
 import { CollabController, CollabConfig } from "./controller/CollabController";
+import { ClassCatalogStore } from "./model/ClassCatalogStore";
+import { TimeGroupStore } from "./model/TimeGroupStore";
 
 /**
  * All fields present in the editor component's global context
@@ -39,6 +41,7 @@ export interface EditorContextState {
   readonly backgroundImageStore: BackgroundImageStore;
   readonly notationGraphStore: NotationGraphStore;
   readonly selectionStore: SelectionStore;
+  readonly timeGroupStore: TimeGroupStore;
   readonly classVisibilityStore: ClassVisibilityStore;
   readonly staffGeometryStore: StaffGeometryStore;
   readonly editorStateStore: EditorStateStore;
@@ -66,6 +69,7 @@ export interface EditorContextState {
   readonly recognitionRegionController: RecognitionRegionController;
   readonly nodeNavigationController: NodeNavigationController;
   readonly collabController: CollabController | null;
+  readonly classCatalogStore: ClassCatalogStore;
 }
 
 /**
@@ -75,12 +79,20 @@ export function useConstructContextServices(
   initialNodes: readonly Node[],
   initialMungFileMetadata: MungFileMetadata,
   backgroundImageUrl: string | null,
+  originalBackgroundImageUrl: string | null = null,
   collabConfig: CollabConfig | null = null,
+  initialCustomClassNames: readonly string[] = [],
+  initialClassColorOverrides: Readonly<Record<string, string>> = {},
 ): EditorContextState {
   const jotaiStore: JotaiStore = useMemo(() => getDefaultStore(), []);
 
   const backgroundImageStore = useMemo(
-    () => new BackgroundImageStore(backgroundImageUrl, jotaiStore),
+    () =>
+      new BackgroundImageStore(
+        backgroundImageUrl,
+        jotaiStore,
+        originalBackgroundImageUrl,
+      ),
     [],
   );
 
@@ -94,8 +106,23 @@ export function useConstructContextServices(
     [],
   );
 
+  const timeGroupStore = useMemo(
+    () => new TimeGroupStore(notationGraphStore, selectionStore, jotaiStore),
+    [],
+  );
+
   const classVisibilityStore = useMemo(
-    () => new ClassVisibilityStore(notationGraphStore),
+    () => new ClassVisibilityStore(notationGraphStore, jotaiStore),
+    [],
+  );
+
+  const classCatalogStore = useMemo(
+    () =>
+      new ClassCatalogStore(
+        jotaiStore,
+        initialCustomClassNames,
+        initialClassColorOverrides,
+      ),
     [],
   );
 
@@ -138,6 +165,7 @@ export function useConstructContextServices(
         notationGraphStore,
         pythonRuntime,
         deltaInterpreter,
+        classCatalogStore,
       ),
     [],
   );
@@ -264,6 +292,7 @@ export function useConstructContextServices(
         classVisibilityStore,
         backgroundImageStore,
         historyStore,
+        timeGroupStore,
       ),
     [],
   );
@@ -307,6 +336,7 @@ export function useConstructContextServices(
     backgroundImageStore,
     notationGraphStore,
     selectionStore,
+    timeGroupStore,
     classVisibilityStore,
     staffGeometryStore,
     editorStateStore,
@@ -334,6 +364,7 @@ export function useConstructContextServices(
     recognitionRegionController,
     nodeNavigationController,
     collabController,
+    classCatalogStore,
   };
 }
 

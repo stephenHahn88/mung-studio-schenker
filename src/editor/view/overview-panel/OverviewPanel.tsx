@@ -19,8 +19,9 @@ import { AutosaveStatus } from "./AutosaveStatus";
 import { DocumentAccordionPanel } from "./DocumentAccordionPanel";
 import { ViewAccordionPanel } from "./ViewAccordionPanel";
 import { SelectionAccordionPanel } from "./SelectionAccordionPanel";
-import { RecognitionQuickAction } from "./RecognitionQuickAction";
-import { BackupButton } from "./BackupButton";
+import { ModelActionsPanel } from "./ModelActionsPanel";
+import { TimeGroupsPanel } from "./TimeGroupsPanel";
+import { PageImagePanel } from "./PageImagePanel";
 import { useState } from "react";
 
 export interface OverviewPanelProps {
@@ -73,6 +74,22 @@ export function OverviewPanel(props: OverviewPanelProps) {
         flexDirection: "column",
         width: "300px",
         height: "100%",
+        minHeight: 0,
+        flexShrink: 0,
+        overflowX: "hidden",
+        overflowY: "auto",
+        overscrollBehavior: "contain",
+        scrollbarGutter: "stable",
+        scrollbarWidth: "thin",
+        scrollbarColor: "var(--joy-palette-neutral-500) transparent",
+        "&::-webkit-scrollbar": { width: "10px" },
+        "&::-webkit-scrollbar-thumb": {
+          backgroundColor: "var(--joy-palette-neutral-500)",
+          borderRadius: "8px",
+          border: "2px solid transparent",
+          backgroundClip: "padding-box",
+        },
+        touchAction: "pan-y",
         borderWidth: "0 1px 0 0",
       }}
     >
@@ -95,19 +112,31 @@ export function OverviewPanel(props: OverviewPanelProps) {
         {props.fileName}
       </Typography>
 
-      <Box sx={{ px: 1, py: 1 }}>
-        <BackupButton />
-      </Box>
+      <Sheet
+        color="primary"
+        variant="soft"
+        sx={{ mx: 1, my: 1, p: 1.25, borderRadius: "sm" }}
+      >
+        <PageImagePanel />
+      </Sheet>
 
-      {/* Recognition (the symbol-detection model tools) — collapsible so it can
-          be tucked away when the user is just annotating. */}
+      {/* Model actions (symbols, syntax links, time groups, precedence links,
+          conversion), collapsible so they can be tucked away while annotating. */}
       <AccordionGroup>
         <Accordion defaultExpanded={true}>
           <AccordionSummary>
-            <Typography level="title-sm">Recognition</Typography>
+            <Typography level="title-sm">Model predictions</Typography>
           </AccordionSummary>
           <AccordionDetails>
-            <RecognitionQuickAction />
+            <ModelActionsPanel />
+          </AccordionDetails>
+        </Accordion>
+        <Accordion defaultExpanded={true}>
+          <AccordionSummary>
+            <Typography level="title-sm">Time groups</Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <TimeGroupsPanel />
           </AccordionDetails>
         </Accordion>
       </AccordionGroup>
@@ -116,8 +145,8 @@ export function OverviewPanel(props: OverviewPanelProps) {
 
       <Box
         sx={{
-          flexGrow: 1,
-          overflowY: "scroll",
+          flexShrink: 0,
+          overflow: "visible",
         }}
       >
         <AccordionGroup>

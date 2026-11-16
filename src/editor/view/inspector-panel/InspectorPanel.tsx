@@ -7,6 +7,7 @@ import { TextTranscriptionPanel } from "./TextTranscriptionPanel";
 import { StafflinesToolPanel } from "./StafflinesToolPanel";
 import { SelectionPanel } from "./SelectionPanel";
 import { GraphViewPanel } from "./GraphViewPanel";
+import { SymbolClassesPanel } from "./SymbolClassesPanel";
 
 /**
  * The right-side panel, showing details about selected nodes.
@@ -36,6 +37,7 @@ export function InspectorPanel() {
         }}
       >
         <AccordionGroup>
+          <SymbolClassesPanel />
           <StafflinesToolPanel />
           <NodeEditingToolPanel />
           <SyntaxLinksToolPanel />

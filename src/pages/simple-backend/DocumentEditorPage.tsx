@@ -19,6 +19,18 @@ export function DocumentEditorPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
+  const [customClassNames, setCustomClassNames] = useState<string[]>([]);
+  const [classColorOverrides, setClassColorOverrides] = useState<
+    Readonly<Record<string, string>>
+  >({});
+  const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (imageUrl !== null) URL.revokeObjectURL(imageUrl);
+      if (originalImageUrl !== null) URL.revokeObjectURL(originalImageUrl);
+    };
+  }, [imageUrl, originalImageUrl]);
 
   useEffect(() => {
     if (connection.userToken === null) {
@@ -31,6 +43,9 @@ export function DocumentEditorPage() {
       setIsLoading(true);
       setMung(null);
       setImageUrl(null);
+      setOriginalImageUrl(null);
+      setCustomClassNames([]);
+      setClassColorOverrides({});
       setError(null);
 
       try {
@@ -44,24 +59,72 @@ export function DocumentEditorPage() {
           /* non-fatal: presence just shows a generic name */
         }
 
-        // download MuNG and parse into nodes
-        const mungXmlString = await api.getDocumentMung(documentName);
+        // The class registry is global and intentionally separate from the
+        // document annotation file.
+        const [mungXmlString, imageBlob, originalImageBlob, classCatalog] =
+          await Promise.all([
+            api.getDocumentMung(documentName),
+            api.getDocumentImage(documentName),
+            api.getDocumentOriginalImage(documentName).catch(() => null),
+            api.getClassCatalog(),
+          ]);
         const parsedMung = readMungXmlString(mungXmlString);
 
-        // download background image
-        const imageBlob = await api.getDocumentImage(documentName);
         const downloadedImageUrl =
           imageBlob === null ? null : URL.createObjectURL(imageBlob);
+        const downloadedOriginalImageUrl =
+          originalImageBlob === null
+            ? null
+            : URL.createObjectURL(originalImageBlob);
 
         setMung(parsedMung);
         setImageUrl(downloadedImageUrl);
+        setOriginalImageUrl(downloadedOriginalImageUrl);
+        setCustomClassNames(classCatalog.classes.map((item) => item.name));
+        setClassColorOverrides(classCatalog.colorOverrides);
         setIsLoading(false);
       } catch (e) {
         setError(String(e));
         setIsLoading(false);
       }
     })();
-  }, [connection.userToken]);
+  }, [connection.backendUrl, connection.userToken, documentName]);
+
+  // Keep already-open annotation tabs in sync when another annotator adds a
+  // class. The registry is tiny, so a low-frequency refresh is sufficient.
+  useEffect(() => {
+    if (connection.userToken === null) return;
+    let isActive = true;
+    const refreshClasses = async () => {
+      try {
+        const catalog = await new SimpleBackendApi(
+          connection,
+        ).getClassCatalog();
+        if (!isActive) return;
+        const names = catalog.classes.map((item) => item.name);
+        setCustomClassNames((previous) =>
+          previous.length === names.length &&
+          previous.every((name, index) => name === names[index])
+            ? previous
+            : names,
+        );
+        setClassColorOverrides((previous) =>
+          JSON.stringify(previous) === JSON.stringify(catalog.colorOverrides)
+            ? previous
+            : catalog.colorOverrides,
+        );
+      } catch (caught) {
+        console.warn("Could not refresh shared symbol classes.", caught);
+      }
+    };
+    const intervalId = window.setInterval(refreshClasses, 30_000);
+    window.addEventListener("focus", refreshClasses);
+    return () => {
+      isActive = false;
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", refreshClasses);
+    };
+  }, [connection.backendUrl, connection.userToken]);
 
   async function onSave(mung: MungFile): Promise<void> {
     const mungXmlString = writeMungXmlString(mung);
@@ -70,10 +133,6 @@ export function DocumentEditorPage() {
   }
 
   function onClose() {
-    if (imageUrl !== null) {
-      URL.revokeObjectURL(imageUrl);
-    }
-
     navigate("/simple-backend");
   }
 
@@ -91,9 +150,27 @@ export function DocumentEditorPage() {
           initialMungFileMetadata={mung.metadata}
           initialNodes={mung.nodes}
           backgroundImageUrl={imageUrl}
+          originalBackgroundImageUrl={originalImageUrl}
           onSave={onSave}
           onClose={onClose}
           fileName={documentName}
+          initialCustomClassNames={customClassNames}
+          initialClassColorOverrides={classColorOverrides}
+          onAddCustomClass={async (className: string) => {
+            const result = await new SimpleBackendApi(
+              connection,
+            ).addCustomClass(className);
+            setCustomClassNames(result.classes.map((item) => item.name));
+            return result.class.name;
+          }}
+          onSetClassColor={async (className: string, color: string | null) => {
+            const result = await new SimpleBackendApi(connection).setClassColor(
+              className,
+              color,
+            );
+            setClassColorOverrides(result.colorOverrides);
+            return result.colorOverrides;
+          }}
           collabConfig={
             connection.userToken !== null
               ? {

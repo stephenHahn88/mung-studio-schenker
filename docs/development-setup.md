@@ -2,8 +2,10 @@
 
 ## Setting up
 
-- Clone the repo `git clone git@github.com:OmniOMR/mung-studio.git`
-- Install npm packages from the lock file `npm ci`
+- Clone the repo `git clone https://github.com/stephenHahn88/mung-studio-schenker.git`
+- Install npm packages from the lock file `npm ci` (Node.js 24 was used)
+- Start the frontend with `npm start` (port 1234) and the Python backend with
+  `npm run start-backend` (port 8080); see [python-backend.md](python-backend.md)
 
 
 ## New feature development
@@ -13,10 +15,13 @@
 
 Before commit:
 
-- Run linter and prettier
-- TODO: Linter needs setting up
+- Run the tests, linter and prettier
 
 ```bash
+# frontend unit tests (node:test via tsx) and backend unit tests (unittest)
+npm test
+npm run test-backend
+
 # run linter and formatter
 npm run lint
 npm run prettier-write
@@ -55,6 +60,8 @@ The `mstudio` package is part of this repository, but it's better to open it as 
 - Copy the `dist` folder to the web server
 
 
-## Deploying Simple PHP Backend
+## Deploying the backend
 
-See the [Simple PHP Backend](simple-php-backend.md) documentation page.
+See [Hosting MuNG Studio for a team](web-deployment.md), the
+[Python backend](python-backend.md) and the original
+[Simple PHP Backend](simple-php-backend.md) documentation pages.

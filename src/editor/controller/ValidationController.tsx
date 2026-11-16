@@ -6,6 +6,7 @@ import { writeMungXmlString } from "../../mung/writeMungXmlString";
 import { JotaiStore } from "../model/JotaiStore";
 import { ValidationIssue } from "../model/ValidationIssue";
 import { DeltaInterpreter } from "../model/DeltaInterpreter";
+import { ClassCatalogStore } from "../model/ClassCatalogStore";
 
 /**
  * Contains the logic behind mung validation, running in the background.
@@ -17,6 +18,7 @@ export class ValidationController {
   private readonly notationGraphStore: NotationGraphStore;
   private readonly pythonRuntime: PythonRuntime;
   private readonly deltaInterpreter: DeltaInterpreter;
+  private readonly classCatalogStore: ClassCatalogStore;
 
   constructor(
     jotaiStore: JotaiStore,
@@ -24,12 +26,14 @@ export class ValidationController {
     notationGraphStore: NotationGraphStore,
     pythonRuntime: PythonRuntime,
     deltaInterpreter: DeltaInterpreter,
+    classCatalogStore: ClassCatalogStore,
   ) {
     this.jotaiStore = jotaiStore;
     this.validationStore = validationStore;
     this.notationGraphStore = notationGraphStore;
     this.pythonRuntime = pythonRuntime;
     this.deltaInterpreter = deltaInterpreter;
+    this.classCatalogStore = classCatalogStore;
   }
 
   // TODO: observe changes to the graph, debounce, and trigger validations
@@ -60,8 +64,19 @@ export class ValidationController {
     // when it finishes
     promise
       .then((issues: ValidationIssue[]) => {
-        // incorporate new data into the app
-        this.validationStore.acceptNewerIssues(issues);
+        // Custom classes are an intentional extension of the built-in MuNG
+        // alphabet, so do not report them as accidental unknown spellings.
+        const customClasses = new Set(
+          this.jotaiStore.get(this.classCatalogStore.customClassNamesAtom),
+        );
+        const relevantIssues = issues.filter((issue) => {
+          if (issue.code !== 5002) return true;
+          if (!this.notationGraphStore.hasNode(issue.nodeId)) return true;
+          return !customClasses.has(
+            this.notationGraphStore.getNode(issue.nodeId).className,
+          );
+        });
+        this.validationStore.acceptNewerIssues(relevantIssues);
       })
       .catch((e) => {
         // display error in the UI and the console

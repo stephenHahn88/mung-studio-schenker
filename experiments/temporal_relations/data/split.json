@@ -1,0 +1,99 @@
+{
+ "time": {
+  "train": [
+   "bach_fugue_in_bb_minor_wtc_2_overview001",
+   "bach_st_matthew_passion_part_ii_sketches005",
+   "berg_three_orchestral_pieces_praeludium_no_1_graph001",
+   "berg_three_orchestral_pieces_praeludium_no_1_graph002",
+   "berg_three_orchestral_pieces_praeludium_no_1_graph003",
+   "berg_three_orchestral_pieces_praeludium_no_1_graph004",
+   "contrapunctusxi_middleground",
+   "monteverdi_lamento_della_ninfa002",
+   "pachelbel_f_sharp_minor_ricercar_middleground",
+   "schubert_einsamkeit_graphs001",
+   "schubert_einsamkeit_graphs002",
+   "schubert_einsamkeit_graphs003",
+   "schubert_einsamkeit_graphs004",
+   "schubert_einsamkeit_graphs009",
+   "sean_cmajfantasy_3_11",
+   "sean_cmajfantasy_3_12",
+   "sean_cmajfantasy_3_13a",
+   "sean_cmajfantasy_3_13b",
+   "sean_cmajfantasy_3_14b",
+   "sean_cmajfantasy_3_16b",
+   "sean_cmajfantasy_3_17",
+   "sean_cmajfantasy_3_18b",
+   "sean_cmajfantasy_3_18c",
+   "sean_cmajfantasy_3_20",
+   "sean_cmajfantasy_3_20a"
+  ],
+  "val": [
+   "bach_st_matthew_passion_part_ii_sketches004",
+   "contrapunctusviii_middleground",
+   "schubert_einsamkeit_graphs005",
+   "sean_cmajfantasy_3_15",
+   "sean_cmajfantasy_3_19b"
+  ],
+  "test": [
+   "rachmaninov_the_bells_second_mvmt_001",
+   "rachmaninov_the_bells_second_mvmt_002",
+   "rachmaninov_the_bells_second_mvmt_003",
+   "rachmaninov_the_bells_second_mvmt_004",
+   "rachmaninov_the_bells_second_mvmt_005",
+   "rachmaninov_the_bells_second_mvmt_006",
+   "rachmaninov_the_bells_second_mvmt_007"
+  ]
+ },
+ "precedence": {
+  "train": [
+   "bach_st_matthew_passion_part_ii_sketches004",
+   "berg_three_orchestral_pieces_praeludium_no_1_graph001",
+   "berg_three_orchestral_pieces_praeludium_no_1_graph002",
+   "berg_three_orchestral_pieces_praeludium_no_1_graph003",
+   "berg_three_orchestral_pieces_praeludium_no_1_graph004",
+   "contrapunctusviii_middleground",
+   "monteverdi_lamento_della_ninfa002",
+   "pachelbel_f_sharp_minor_ricercar_middleground",
+   "schubert_einsamkeit_graphs001",
+   "schubert_einsamkeit_graphs003",
+   "schubert_einsamkeit_graphs004",
+   "schubert_einsamkeit_graphs005",
+   "schubert_einsamkeit_graphs009",
+   "sean_cmajfantasy_3_11",
+   "sean_cmajfantasy_3_12",
+   "sean_cmajfantasy_3_13a",
+   "sean_cmajfantasy_3_13b",
+   "sean_cmajfantasy_3_14b",
+   "sean_cmajfantasy_3_16b",
+   "sean_cmajfantasy_3_17",
+   "sean_cmajfantasy_3_18b",
+   "sean_cmajfantasy_3_18c",
+   "sean_cmajfantasy_3_20",
+   "sean_cmajfantasy_3_20a",
+   "sean_cmajfantasy_3_20b",
+   "sean_der_wanderer_001",
+   "sean_der_wanderer_002",
+   "sean_wanderer_fantasy_2nd_mvt_001",
+   "sean_wanderer_fantasy_2nd_mvt_002",
+   "wtcii_f_sharp_fugue_subjects"
+  ],
+  "val": [
+   "bach_fugue_in_bb_minor_wtc_2_overview001",
+   "bach_st_matthew_passion_part_ii_sketches005",
+   "contrapunctusxi_middleground",
+   "schubert_einsamkeit_graphs002",
+   "sean_cmajfantasy_3_15",
+   "sean_cmajfantasy_3_19b",
+   "sean_der_wanderer_003"
+  ],
+  "test": [
+   "rachmaninov_the_bells_second_mvmt_001",
+   "rachmaninov_the_bells_second_mvmt_002",
+   "rachmaninov_the_bells_second_mvmt_003",
+   "rachmaninov_the_bells_second_mvmt_004",
+   "rachmaninov_the_bells_second_mvmt_005",
+   "rachmaninov_the_bells_second_mvmt_006",
+   "rachmaninov_the_bells_second_mvmt_007"
+  ]
+ }
+}

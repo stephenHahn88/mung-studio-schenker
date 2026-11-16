@@ -12,10 +12,12 @@ import {
 } from "@mui/joy";
 import { MenuItemTypeMap } from "@mui/material";
 import { useContext } from "react";
+import { useParams } from "react-router-dom";
 import MenuIcon from "@mui/icons-material/Menu";
 import { useAtom, useAtomValue } from "jotai";
 import { DefaultComponentProps } from "@mui/material/OverridableComponent";
 import { EditorContext } from "../../EditorContext";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
 
 export const renderShortcut = (text: string) => (
   <Typography
@@ -67,6 +69,7 @@ export interface MainMenuProps {
 export function MainMenu(props: MainMenuProps) {
   const { mainMenuController, settingsStore } = useContext(EditorContext);
   const controller = mainMenuController;
+  const documentName = useParams().documentName || "";
 
   const [_, setSettingsOpen] = useAtom(settingsStore.isSettingsWindowOpenAtom);
 
@@ -84,11 +87,9 @@ export function MainMenu(props: MainMenuProps) {
   const canGenerateGraphFromStafflines = useAtomValue(
     controller.canGenerateGraphFromStafflinesAtom,
   );
-  const canRunYolo26Combined = useAtomValue(
-    controller.canRunYolo26CombinedAtom,
-  );
-  const isYolo26Running = useAtomValue(controller.isYolo26RunningAtom);
-  const yolo26Status = useAtomValue(controller.yolo26StatusAtom);
+  const canRunModels = useAtomValue(controller.canRunModelsAtom);
+  const isModelRunning = useAtomValue(controller.isModelRunningAtom);
+  const modelStatus = useAtomValue(controller.modelStatusAtom);
 
   ////////////////////////////
   // Action implementations //
@@ -100,6 +101,12 @@ export function MainMenu(props: MainMenuProps) {
 
   function openSettings() {
     setSettingsOpen(true);
+  }
+
+  function openAnnotationGuide() {
+    const guideUrl = new URL(window.location.href);
+    guideUrl.hash = "/annotation-guide";
+    window.open(guideUrl.toString(), "_blank", "noopener,noreferrer");
   }
 
   ///////////////
@@ -118,6 +125,10 @@ export function MainMenu(props: MainMenuProps) {
         // open={true}
       >
         <MyMenuItem onClick={backToFiles}>Back to files</MyMenuItem>
+
+        <MyMenuItem onClick={openAnnotationGuide}>
+          <MenuBookIcon fontSize="small" /> Annotation guide & shortcuts
+        </MyMenuItem>
 
         <MyMenuItem onClick={openSettings}>Settings</MyMenuItem>
 
@@ -178,19 +189,17 @@ export function MainMenu(props: MainMenuProps) {
         </MyMenuItem>
 
         <MyListDivider />
-        <MyCategoryTitle>Recognition</MyCategoryTitle>
+        <MyCategoryTitle>Model predictions</MyCategoryTitle>
 
         <MyMenuItem
-          disabled={!canRunYolo26Combined}
-          onClick={() => controller.runYolo26Combined()}
+          disabled={!canRunModels || !documentName}
+          onClick={() => controller.runModel("symbols", documentName)}
         >
-          {isYolo26Running
-            ? "Running symbol detector..."
-            : "Run default symbol detectors"}
+          {isModelRunning ? "Running a model..." : "Detect symbols on page"}
         </MyMenuItem>
 
-        {yolo26Status !== null && (
-          <MyMenuItem disabled>{yolo26Status}</MyMenuItem>
+        {modelStatus !== null && (
+          <MyMenuItem disabled>{modelStatus}</MyMenuItem>
         )}
 
         <MyListDivider />

@@ -219,7 +219,7 @@ export class NodeEditingController implements IController {
         });
 
         // make sure the new node's class is visible when you exit this tool
-        this.classVisibilityStore.setClassVisibility(newValue, true);
+        this.classVisibilityStore.ensureEditedClassIsVisible(newValue);
       }
     },
   );
@@ -306,7 +306,7 @@ export class NodeEditingController implements IController {
     this.notationGraphStore.insertNode(node);
 
     // make sure the new node's class is visible
-    this.classVisibilityStore.setClassVisibility(node.className, true);
+    this.classVisibilityStore.ensureEditedClassIsVisible(node.className);
 
     // enter the node editing tool (so the class-name panel is shown), select
     // the new node and jump straight into choosing its class
@@ -406,7 +406,7 @@ export class NodeEditingController implements IController {
       this.notationGraphStore.insertNode(node);
 
       // make sure the new node's class is visible when you exit this tool
-      this.classVisibilityStore.setClassVisibility(node.className, true);
+      this.classVisibilityStore.ensureEditedClassIsVisible(node.className);
 
       // select the new node
       this.selectionStore.changeSelection([node.id]);

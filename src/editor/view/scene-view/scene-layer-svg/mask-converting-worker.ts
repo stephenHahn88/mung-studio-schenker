@@ -1,14 +1,12 @@
-import { hslToRgb } from "../../../../utils/hslToRgb";
-
-onmessage = async (e: MessageEvent<[number, number, ImageData]>) => {
+onmessage = async (
+  e: MessageEvent<[number, [number, number, number], ImageData]>,
+) => {
   // (the image data was copied as it was sent to the web worker)
   // (note, however, that typed arrays are transfered, not copied)
   // https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Transferable_objects
-  const [nodeId, hue, imageData] = e.data;
-  const lightness = 50;
+  const [nodeId, [r, g, b], imageData] = e.data;
 
-  // set image data to use hue from the MuNG class name
-  const [r, g, b] = hslToRgb(hue / 360, 1.0, lightness / 100);
+  // set image data to use the shared display color for this class
   for (let i = 0; i < imageData.data.length; i += 4) {
     imageData.data[i] = r;
     imageData.data[i + 1] = g;

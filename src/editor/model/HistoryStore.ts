@@ -2,6 +2,17 @@ import { Atom, atom, getDefaultStore, PrimitiveAtom } from "jotai";
 import { Node } from "../../mung/Node";
 import { NotationGraphStore } from "./notation-graph-store/NotationGraphStore";
 import { JotaiStore } from "./JotaiStore";
+import { isTimeGroupKey, TimeGroupPatch } from "../../mung/TimeGroups";
+
+type GroupFieldChange = {
+  nodeId: number;
+  key: string;
+  before: Node["data"][string] | null;
+  after: Node["data"][string] | null;
+};
+type HistoryEntry =
+  | { kind: "snapshot"; before: HistorySnapshot; after: HistorySnapshot }
+  | { kind: "timeGroups"; changes: readonly GroupFieldChange[] };
 
 type HistorySnapshot = readonly Node[];
 
@@ -18,8 +29,8 @@ export class HistoryStore {
   private readonly notationGraphStore: NotationGraphStore;
   private readonly jotaiStore: JotaiStore;
 
-  private undoStack: HistorySnapshot[] = [];
-  private redoStack: HistorySnapshot[] = [];
+  private undoStack: HistoryEntry[] = [];
+  private redoStack: HistoryEntry[] = [];
   private currentSnapshot: HistorySnapshot;
 
   private isApplyingSnapshot = false;
@@ -34,8 +45,25 @@ export class HistoryStore {
     this.currentSnapshot = this.takeSnapshot();
 
     this.notationGraphStore.onChange.subscribe(() => {
-      if (this.isApplyingSnapshot) return;
+      if (
+        this.isApplyingSnapshot ||
+        this.notationGraphStore.isApplyingTimeGroupPatches
+      )
+        return;
       this.scheduleSnapshot();
+    });
+
+    this.notationGraphStore.onBeforeTimeGroupPatches.subscribe(() => {
+      if (!this.isApplyingSnapshot) this.flushScheduledSnapshot();
+    });
+    this.notationGraphStore.onAfterTimeGroupPatches.subscribe(({ remote }) => {
+      if (this.isApplyingSnapshot) return;
+      if (remote) {
+        // Rebase the next local history entry. Remote groups are never local undo items.
+        this.currentSnapshot = this.takeSnapshot();
+      } else {
+        this.recordCurrentSnapshot();
+      }
     });
 
     this.updateAtoms();
@@ -53,10 +81,10 @@ export class HistoryStore {
     this.flushScheduledSnapshot();
     if (!this.canUndo) return false;
 
-    const previousSnapshot = this.undoStack.pop()!;
-    this.redoStack.push(this.currentSnapshot);
-    this.applySnapshot(previousSnapshot);
-    this.currentSnapshot = previousSnapshot;
+    const entry = this.undoStack.pop()!;
+    const applied = this.applyEntry(entry, false);
+    if (applied !== null) this.redoStack.push(applied);
+    this.currentSnapshot = this.takeSnapshot();
     this.updateAtoms();
     return true;
   }
@@ -65,12 +93,46 @@ export class HistoryStore {
     this.flushScheduledSnapshot();
     if (!this.canRedo) return false;
 
-    const nextSnapshot = this.redoStack.pop()!;
-    this.undoStack.push(this.currentSnapshot);
-    this.applySnapshot(nextSnapshot);
-    this.currentSnapshot = nextSnapshot;
+    const entry = this.redoStack.pop()!;
+    const applied = this.applyEntry(entry, true);
+    if (applied !== null) this.undoStack.push(applied);
+    this.currentSnapshot = this.takeSnapshot();
     this.updateAtoms();
     return true;
+  }
+
+  private applyEntry(
+    entry: HistoryEntry,
+    forward: boolean,
+  ): HistoryEntry | null {
+    if (entry.kind === "snapshot") {
+      this.applySnapshot(forward ? entry.after : entry.before);
+      return entry;
+    }
+    const patches: TimeGroupPatch[] = [];
+    const applied: GroupFieldChange[] = [];
+    for (const change of entry.changes) {
+      if (!this.notationGraphStore.hasNode(change.nodeId)) continue;
+      const current =
+        this.notationGraphStore.getNode(change.nodeId).data[change.key] ?? null;
+      const expected = forward ? change.before : change.after;
+      // A collaborator's newer value owns this field. Undo only our still-current changes.
+      if (!this.areDataValuesEqual(current, expected)) continue;
+      patches.push({
+        nodeId: change.nodeId,
+        data: { [change.key]: forward ? change.after : change.before },
+      });
+      applied.push(change);
+    }
+    if (patches.length === 0) return null;
+    this.isApplyingSnapshot = true;
+    try {
+      this.notationGraphStore.applyTimeGroupPatches(patches);
+    } finally {
+      this.isApplyingSnapshot = false;
+    }
+    // Redo only the fields that undo actually changed; never resurrect skipped conflicts.
+    return { kind: "timeGroups", changes: applied };
   }
 
   private scheduleSnapshot(): void {
@@ -91,7 +153,19 @@ export class HistoryStore {
       return;
     }
 
-    this.undoStack.push(this.currentSnapshot);
+    const groupChanges = this.groupOnlyChanges(
+      this.currentSnapshot,
+      nextSnapshot,
+    );
+    this.undoStack.push(
+      groupChanges === null
+        ? {
+            kind: "snapshot",
+            before: this.currentSnapshot,
+            after: nextSnapshot,
+          }
+        : { kind: "timeGroups", changes: groupChanges },
+    );
     if (this.undoStack.length > MAX_HISTORY_SIZE) {
       this.undoStack.shift();
     }
@@ -103,10 +177,73 @@ export class HistoryStore {
   private applySnapshot(snapshot: HistorySnapshot): void {
     this.isApplyingSnapshot = true;
     try {
-      this.notationGraphStore.setAllNodes(this.cloneSnapshot(snapshot));
+      // Ordinary graph undo still uses snapshots, but must not erase newer groups
+      // on surviving nodes. Deleted/restored nodes keep their historical memberships.
+      const nodes = this.cloneSnapshot(snapshot).map((node) => {
+        if (!this.notationGraphStore.hasNode(node.id)) return node;
+        const data = { ...node.data };
+        for (const key of Object.keys(data))
+          if (isTimeGroupKey(key)) delete data[key];
+        for (const [key, value] of Object.entries(
+          this.notationGraphStore.getNode(node.id).data,
+        )) {
+          if (isTimeGroupKey(key)) data[key] = { ...value };
+        }
+        return { ...node, data };
+      });
+      this.notationGraphStore.setAllNodes(nodes);
     } finally {
       this.isApplyingSnapshot = false;
     }
+  }
+
+  private areDataValuesEqual(
+    first: Node["data"][string] | null,
+    second: Node["data"][string] | null,
+  ): boolean {
+    if (first === null || second === null) return first === second;
+    return first.type === second.type && first.value === second.value;
+  }
+
+  private groupOnlyChanges(
+    before: HistorySnapshot,
+    after: HistorySnapshot,
+  ): GroupFieldChange[] | null {
+    if (before.length !== after.length) return null;
+    const changes: GroupFieldChange[] = [];
+    for (let i = 0; i < before.length; i++) {
+      const first = before[i];
+      const second = after[i];
+      if (first.id !== second.id) return null;
+      const withoutGroups = (data: Node["data"]) =>
+        Object.fromEntries(
+          Object.entries(data).filter(([key]) => !isTimeGroupKey(key)),
+        );
+      if (
+        !this.areNodesEqual(
+          { ...first, data: withoutGroups(first.data) },
+          { ...second, data: withoutGroups(second.data) },
+        )
+      )
+        return null;
+      for (const key of new Set([
+        ...Object.keys(first.data),
+        ...Object.keys(second.data),
+      ])) {
+        if (!isTimeGroupKey(key)) continue;
+        const oldValue = first.data[key] ?? null;
+        const newValue = second.data[key] ?? null;
+        if (!this.areDataValuesEqual(oldValue, newValue)) {
+          changes.push({
+            nodeId: first.id,
+            key,
+            before: oldValue,
+            after: newValue,
+          });
+        }
+      }
+    }
+    return changes;
   }
 
   private takeSnapshot(): HistorySnapshot {
@@ -125,7 +262,9 @@ export class HistoryStore {
       precedenceOutlinks: [...node.precedenceOutlinks],
       precedenceInlinks: [...node.precedenceInlinks],
       decodedMask:
-        node.decodedMask === null ? null : this.cloneImageData(node.decodedMask),
+        node.decodedMask === null
+          ? null
+          : this.cloneImageData(node.decodedMask),
       data: this.cloneDataItems(node.data),
       polygon: node.polygon === null ? null : [...node.polygon],
     };
@@ -201,7 +340,10 @@ export class HistoryStore {
     return this.areNumberArraysEqual(first, second);
   }
 
-  private areDataItemsEqual(first: Node["data"], second: Node["data"]): boolean {
+  private areDataItemsEqual(
+    first: Node["data"],
+    second: Node["data"],
+  ): boolean {
     const firstKeys = Object.keys(first).sort();
     const secondKeys = Object.keys(second).sort();
     if (!this.areStringArraysEqual(firstKeys, secondKeys)) return false;

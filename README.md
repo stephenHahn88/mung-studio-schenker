@@ -1,72 +1,53 @@
-# MuNG Studio
+# Schenkerian Optical Music Recognition
 
-Try MuNG Studio at: https://ufallab.ms.mff.cuni.cz/~mayer/mung-studio
+Code, data and models of *A Novel Dataset and Framework for Schenkerian Optical Music Recognition*.
 
-The MuNG format: https://github.com/OMR-Research/mung
+| Folder | Contents |
+|---|---|
+| `src/`, `simple-php-backend/`, [`docs/`](docs/) | MuNG Studio annotation tool with the model actions |
+| [`dataset/`](dataset/README.md) | HandSchA: page images and MuNG annotations |
+| [`experiments/symbol_recognition/`](experiments/symbol_recognition/README.md) | symbol detection |
+| [`experiments/syntax_links/`](experiments/syntax_links/README.md) | syntax-link prediction |
+| [`experiments/temporal_relations/`](experiments/temporal_relations/README.md) | time-group and precedence-link prediction |
+| [`conversion/`](conversion/README.md) | graph-to-JSON conversion |
+| [`models/`](models/README.md) | trained models |
 
-The MUSCIMA++ v2.0 dataset: https://github.com/OMR-Research/muscima-pp/releases/tag/v2.0
+## Annotation tool
 
-
-## Documentation
-
-- [User Manual](docs/user-manual/user-manual.md)
-- [Local Symbol Detector Guide](docs/local-symbol-detector-guide.md)
-- [Web Deployment (hosted, no local models)](docs/web-deployment.md)
-
-Development documentation:
-
-- [Folder structure](docs/folder-structure.md)
-- [Architecture](docs/architecture.md)
-- [Editor component](docs/editor-component.md)
-- [Performance bottlenecks](docs/performance-bottlenecks.md)
-- [Simple PHP backend](docs/simple-php-backend.md)
-- [Pyodide Python Runtime](docs/pyodide-python-runtime.md)
-- [WebGL Renderer](docs/webgl-renderer.md)
-- [Development setup](docs/development-setup.md)
-
-
-## Development
-
-For local annotators using the symbol detector panel, see the
-[Local Symbol Detector Guide](docs/local-symbol-detector-guide.md). The local
-release only needs this repository plus local model files in `models/`; it does
-not require a separate `Schenkerian_OMR` checkout.
-
-Start the development frontend server:
+This repository is a fork of [MuNG Studio](https://github.com/OmniOMR/mung-studio); its
+[user manual](docs/user-manual/user-manual.md) applies. Requirements: Node.js 24 with npm, Python 3.10 or newer.
 
 ```bash
-# install dependencies from package-lock.json
 npm ci
-
-# run the development server
-npm start
-
-# see the development preview at http://localhost:1234
+pip install -r simple-php-backend/requirements.txt
+./start_local.sh            # builds the frontend and serves it on http://localhost:8080 (token 123456789)
 ```
 
-Optionally start the simple PHP backend server in another terminal:
+Pages are folders in `documents/` with an `image.jpg` (or `.png`) and a `mung.xml`. The model actions need the
+models ([`models/README.md`](models/README.md)) and the settings in [`docs/model-actions.md`](docs/model-actions.md).
 
-```bash
-cd simple-php-backend
-php -S localhost:8080
+## Licenses
 
-# NOTE: you need to have the .env file present with this line in it,
-# otherwise the frontend will not know where to connect to:
-SIMPLE_PHP_BACKEND_URL=http://localhost:8080
+- Software: Apache License 2.0 ([`LICENSE`](LICENSE)).
+- HandSchA (`dataset/` and the data folders of `experiments/`): [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+- Models: YOLOv8L weights AGPL-3.0 (Ultralytics); models trained on MUSCIMA++ CC BY-NC-SA 4.0.
+- MUSCIMA++ and CVC-MUSCIMA are not redistributed.
+
+## Citation
+
+```bibtex
+@misc{huang2026handscha,
+  title  = {A Novel Dataset and Framework for Schenkerian Optical Music Recognition},
+  author = {Huang, Yixuan and Yun, Xiao and Zheng, Jiayin and Mak, Simon and Jiang, Yue and Rudin, Cynthia and Ni-Hahn, Stephen},
+  note   = {Submitted to ICDE 2027},
+  year   = {2026}
+}
+
+@inproceedings{mungstudio,
+  title     = {{MuNG Studio}: Annotation Tool for Music Notation Graph},
+  author    = {Mayer, Ji{\v{r}}{\'\i} and Jebav{\'y}, Filip and Herz{\'a}nov{\'a} Vlkov{\'a}, Mark{\'e}ta and Dvo{\v{r}}{\'a}kov{\'a}, Martina and Pecina, Pavel and Haji{\v{c}}, Jr., Jan},
+  booktitle = {Proceedings of the 12th International Conference on Digital Libraries for Musicology},
+  pages     = {114--118},
+  year      = {2025}
+}
 ```
-
-To use the symbol detector recognizer from the editor menu, start the bundled
-Python backend instead:
-
-```bash
-npm run start-yolo26-backend
-
-# in .env
-YOLO26_BACKEND_URL=http://localhost:8080
-```
-
-The backend expects model files under `models/`. See
-[models/README.md](models/README.md) for the supported file names and optional
-environment variable overrides.
-
-Read the [Development Setup](docs/development-setup.md) documentation page to see how to develop, debug, and deploy the project.

@@ -1,72 +1,32 @@
-Place local detector model files in this directory.
+# Models
 
-Download the prepared model package from Google Drive:
+The syntax-link, time-group and precedence-link models are in this folder. The symbol-detection checkpoints are
+assets of the GitHub release `v1.0`; download them from the repository root:
 
-```text
-https://drive.google.com/file/d/1RsXbsR17CwZLJQ7G-Iiw7xSl3RtpcHZp/view?usp=drive_link
+```bash
+R=https://github.com/stephenHahn88/mung-studio-schenker/releases/download/v1.0
+mkdir -p models/symbol_recognition/yolov8l models/symbol_recognition/rfdetr_branch
+curl -L -o models/symbol_recognition/yolov8l/HandSchA_seed20261021.pt $R/HandSchA_seed20261021.pt
+curl -L -o models/symbol_recognition/rfdetr_branch/HandSchA_seed43.pth $R/HandSchA_seed43.pth
+curl -L -o models/symbol_recognition/yolov8l/MUSCIMA_M_seed20261027.pt $R/MUSCIMA_M_seed20261027.pt
+curl -L -o models/symbol_recognition/rfdetr_branch/MUSCIMA_M_seed20261027.pth $R/MUSCIMA_M_seed20261027.pth
 ```
 
-Unzip the package in the repository root, not inside this directory. After
-extraction, this directory should contain the files and folders listed below.
+| Path | Model | Code and split |
+|---|---|---|
+| `symbol_recognition/yolov8l/HandSchA_seed20261021.pt` | YOLOv8L branch, HandSchA | `experiments/symbol_recognition/`, `data/split.json` |
+| `symbol_recognition/rfdetr_branch/HandSchA_seed43.pth` | RF-DETR branch, HandSchA | `experiments/symbol_recognition/`, `data/split.json` |
+| `symbol_recognition/yolov8l/MUSCIMA_M_seed20261027.pt` | YOLOv8L branch, MUSCIMA++ | `experiments/symbol_recognition/`, `muscima/completeomr_split.json` |
+| `symbol_recognition/rfdetr_branch/MUSCIMA_M_seed20261027.pth` | RF-DETR branch, MUSCIMA++ | `experiments/symbol_recognition/`, `muscima/completeomr_split.json` |
+| `syntax_links/incidence/handscha/heldout/seed_42/` | syntax-link model folder | `experiments/syntax_links/`, `data/split.json` (held-out split) |
+| `syntax_links/pair_cnn/handscha/heldout_seed42.pth` | CNN of the syntax-link model folder (copied there as `pair_cnn.pth`) | `experiments/syntax_links/`, `data/split.json` (held-out split) |
+| `temporal_relations/hgb/time_groups_heldout_rachmaninov_seed42.joblib` | time-group model | `experiments/temporal_relations/`, `data/split.json` (held-out split) |
+| `temporal_relations/hgb/precedence_heldout_rachmaninov_seed43.joblib` | precedence-link model | `experiments/temporal_relations/`, `data/split.json` (held-out split) |
 
-YOLO model weights:
+The annotation tool uses the two HandSchA symbol checkpoints and these relation models ([`docs/model-actions.md`](../docs/model-actions.md)).
 
-- yolo26l_all9_fixed_ep100_tiled_ep100.pt
-- yolo26l_tiled_9pages_pre_ep200.pt
+## Licenses
 
-Place local DETR model directories in this shape:
-
-```text
-models/detr_large_fullwidth_9pages_ep90/model/
-models/detr_large_fullwidth_9pages_boxfocused_ep200/model/
-models/detr_large_9pages_copypaste_ep50/model/
-models/detr_large_9pages_plus50/model/
-models/detr_tiled_9pages_plus50/model/
-```
-
-These files are intentionally not tracked by git.
-
-Learned edge model bundle:
-
-```
-models/edge_all9_production/
-  COMPLETE
-  bundle.json
-  direction.joblib
-  incidence.pth
-  incidence_initialization.pth
-  proposal.pth
-  vcnn.pth
-```
-
-The backend verifies the production marker, the no-rules inference contract,
-and every declared artifact size and SHA-256 before loading this bundle. The
-directory can be overridden with `EDGE_LEARNED_BUNDLE_DIR`.
-
-The fixed-epoch-100 tiled file is the default small-symbol detector. It must be
-present before enabling small-symbol detection; the backend lists a missing
-model but does not silently fall back. Override its directory with
-`YOLO26_ALL9_FIXED_EP100_MODELS_DIR`, or override the file with
-`YOLO26_ALL9_FIXED_EP100_TILED_MODEL`. Large-symbol detection defaults to the
-5-model MuSViT ensemble registered in `simple-php-backend/yolo26_inference.py`.
-
-The epoch-200 tiled file backs two selectable small-symbol recipes: the legacy
-margin-ownership option (`yolo26l_tiled_9pages_ep200`) and the optional
-center/Voronoi-ownership option
-(`yolo26l_tiled_9pages_ep200_center_voronoi`). They share the same learned
-weights; only the tile-ownership/stitching method differs. The center/Voronoi
-recipe is available for explicit selection and is not the default.
-
-For models with registered server paths, the backend checks local paths first
-and then falls back to the paths in
-`simple-php-backend/yolo26_inference.py`:
-
-- YOLO26L, 9 pages, 200 epochs (shared by the legacy and center/Voronoi recipes)
-- DETR, 9 pages, 90 epochs
-- DETR box-focused, 9 pages, 200 epochs
-- DETR copy-paste, 9 pages, 50 epochs
-- DETR, 9 pages, 200 epochs
-- DETR, 9 pages, 170 epochs
-
-Override those paths with the matching environment variables if the model files
-live somewhere else on the machine running the backend.
+- YOLOv8L weights: AGPL-3.0 (Ultralytics).
+- Models trained on MUSCIMA++: CC BY-NC-SA 4.0.
+- Models trained on HandSchA: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).

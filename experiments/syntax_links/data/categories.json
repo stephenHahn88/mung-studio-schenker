@@ -1,0 +1,490 @@
+[
+  {
+    "id": 0,
+    "name": "DoubleBarline"
+  },
+  {
+    "id": 1,
+    "name": "accidentalDoubleFlat"
+  },
+  {
+    "id": 2,
+    "name": "accidentalDoubleSharp"
+  },
+  {
+    "id": 3,
+    "name": "accidentalFlat"
+  },
+  {
+    "id": 4,
+    "name": "accidentalNatural"
+  },
+  {
+    "id": 5,
+    "name": "accidentalParensLeft"
+  },
+  {
+    "id": 6,
+    "name": "accidentalParensRight"
+  },
+  {
+    "id": 7,
+    "name": "accidentalSharp"
+  },
+  {
+    "id": 8,
+    "name": "analysisInterruption"
+  },
+  {
+    "id": 9,
+    "name": "analyticalMinus"
+  },
+  {
+    "id": 10,
+    "name": "analyticalPlus"
+  },
+  {
+    "id": 11,
+    "name": "analyticalV"
+  },
+  {
+    "id": 12,
+    "name": "barline"
+  },
+  {
+    "id": 13,
+    "name": "barlineDashed"
+  },
+  {
+    "id": 14,
+    "name": "barlineFinal"
+  },
+  {
+    "id": 15,
+    "name": "barlineHeavy"
+  },
+  {
+    "id": 16,
+    "name": "barlineStructuralDotted"
+  },
+  {
+    "id": 17,
+    "name": "beamStructural"
+  },
+  {
+    "id": 18,
+    "name": "beamStructuralPartialLeft"
+  },
+  {
+    "id": 19,
+    "name": "beamStructuralPartialMiddle"
+  },
+  {
+    "id": 20,
+    "name": "beamStructuralPartialMiddleDashed"
+  },
+  {
+    "id": 21,
+    "name": "beamStructuralPartialRight"
+  },
+  {
+    "id": 22,
+    "name": "beamStructuralUnfoldingDown"
+  },
+  {
+    "id": 23,
+    "name": "beamStructuralUnfoldingUp"
+  },
+  {
+    "id": 24,
+    "name": "brace"
+  },
+  {
+    "id": 25,
+    "name": "braceAnalytical"
+  },
+  {
+    "id": 26,
+    "name": "characterApostrophe"
+  },
+  {
+    "id": 27,
+    "name": "characterCapitalA"
+  },
+  {
+    "id": 28,
+    "name": "characterCapitalB"
+  },
+  {
+    "id": 29,
+    "name": "characterCapitalC"
+  },
+  {
+    "id": 30,
+    "name": "characterCapitalD"
+  },
+  {
+    "id": 31,
+    "name": "characterCapitalE"
+  },
+  {
+    "id": 32,
+    "name": "characterCapitalF"
+  },
+  {
+    "id": 33,
+    "name": "characterCapitalG"
+  },
+  {
+    "id": 34,
+    "name": "characterCapitalS"
+  },
+  {
+    "id": 35,
+    "name": "characterCapitalX"
+  },
+  {
+    "id": 36,
+    "name": "characterCapitalY"
+  },
+  {
+    "id": 37,
+    "name": "characterCapitalZ"
+  },
+  {
+    "id": 38,
+    "name": "characterEqual"
+  },
+  {
+    "id": 39,
+    "name": "characterExclamation"
+  },
+  {
+    "id": 40,
+    "name": "characterForwardSlash"
+  },
+  {
+    "id": 41,
+    "name": "characterHyphen"
+  },
+  {
+    "id": 42,
+    "name": "characterOther"
+  },
+  {
+    "id": 43,
+    "name": "characterSmallB"
+  },
+  {
+    "id": 44,
+    "name": "characterSmallC"
+  },
+  {
+    "id": 45,
+    "name": "characterSmallD"
+  },
+  {
+    "id": 46,
+    "name": "characterSmallE"
+  },
+  {
+    "id": 47,
+    "name": "characterSmallF"
+  },
+  {
+    "id": 48,
+    "name": "characterSmallG"
+  },
+  {
+    "id": 49,
+    "name": "characterSmallI"
+  },
+  {
+    "id": 50,
+    "name": "characterSmallZ"
+  },
+  {
+    "id": 51,
+    "name": "circleMeasureNumber"
+  },
+  {
+    "id": 52,
+    "name": "fClef"
+  },
+  {
+    "id": 53,
+    "name": "figuredBassText"
+  },
+  {
+    "id": 54,
+    "name": "flag8thDown"
+  },
+  {
+    "id": 55,
+    "name": "flag8thUp"
+  },
+  {
+    "id": 56,
+    "name": "flagStructuralDown"
+  },
+  {
+    "id": 57,
+    "name": "flagStructuralUp"
+  },
+  {
+    "id": 58,
+    "name": "formAntecedent"
+  },
+  {
+    "id": 59,
+    "name": "formConsequent"
+  },
+  {
+    "id": 60,
+    "name": "gClef"
+  },
+  {
+    "id": 61,
+    "name": "glissando"
+  },
+  {
+    "id": 62,
+    "name": "interpretationText"
+  },
+  {
+    "id": 63,
+    "name": "keyAnalysis"
+  },
+  {
+    "id": 64,
+    "name": "keyAnalysisBM"
+  },
+  {
+    "id": 65,
+    "name": "keyAnalysisBfM"
+  },
+  {
+    "id": 66,
+    "name": "keyAnalysisBfm"
+  },
+  {
+    "id": 67,
+    "name": "keyAnalysisBm"
+  },
+  {
+    "id": 68,
+    "name": "keyAnalysisCM"
+  },
+  {
+    "id": 69,
+    "name": "keyAnalysisDM"
+  },
+  {
+    "id": 70,
+    "name": "keyAnalysisDfM"
+  },
+  {
+    "id": 71,
+    "name": "keyAnalysisDm"
+  },
+  {
+    "id": 72,
+    "name": "keyAnalysisEM"
+  },
+  {
+    "id": 73,
+    "name": "keyAnalysisEfM"
+  },
+  {
+    "id": 74,
+    "name": "keyAnalysisFM"
+  },
+  {
+    "id": 75,
+    "name": "keyAnalysisFm"
+  },
+  {
+    "id": 76,
+    "name": "keyAnalysisGM"
+  },
+  {
+    "id": 77,
+    "name": "keyAnalysisGm"
+  },
+  {
+    "id": 78,
+    "name": "keySignature"
+  },
+  {
+    "id": 79,
+    "name": "legerLine"
+  },
+  {
+    "id": 80,
+    "name": "measureNumber"
+  },
+  {
+    "id": 81,
+    "name": "misalignment"
+  },
+  {
+    "id": 82,
+    "name": "motiveBox"
+  },
+  {
+    "id": 83,
+    "name": "motiveBracket"
+  },
+  {
+    "id": 84,
+    "name": "motivebracket"
+  },
+  {
+    "id": 85,
+    "name": "noteheadBlack"
+  },
+  {
+    "id": 86,
+    "name": "noteheadHalf"
+  },
+  {
+    "id": 87,
+    "name": "numeral1"
+  },
+  {
+    "id": 88,
+    "name": "numeral2"
+  },
+  {
+    "id": 89,
+    "name": "numeral3"
+  },
+  {
+    "id": 90,
+    "name": "numeral4"
+  },
+  {
+    "id": 91,
+    "name": "numeral5"
+  },
+  {
+    "id": 92,
+    "name": "numeral6"
+  },
+  {
+    "id": 93,
+    "name": "numeral7"
+  },
+  {
+    "id": 94,
+    "name": "numeralRomanI"
+  },
+  {
+    "id": 95,
+    "name": "numeralRomanII"
+  },
+  {
+    "id": 96,
+    "name": "numeralRomanIII"
+  },
+  {
+    "id": 97,
+    "name": "numeralRomanIV"
+  },
+  {
+    "id": 98,
+    "name": "numeralRomanV"
+  },
+  {
+    "id": 99,
+    "name": "numeralRomanVI"
+  },
+  {
+    "id": 100,
+    "name": "numeralRomanVII"
+  },
+  {
+    "id": 101,
+    "name": "otherAnalytical"
+  },
+  {
+    "id": 102,
+    "name": "otherNumericSign"
+  },
+  {
+    "id": 103,
+    "name": "otherText"
+  },
+  {
+    "id": 104,
+    "name": "parensImpliedLeft"
+  },
+  {
+    "id": 105,
+    "name": "parensImpliedRight"
+  },
+  {
+    "id": 106,
+    "name": "scaleDegreeMark"
+  },
+  {
+    "id": 107,
+    "name": "secondaryHarmony"
+  },
+  {
+    "id": 108,
+    "name": "secondaryHarmonyArrowRight"
+  },
+  {
+    "id": 109,
+    "name": "slurStructuralDown"
+  },
+  {
+    "id": 110,
+    "name": "slurStructuralDownDashed"
+  },
+  {
+    "id": 111,
+    "name": "slurStructuralUp"
+  },
+  {
+    "id": 112,
+    "name": "slurStructuralUpDashed"
+  },
+  {
+    "id": 113,
+    "name": "staffLine"
+  },
+  {
+    "id": 114,
+    "name": "stemStructural"
+  },
+  {
+    "id": 115,
+    "name": "tonicizationBar"
+  },
+  {
+    "id": 116,
+    "name": "unclassified"
+  },
+  {
+    "id": 117,
+    "name": "voiceExchangeDown"
+  },
+  {
+    "id": 118,
+    "name": "voiceExchangeUp"
+  },
+  {
+    "id": 119,
+    "name": "voiceExchangeUpDashed"
+  },
+  {
+    "id": 120,
+    "name": "numeral8"
+  },
+  {
+    "id": 121,
+    "name": "analysisPivot"
+  }
+]

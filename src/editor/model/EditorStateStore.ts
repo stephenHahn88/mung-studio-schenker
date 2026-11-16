@@ -11,6 +11,13 @@ export enum NodeDisplayMode {
   Hidden = "Hidden",
 }
 
+/** Which page image and annotation overlay are shown in the main canvas. */
+export enum PageImageMode {
+  ProcessedWithAnnotations = "processed-with-annotations",
+  OriginalOnly = "original-only",
+  OriginalWithAnnotations = "original-with-annotations",
+}
+
 /**
  * Contans state that belongs to the editor
  * (what is visible, what editing mode is currently on, etc.)
@@ -29,6 +36,11 @@ export class EditorStateStore {
   // atom that manages display of nodes
   public readonly nodeDisplayModeAtom: PrimitiveAtom<NodeDisplayMode> = atom(
     NodeDisplayMode.PolygonsAndMasks,
+  );
+
+  // Browser-only view state. It is never serialized into the MuNG file.
+  public readonly pageImageModeAtom: PrimitiveAtom<PageImageMode> = atom(
+    PageImageMode.ProcessedWithAnnotations,
   );
 
   // atom that manages display of syntax links
@@ -50,12 +62,32 @@ export class EditorStateStore {
     return this.displayPrecedenceLinksAtomWithEvent.event;
   }
 
+  // Temporarily hides every edge without changing the user's per-edge-type
+  // visibility choices. Turning this off restores the exact syntax and
+  // precedence visibility combination that was active before it.
+  private hideAllEdgesAtomWithEvent = AtomWithEvent.primitiveAtom(false);
+  public get hideAllEdgesAtom() {
+    return this.hideAllEdgesAtomWithEvent.atom;
+  }
+  public get hideAllEdgesChangeEvent() {
+    return this.hideAllEdgesAtomWithEvent.event;
+  }
+
+  public readonly effectiveDisplaySyntaxLinksAtom = atom(
+    (get) => !get(this.hideAllEdgesAtom) && get(this.displaySyntaxLinksAtom),
+  );
+
+  public readonly effectiveDisplayPrecedenceLinksAtom = atom(
+    (get) =>
+      !get(this.hideAllEdgesAtom) && get(this.displayPrecedenceLinksAtom),
+  );
+
   public get isDisplaySyntaxLinks(): boolean {
-    return this.jotaiStore.get(this.displaySyntaxLinksAtom);
+    return this.jotaiStore.get(this.effectiveDisplaySyntaxLinksAtom);
   }
 
   public get isDisplayPrecedenceLinks(): boolean {
-    return this.jotaiStore.get(this.displayPrecedenceLinksAtom);
+    return this.jotaiStore.get(this.effectiveDisplayPrecedenceLinksAtom);
   }
 
   ///////////////////////

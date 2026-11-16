@@ -15,6 +15,7 @@ import { useAtomValue } from "jotai";
 import { NodeNavigationTab } from "./view/NodeNavigationTab";
 import { CollabConfig } from "./controller/CollabController";
 import { PresenceBar } from "./view/collab/PresenceBar";
+import { PageImageMode } from "./model/EditorStateStore";
 
 export interface EditorProps {
   /**
@@ -34,6 +35,9 @@ export interface EditorProps {
    * if null, then no image is displayed.
    */
   readonly backgroundImageUrl: string | null;
+
+  /** Coordinate-aligned scan before preprocessing, for in-canvas comparison. */
+  readonly originalBackgroundImageUrl?: string | null;
 
   /**
    * Called when the file modifications should be persisted
@@ -56,6 +60,21 @@ export interface EditorProps {
    * this document (live op sync + presence + peer cursors). Optional.
    */
   readonly collabConfig?: CollabConfig | null;
+
+  /** Additional symbol classes shared by all annotators. */
+  readonly initialCustomClassNames?: readonly string[];
+
+  /** Shared display-color overrides keyed by symbol class name. */
+  readonly initialClassColorOverrides?: Readonly<Record<string, string>>;
+
+  /** Persists a newly-created shared class and returns its canonical name. */
+  readonly onAddCustomClass?: (className: string) => Promise<string>;
+
+  /** Persists or clears a shared class display color. */
+  readonly onSetClassColor?: (
+    className: string,
+    color: string | null,
+  ) => Promise<Readonly<Record<string, string>>>;
 }
 
 /**
@@ -71,7 +90,10 @@ export function Editor(props: EditorProps) {
     props.initialNodes,
     props.initialMungFileMetadata,
     props.backgroundImageUrl,
+    props.originalBackgroundImageUrl ?? null,
     props.collabConfig ?? null,
+    props.initialCustomClassNames ?? [],
+    props.initialClassColorOverrides ?? {},
   );
   const {
     notationGraphStore,
@@ -79,7 +101,31 @@ export function Editor(props: EditorProps) {
     backgroundImageStore,
     zoomController,
     collabController,
+    classCatalogStore,
+    editorStateStore,
   } = editorContext;
+  const pageImageMode = useAtomValue(editorStateStore.pageImageModeAtom);
+  const isOriginalOnly = pageImageMode === PageImageMode.OriginalOnly;
+
+  useEffect(() => {
+    classCatalogStore.setAddCallback(props.onAddCustomClass ?? null);
+    return () => classCatalogStore.setAddCallback(null);
+  }, [classCatalogStore, props.onAddCustomClass]);
+
+  useEffect(() => {
+    classCatalogStore.setColorCallback(props.onSetClassColor ?? null);
+    return () => classCatalogStore.setColorCallback(null);
+  }, [classCatalogStore, props.onSetClassColor]);
+
+  useEffect(() => {
+    classCatalogStore.setCustomClassNames(props.initialCustomClassNames ?? []);
+  }, [classCatalogStore, props.initialCustomClassNames]);
+
+  useEffect(() => {
+    classCatalogStore.setClassColorOverrides(
+      props.initialClassColorOverrides ?? {},
+    );
+  }, [classCatalogStore, props.initialClassColorOverrides]);
 
   // join / leave the real-time collaboration session
   useEffect(() => {
@@ -103,6 +149,7 @@ export function Editor(props: EditorProps) {
    */
   async function handleCloseFileButtonClick() {
     let savePromise: Promise<void> | null | undefined | void = null;
+    const savedRevision = autosaveStore.revision;
 
     // save if dirty
     if (autosaveStore.isDirty) {
@@ -115,7 +162,7 @@ export function Editor(props: EditorProps) {
     // wait for the save to complete and reset the autosave store
     // (in case the onClose event did not destroy the editor)
     await savePromise;
-    autosaveStore.setClean();
+    autosaveStore.setClean(savedRevision);
   }
 
   // The user is leaving the editor by closing or reloading the browser tab
@@ -126,8 +173,9 @@ export function Editor(props: EditorProps) {
     // trigger save right after the dialog is closed
     // (if it gets triggered during the dialog, even better)
     setTimeout(async () => {
+      const savedRevision = autosaveStore.revision;
       await props.onSave?.(notationGraphStore.getMungFile());
-      autosaveStore.setClean();
+      autosaveStore.setClean(savedRevision);
     }, 50);
 
     // these two lines should cause the browser to halt the user via dialog
@@ -179,8 +227,8 @@ export function Editor(props: EditorProps) {
           >
             <Box sx={{ position: "relative", flexGrow: 1 }}>
               <SceneView />
-              <Toolbelt />
-              {collabController !== null && <PresenceBar />}
+              {!isOriginalOnly && <Toolbelt />}
+              {!isOriginalOnly && collabController !== null && <PresenceBar />}
             </Box>
             <NodeNavigationTab />
             <ValidationPanel />

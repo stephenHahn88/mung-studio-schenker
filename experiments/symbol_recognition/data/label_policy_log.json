@@ -1,0 +1,285 @@
+{
+ "summary": {
+  "pages": 47,
+  "mung_nodes": 30810,
+  "excluded_nodes": 29,
+  "aliased_nodes": 1,
+  "collapsed_duplicates": 1,
+  "clipped_boxes": 5,
+  "same_box_different_class_groups": 1,
+  "targets": 30780,
+  "classes": 128
+ },
+ "excluded": [
+  {
+   "page_id": "berg_three_orchestral_pieces_praeludium_no_1_graph001",
+   "node_id": 133,
+   "class_name": "unclassified"
+  },
+  {
+   "page_id": "berg_three_orchestral_pieces_praeludium_no_1_graph001",
+   "node_id": 151,
+   "class_name": "unclassified"
+  },
+  {
+   "page_id": "berg_three_orchestral_pieces_praeludium_no_1_graph001",
+   "node_id": 358,
+   "class_name": "unclassified"
+  },
+  {
+   "page_id": "berg_three_orchestral_pieces_praeludium_no_1_graph001",
+   "node_id": 681,
+   "class_name": "unclassified"
+  },
+  {
+   "page_id": "berg_three_orchestral_pieces_praeludium_no_1_graph001",
+   "node_id": 776,
+   "class_name": "unclassified"
+  },
+  {
+   "page_id": "berg_three_orchestral_pieces_praeludium_no_1_graph002",
+   "node_id": 6,
+   "class_name": "unclassified"
+  },
+  {
+   "page_id": "berg_three_orchestral_pieces_praeludium_no_1_graph003",
+   "node_id": 74,
+   "class_name": "unclassified"
+  },
+  {
+   "page_id": "berg_three_orchestral_pieces_praeludium_no_1_graph003",
+   "node_id": 94,
+   "class_name": "unclassified"
+  },
+  {
+   "page_id": "berg_three_orchestral_pieces_praeludium_no_1_graph003",
+   "node_id": 146,
+   "class_name": "unclassified"
+  },
+  {
+   "page_id": "berg_three_orchestral_pieces_praeludium_no_1_graph003",
+   "node_id": 246,
+   "class_name": "unclassified"
+  },
+  {
+   "page_id": "berg_three_orchestral_pieces_praeludium_no_1_graph003",
+   "node_id": 288,
+   "class_name": "unclassified"
+  },
+  {
+   "page_id": "berg_three_orchestral_pieces_praeludium_no_1_graph003",
+   "node_id": 343,
+   "class_name": "unclassified"
+  },
+  {
+   "page_id": "berg_three_orchestral_pieces_praeludium_no_1_graph003",
+   "node_id": 631,
+   "class_name": "unclassified"
+  },
+  {
+   "page_id": "monteverdi_lamento_della_ninfa002",
+   "node_id": 243,
+   "class_name": "unclassified"
+  },
+  {
+   "page_id": "monteverdi_lamento_della_ninfa002",
+   "node_id": 244,
+   "class_name": "unclassified"
+  },
+  {
+   "page_id": "monteverdi_lamento_della_ninfa002",
+   "node_id": 245,
+   "class_name": "unclassified"
+  },
+  {
+   "page_id": "monteverdi_lamento_della_ninfa002",
+   "node_id": 246,
+   "class_name": "unclassified"
+  },
+  {
+   "page_id": "monteverdi_lamento_della_ninfa002",
+   "node_id": 247,
+   "class_name": "unclassified"
+  },
+  {
+   "page_id": "rachmaninov_the_bells_second_mvmt_001",
+   "node_id": 819,
+   "class_name": "unKnown"
+  },
+  {
+   "page_id": "schubert_einsamkeit_graphs004",
+   "node_id": 1,
+   "class_name": "unclassified"
+  },
+  {
+   "page_id": "schubert_einsamkeit_graphs004",
+   "node_id": 10,
+   "class_name": "unclassified"
+  },
+  {
+   "page_id": "schubert_einsamkeit_graphs004",
+   "node_id": 330,
+   "class_name": "unclassified"
+  },
+  {
+   "page_id": "schubert_einsamkeit_graphs004",
+   "node_id": 387,
+   "class_name": "unclassified"
+  },
+  {
+   "page_id": "schubert_einsamkeit_graphs004",
+   "node_id": 924,
+   "class_name": "unclassified"
+  },
+  {
+   "page_id": "schubert_einsamkeit_graphs004",
+   "node_id": 948,
+   "class_name": "unclassified"
+  },
+  {
+   "page_id": "sean_cmajfantasy_3_19b",
+   "node_id": 83,
+   "class_name": "unclassified"
+  },
+  {
+   "page_id": "sean_wanderer_fantasy_2nd_mvt_001",
+   "node_id": 219,
+   "class_name": "unknown"
+  },
+  {
+   "page_id": "sean_wanderer_fantasy_2nd_mvt_001",
+   "node_id": 776,
+   "class_name": "unknown"
+  },
+  {
+   "page_id": "wtcii_f_sharp_fugue_p1",
+   "node_id": 967,
+   "class_name": "unclassified"
+  }
+ ],
+ "aliased": [
+  {
+   "page_id": "sean_der_wanderer_001",
+   "node_id": 183,
+   "class_name": "motivebracket",
+   "label": "motiveBracket"
+  }
+ ],
+ "clipped": [
+  {
+   "page_id": "rachmaninov_the_bells_second_mvmt_005",
+   "node_id": 583,
+   "mung_box_ltrb": [
+    -2,
+    1273,
+    841,
+    1359
+   ],
+   "clipped_box_ltrb": [
+    0,
+    1273,
+    841,
+    1359
+   ]
+  },
+  {
+   "page_id": "schubert_einsamkeit_graphs001",
+   "node_id": 329,
+   "mung_box_ltrb": [
+    53,
+    -19,
+    3654,
+    162
+   ],
+   "clipped_box_ltrb": [
+    53,
+    0,
+    3654,
+    162
+   ]
+  },
+  {
+   "page_id": "schubert_einsamkeit_graphs003",
+   "node_id": 8,
+   "mung_box_ltrb": [
+    33,
+    -1,
+    1197,
+    120
+   ],
+   "clipped_box_ltrb": [
+    33,
+    0,
+    1197,
+    120
+   ]
+  },
+  {
+   "page_id": "schubert_einsamkeit_graphs003",
+   "node_id": 543,
+   "mung_box_ltrb": [
+    -1,
+    2634,
+    26,
+    2679
+   ],
+   "clipped_box_ltrb": [
+    0,
+    2634,
+    26,
+    2679
+   ]
+  },
+  {
+   "page_id": "wtcii_f_sharp_fugue_p3",
+   "node_id": 337,
+   "mung_box_ltrb": [
+    2378,
+    309,
+    2699,
+    383
+   ],
+   "clipped_box_ltrb": [
+    2378,
+    309,
+    2698,
+    383
+   ]
+  }
+ ],
+ "collapsed_duplicates": [
+  {
+   "page_id": "rachmaninov_the_bells_second_mvmt_006",
+   "kept_node_id": 326,
+   "duplicate_node_id": 334,
+   "label": "accidentalFlat",
+   "box_ltrb": [
+    2357,
+    928,
+    2381,
+    967
+   ]
+  }
+ ],
+ "same_box_different_classes": [
+  {
+   "page_id": "rachmaninov_the_bells_second_mvmt_006",
+   "box_ltrb": [
+    1313,
+    948,
+    1394,
+    969
+   ],
+   "nodes": [
+    {
+     "node_id": 146,
+     "label": "slurStructuralUp"
+    },
+    {
+     "node_id": 169,
+     "label": "slurStructuralDown"
+    }
+   ]
+  }
+ ]
+}

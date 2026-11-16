@@ -1,4 +1,4 @@
-import { useContext, useRef } from "react";
+import { RefObject, useContext, useRef } from "react";
 import { ForegroundLayer } from "./foreground-layer/ForegroundLayer";
 import { SceneLayer_Canvas2D } from "./SceneLayer_Canvas2D";
 import { SceneLayer_SVG } from "./scene-layer-svg/SceneLayer_SVG";
@@ -8,6 +8,7 @@ import { EditorContext } from "../../EditorContext";
 import { useAtomValue } from "jotai";
 import { SceneRenderingEngine } from "../../model/SettingsStore";
 import { CollabOverlay } from "../collab/CollabOverlay";
+import { PageImageMode } from "../../model/EditorStateStore";
 
 /**
  * The central surface of the editor. Displays the scene and its
@@ -15,8 +16,10 @@ import { CollabOverlay } from "../collab/CollabOverlay";
  * with the scene to the user.
  */
 export function SceneView() {
-  const { zoomController, settingsStore, collabController } =
+  const { zoomController, settingsStore, collabController, editorStateStore } =
     useContext(EditorContext);
+  const pageImageMode = useAtomValue(editorStateStore.pageImageModeAtom);
+  const isOriginalOnly = pageImageMode === PageImageMode.OriginalOnly;
 
   const sceneRenderingEngine = useAtomValue(
     settingsStore.sceneRenderingEngineAtom,
@@ -64,20 +67,50 @@ export function SceneView() {
 
       {/* Objects that are not being edited, but there is many of them,
       so tricks have to be made to render them fast */}
-      {sceneRenderingEngine === SceneRenderingEngine.SVG && <SceneLayer_SVG />}
-      {sceneRenderingEngine === SceneRenderingEngine.WebGL && (
-        <SceneLayer_WebGL />
+      {!isOriginalOnly && sceneRenderingEngine === SceneRenderingEngine.SVG && (
+        <SceneLayer_SVG />
       )}
-      {sceneRenderingEngine === SceneRenderingEngine.Canvas2D && (
-        <SceneLayer_Canvas2D />
-      )}
+      {!isOriginalOnly &&
+        sceneRenderingEngine === SceneRenderingEngine.WebGL && (
+          <SceneLayer_WebGL />
+        )}
+      {!isOriginalOnly &&
+        sceneRenderingEngine === SceneRenderingEngine.Canvas2D && (
+          <SceneLayer_Canvas2D />
+        )}
 
       {/* The editing overlay for the current object, consumes pointer events
       and contains the zoom controlling code */}
-      <ForegroundLayer />
+      {isOriginalOnly ? (
+        <OriginalPreviewInteractionLayer />
+      ) : (
+        <ForegroundLayer />
+      )}
 
       {/* Live collaborator cursors + selection (click-through) */}
-      {collabController !== null && <CollabOverlay />}
+      {!isOriginalOnly && collabController !== null && <CollabOverlay />}
     </div>
+  );
+}
+
+/** Keeps pan/zoom available while guaranteeing that no editing controller runs. */
+function OriginalPreviewInteractionLayer() {
+  const { zoomController } = useContext(EditorContext);
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  zoomController.useZoomController(svgRef as RefObject<SVGSVGElement | null>);
+  return (
+    <svg
+      ref={svgRef}
+      aria-label="Original image read-only preview"
+      style={{
+        position: "absolute",
+        inset: 0,
+        width: "100%",
+        height: "100%",
+        cursor: "grab",
+      }}
+    >
+      <g />
+    </svg>
   );
 }

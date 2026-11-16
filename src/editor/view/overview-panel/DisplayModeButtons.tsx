@@ -80,19 +80,6 @@ export function DisplayModeButtons() {
             <TimelineIcon />
           </IconButton>
         </Tooltip>
-        <Tooltip arrow title="Hide all links">
-          <IconButton
-            aria-pressed={
-              !displaySyntaxLinks && !displayPrecedenceLinks ? "true" : "false"
-            }
-            onClick={() => {
-              setDisplaySyntaxLinks(false);
-              setDisplayPrecedenceLinks(false);
-            }}
-          >
-            <VisibilityOffIcon />
-          </IconButton>
-        </Tooltip>
       </ToggleButtonGroup>
 
       <Tooltip arrow title="Scene rendering engine">

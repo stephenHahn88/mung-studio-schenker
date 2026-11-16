@@ -1,0 +1,9 @@
+# Python 3.12.8; CUDA 12.8 build of torch for GPU training
+torch==2.10.0
+numpy==2.2.6
+scipy==1.18.1
+scikit-learn==1.7.2
+opencv-python==5.0.0.93
+pillow==12.3.0
+threadpoolctl==3.6.0
+joblib==1.5.3

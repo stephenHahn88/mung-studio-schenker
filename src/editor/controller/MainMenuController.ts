@@ -8,27 +8,69 @@ import { ToolbeltController } from "./ToolbeltController";
 import { EditorTool } from "../model/EditorTool";
 import { PythonRuntime } from "../../../pyodide/PythonRuntime";
 import { Node } from "../../mung/Node";
+import { hasTimeGroupData, isNotehead } from "../../mung/TimeGroups";
 import { ClassVisibilityStore } from "../model/ClassVisibilityStore";
 import { EditorStateStore } from "../model/EditorStateStore";
 import { ZoomController } from "./ZoomController";
 import { BackgroundImageStore } from "../model/BackgroundImageStore";
-import {
-  DEFAULT_LARGE_DETECTION_MODEL_KEY,
-  DEFAULT_SMALL_DETECTION_MODEL_KEY,
-  DEFAULT_YOLO26_DETECTION_OPTIONS,
-  SymbolDetectionRunOptions,
-  SymbolDetectionSource,
-  Yolo26DetectionApi,
-  Yolo26DetectionOptions,
-  Yolo26Prediction,
-} from "./Yolo26DetectionApi";
+import { TimeGroupStore } from "../model/TimeGroupStore";
+import { ModelApi, ModelNode, PageRegion, SymbolPrediction } from "./ModelApi";
 import { HistoryStore } from "../model/HistoryStore";
 import { isMacish } from "../../utils/isMacish";
 import { MUNG_CLASSES_BY_NAME } from "../../mung/ontology/mungClasses";
+import {
+  RELATION_INFERENCE_ENABLED,
+  RELATION_INFERENCE_UNAVAILABLE_MESSAGE,
+  SYMBOL_INFERENCE_ENABLED,
+  SYMBOL_INFERENCE_UNAVAILABLE_MESSAGE,
+} from "../../utils/featureFlags";
+
+/** The model actions that can run on a whole page or on a selected region. */
+export type ModelAction =
+  | "symbols"
+  | "syntaxLinks"
+  | "timeGroups"
+  | "precedence";
+
+export const MODEL_ACTION_LABELS: Record<ModelAction, string> = {
+  symbols: "symbol detection",
+  syntaxLinks: "syntax-link prediction",
+  timeGroups: "time-group prediction",
+  precedence: "precedence-link prediction",
+};
+
+export interface ModelRunOptions {
+  /** Detector score threshold; null uses the backend default. */
+  readonly scoreThreshold?: number | null;
+}
+
+/**
+ * Throws when a model response refers to a different page size than the
+ * annotation canvas, so predictions are never inserted in wrong coordinates.
+ */
+export function assertDetectionImageSize(
+  actual: { readonly width: number; readonly height: number },
+  expected: { readonly width: number; readonly height: number },
+  label: string,
+): void {
+  if (
+    !Number.isInteger(expected.width) ||
+    !Number.isInteger(expected.height) ||
+    expected.width <= 0 ||
+    expected.height <= 0 ||
+    actual?.width !== expected.width ||
+    actual?.height !== expected.height
+  ) {
+    throw new Error(
+      `${label} dimensions do not match the annotation page (${expected.width} × ${expected.height}). No predictions were applied.`,
+    );
+  }
+}
 
 /**
  * Implements the logic and keyboard shortcuts behind actions from
- * the main menu. This controller is always enabled.
+ * the main menu, including the model actions. This controller is always
+ * enabled.
  */
 export class MainMenuController implements IController {
   public readonly controllerName = "MainMenuController";
@@ -45,6 +87,7 @@ export class MainMenuController implements IController {
   private readonly classVisibilityStore: ClassVisibilityStore;
   private readonly backgroundImageStore: BackgroundImageStore;
   private readonly historyStore: HistoryStore;
+  private readonly timeGroupStore: TimeGroupStore | null;
 
   constructor(
     jotaiStore: JotaiStore,
@@ -57,6 +100,7 @@ export class MainMenuController implements IController {
     classVisibilityStore: ClassVisibilityStore,
     backgroundImageStore: BackgroundImageStore,
     historyStore: HistoryStore,
+    timeGroupStore: TimeGroupStore | null = null,
   ) {
     this.jotaiStore = jotaiStore;
     this.notationGraphStore = notationGraphStore;
@@ -68,6 +112,7 @@ export class MainMenuController implements IController {
     this.classVisibilityStore = classVisibilityStore;
     this.backgroundImageStore = backgroundImageStore;
     this.historyStore = historyStore;
+    this.timeGroupStore = timeGroupStore;
   }
 
   public readonly isEnabledAtom = atom(true);
@@ -197,7 +242,7 @@ export class MainMenuController implements IController {
     }
     this.clipboardNodes = copied;
     if (copied.length > 0) {
-      this.setYolo26Status(
+      this.setModelStatus(
         `Copied ${copied.length} symbol(s). Press Ctrl+V to paste.`,
       );
     }
@@ -243,57 +288,9 @@ export class MainMenuController implements IController {
     }
     this.toolbeltController.setCurrentTool(EditorTool.Pointer);
     this.selectionStore.changeSelection(newIds);
-    this.setYolo26Status(
+    this.setModelStatus(
       `Pasted ${newIds.length} symbol(s). Drag to reposition or resize.`,
     );
-  }
-
-  /**
-   * Predict syntax edges among ALL symbols using the server-side edge model,
-   * and add the returned links to the graph. Predicts on the document's
-   * last-saved mung.xml, so save (autosave) before running.
-   */
-  public async predictEdges(
-    documentName: string,
-    threshold?: number,
-  ): Promise<void> {
-    if (!documentName) {
-      this.setYolo26Status("No document name for edge prediction.");
-      return;
-    }
-    const api = new Yolo26DetectionApi();
-    this.setYolo26Status("Predicting edges...");
-    try {
-      const result = await api.assembleEdges(documentName, threshold);
-      let added = 0;
-      for (const e of result.edges) {
-        if (
-          !this.notationGraphStore.hasNode(e.source) ||
-          !this.notationGraphStore.hasNode(e.target)
-        ) {
-          continue;
-        }
-        const src = this.notationGraphStore.getNode(e.source);
-        if (
-          src.syntaxOutlinks.includes(e.target) ||
-          src.syntaxInlinks.includes(e.target)
-        ) {
-          continue; // already linked
-        }
-        this.notationGraphStore.insertLink(e.source, e.target, LinkType.Syntax);
-        added++;
-      }
-      this.setYolo26Status(
-        `Added ${added} predicted edge(s) from ${result.edges.length} candidates` +
-          (threshold !== undefined ? ` (threshold ${threshold})` : "") +
-          ((result.skippedInvalidNodeCount ?? 0) > 0
-            ? `; skipped ${result.skippedInvalidNodeCount} unclassified symbol(s)`
-            : "") +
-          ".",
-      );
-    } catch (err) {
-      this.setYolo26Status("Edge prediction failed: " + String(err));
-    }
   }
 
   /** Live count of ALL syntax edges in the document (works across reloads). */
@@ -303,15 +300,14 @@ export class MainMenuController implements IController {
 
   /**
    * Removes ALL syntax edges from the document (predicted and hand-drawn
-   * alike), leaving every symbol untouched. Unlike the old session-scoped
-   * "clear predicted edges", this works after a reload too.
+   * alike), leaving every symbol untouched.
    */
   public clearAllEdges(): void {
     const links = [...this.notationGraphStore.syntaxLinks];
     for (const link of links) {
       this.notationGraphStore.removeLink(link.fromId, link.toId, link.type);
     }
-    this.setYolo26Status(
+    this.setModelStatus(
       links.length === 0
         ? "No edges to clear."
         : `Removed ${links.length} edge(s); symbols untouched.`,
@@ -370,39 +366,6 @@ export class MainMenuController implements IController {
     return true;
   });
 
-  private readonly isYolo26RunningBaseAtom = atom<boolean>(false);
-
-  public readonly isYolo26RunningAtom = atom((get) =>
-    get(this.isYolo26RunningBaseAtom),
-  );
-
-  private readonly yolo26StatusBaseAtom = atom<string | null>(null);
-
-  public readonly yolo26StatusAtom = atom((get) =>
-    get(this.yolo26StatusBaseAtom),
-  );
-
-  public setYolo26Status(message: string | null): void {
-    this.jotaiStore.set(this.yolo26StatusBaseAtom, message);
-  }
-
-  public canRunYolo26CombinedAtom = atom(
-    (get) =>
-      Yolo26DetectionApi.isConfigured() &&
-      this.backgroundImageStore.imageUrl !== null &&
-      !get(this.isYolo26RunningBaseAtom),
-  );
-
-  public canClearYolo26PredictionsAtom = atom((get) => {
-    get(this.notationGraphStore.nodeIdsAtom);
-    return this.countYolo26PredictionNodes() > 0;
-  });
-
-  public readonly yolo26PredictionCountAtom = atom((get) => {
-    get(this.notationGraphStore.nodeIdsAtom);
-    return this.countYolo26PredictionNodes();
-  });
-
   public canUndoAtom = atom((get) => get(this.historyStore.canUndoAtom));
   public canRedoAtom = atom((get) => get(this.historyStore.canRedoAtom));
 
@@ -443,10 +406,10 @@ export class MainMenuController implements IController {
     if (!this.jotaiStore.get(this.canRemoveLinksAtom)) return;
 
     const canRemoveSyntaxLinks =
-      this.jotaiStore.get(this.editorStateStore.displaySyntaxLinksAtom) &&
+      this.editorStateStore.isDisplaySyntaxLinks &&
       this.toolbeltController.currentTool !== EditorTool.PrecedenceLinks;
     const canRemovePrecedenceLinks =
-      this.jotaiStore.get(this.editorStateStore.displayPrecedenceLinksAtom) &&
+      this.editorStateStore.isDisplayPrecedenceLinks &&
       this.toolbeltController.currentTool !== EditorTool.SyntaxLinks;
 
     const links = this.selectionStore.partiallySelectedLinks;
@@ -599,147 +562,315 @@ export class MainMenuController implements IController {
     console.log("DONE!");
   }
 
-  public async runYolo26Combined(
-    options?: SymbolDetectionRunOptions,
+  ///////////////////
+  // Model actions //
+  ///////////////////
+
+  private readonly isModelRunningBaseAtom = atom<boolean>(false);
+
+  public readonly isModelRunningAtom = atom((get) =>
+    get(this.isModelRunningBaseAtom),
+  );
+
+  private readonly modelStatusBaseAtom = atom<string | null>(null);
+
+  public readonly modelStatusAtom = atom((get) =>
+    get(this.modelStatusBaseAtom),
+  );
+
+  public setModelStatus(message: string | null): void {
+    this.jotaiStore.set(this.modelStatusBaseAtom, message);
+  }
+
+  public readonly canRunModelsAtom = atom(
+    (get) =>
+      this.backgroundImageStore.imageUrl !== null &&
+      !get(this.isModelRunningBaseAtom),
+  );
+
+  public readonly canClearPredictedSymbolsAtom = atom((get) => {
+    get(this.notationGraphStore.nodeIdsAtom);
+    return this.countPredictedSymbolNodes() > 0;
+  });
+
+  public readonly predictedSymbolCountAtom = atom((get) => {
+    get(this.notationGraphStore.nodeIdsAtom);
+    return this.countPredictedSymbolNodes();
+  });
+
+  /**
+   * Runs one model action on the whole page (region = null) or on the nodes
+   * and pixels inside a region of the page.
+   *
+   * - symbols: replaces earlier symbol predictions in the page or region and
+   *   inserts the new detections as nodes tagged with their model.
+   * - syntaxLinks / precedence: sends the current nodes and adds the
+   *   predicted links between nodes that are not linked yet (in either
+   *   direction), as one undoable edit.
+   * - timeGroups: sends the current nodes and creates predicted time groups
+   *   for noteheads that are not grouped yet.
+   */
+  public async runModel(
+    action: ModelAction,
+    documentName: string,
+    region: DOMRect | null = null,
+    options: ModelRunOptions = {},
   ): Promise<void> {
-    if (!this.jotaiStore.get(this.canRunYolo26CombinedAtom)) return;
-    if (this.backgroundImageStore.imageUrl === null) return;
-    const runOptions = {
-      ...(options ?? this.buildDefaultSymbolDetectionRunOptions()),
-      deduplicate: true,
-    };
-    const region = this.getRecognitionRegion(runOptions);
-    const sourcesToReplace = this.getRunSources(runOptions);
-    if (sourcesToReplace.length === 0) {
-      this.jotaiStore.set(
-        this.yolo26StatusBaseAtom,
-        "Choose at least one prediction source.",
-      );
+    if (
+      action === "symbols"
+        ? this.notifyInferenceUnavailable(
+            SYMBOL_INFERENCE_ENABLED,
+            SYMBOL_INFERENCE_UNAVAILABLE_MESSAGE,
+          )
+        : this.notifyInferenceUnavailable(
+            RELATION_INFERENCE_ENABLED,
+            RELATION_INFERENCE_UNAVAILABLE_MESSAGE,
+          )
+    ) {
       return;
     }
+    if (!documentName) {
+      this.setModelStatus("No document is open.");
+      return;
+    }
+    if (!this.jotaiStore.get(this.canRunModelsAtom)) return;
 
-    this.jotaiStore.set(this.isYolo26RunningBaseAtom, true);
-    this.jotaiStore.set(
-      this.yolo26StatusBaseAtom,
-      `Running ${this.formatSources(sourcesToReplace)} detection${
-        region === null ? "" : " in the selected area"
-      }...`,
+    let clipped: DOMRect | null = null;
+    if (region !== null) {
+      clipped = this.clipRegionToPage(region);
+      if (clipped === null) {
+        const message =
+          "The selected area does not overlap the page. No predictions were applied.";
+        this.setModelStatus(message);
+        window.alert(message);
+        return;
+      }
+    }
+
+    if (action === "symbols") {
+      await this.detectSymbols(
+        documentName,
+        clipped,
+        options.scoreThreshold ?? null,
+      );
+    } else if (action === "timeGroups") {
+      await this.predictTimeGroups(documentName, clipped);
+    } else {
+      await this.predictLinks(action, documentName, clipped);
+    }
+  }
+
+  private async detectSymbols(
+    documentName: string,
+    region: DOMRect | null,
+    scoreThreshold: number | null,
+  ): Promise<void> {
+    if (this.protectTimeGroupsFromRecognition(region)) return;
+    this.jotaiStore.set(this.isModelRunningBaseAtom, true);
+    this.setModelStatus(
+      "Running symbol detection" +
+        (region === null ? "" : " in the selected area") +
+        "...",
     );
-
     try {
-      const api = new Yolo26DetectionApi();
-      const result = await api.detectImageUrl(
-        this.backgroundImageStore.imageUrl,
-        runOptions,
+      const api = new ModelApi();
+      const result = await api.detectSymbols(
+        documentName,
+        region === null ? null : this.toPageRegion(region),
+        scoreThreshold,
       );
-      const removed = this.removeYolo26PredictionNodes(
-        sourcesToReplace,
-        region,
+      assertDetectionImageSize(
+        result.image,
+        this.pageSize(),
+        "Detection result",
       );
-      const inserted = this.insertYolo26Predictions(result.predictions);
-      const deduplicated = this.removeDuplicateYolo26PredictionNodes(
-        runOptions,
-        region,
+      // A collaborator can annotate while the model request is in flight.
+      // Re-check immediately before the synchronous replacement.
+      if (this.protectTimeGroupsFromRecognition(region)) return;
+      const removed = this.removePredictedSymbolNodes(region);
+      const inserted = this.insertSymbolPredictions(
+        result.predictions,
+        result.model,
       );
       const message =
-        `Inserted ${inserted} ${this.formatSources(sourcesToReplace)} predicted symbols` +
+        `Inserted ${inserted} symbols` +
         (region === null ? "" : " in the selected area") +
-        (removed > 0
-          ? ` after replacing ${removed} previous predictions`
-          : "") +
-        (deduplicated > 0
-          ? ` and removing ${deduplicated} overlapping predictions.`
-          : ".");
-
-      this.jotaiStore.set(this.yolo26StatusBaseAtom, message);
+        (removed > 0 ? ` · replaced ${removed} earlier predictions` : "") +
+        ".";
+      this.setModelStatus(message);
       window.alert(message);
     } catch (e) {
       const message = String(e);
       console.error(e);
-      this.jotaiStore.set(this.yolo26StatusBaseAtom, message);
+      this.setModelStatus(message);
       window.alert(message);
     } finally {
-      this.jotaiStore.set(this.isYolo26RunningBaseAtom, false);
+      this.jotaiStore.set(this.isModelRunningBaseAtom, false);
     }
   }
 
-  public clearYolo26Predictions(): void {
-    const removedCount = this.removeYolo26PredictionNodes();
+  private async predictLinks(
+    action: "syntaxLinks" | "precedence",
+    documentName: string,
+    region: DOMRect | null,
+  ): Promise<void> {
+    const nodes = this.nodesForModel(region);
+    if (nodes.length < 2) {
+      this.setModelStatus(
+        "At least two symbols are needed" +
+          (region === null ? "" : " in the selected area") +
+          " to predict links.",
+      );
+      return;
+    }
+    const linkType =
+      action === "syntaxLinks" ? LinkType.Syntax : LinkType.Precedence;
+    const label = action === "syntaxLinks" ? "syntax" : "precedence";
+    const submitted = this.graphSignature(nodes);
+    this.jotaiStore.set(this.isModelRunningBaseAtom, true);
+    this.setModelStatus(`Predicting ${label} links...`);
+    try {
+      const api = new ModelApi();
+      const result =
+        action === "syntaxLinks"
+          ? await api.predictSyntaxLinks(documentName, nodes)
+          : await api.predictPrecedence(documentName, nodes);
+      if (this.graphSignature(nodes) !== submitted) {
+        throw new Error(
+          "The symbols changed during prediction. No links were added; please run again.",
+        );
+      }
+      const allowed = new Set(nodes.map((node) => node.id));
+      let added = 0;
+      for (const link of result.links) {
+        // A pair that is already linked (in either direction) keeps its link.
+        if (
+          link.source === link.target ||
+          !allowed.has(link.source) ||
+          !allowed.has(link.target) ||
+          this.notationGraphStore.hasLink(link.source, link.target, linkType) ||
+          this.notationGraphStore.hasLink(link.target, link.source, linkType)
+        ) {
+          continue;
+        }
+        this.notationGraphStore.insertLink(link.source, link.target, linkType);
+        added++;
+      }
+      this.setModelStatus(
+        `Added ${added} predicted ${label} link(s) from ` +
+          `${result.links.length} predictions` +
+          (region === null ? "" : " in the selected area") +
+          ".",
+      );
+    } catch (e) {
+      console.error(e);
+      this.setModelStatus(`The ${label}-link prediction failed: ` + String(e));
+    } finally {
+      this.jotaiStore.set(this.isModelRunningBaseAtom, false);
+    }
+  }
+
+  private async predictTimeGroups(
+    documentName: string,
+    region: DOMRect | null,
+  ): Promise<void> {
+    if (this.timeGroupStore === null) {
+      this.setModelStatus("Time groups are not available in this editor.");
+      return;
+    }
+    const nodes = this.nodesForModel(region);
+    if (!nodes.some((node) => isNotehead(node))) {
+      this.setModelStatus(
+        "No noteheads" +
+          (region === null ? "" : " in the selected area") +
+          " to group.",
+      );
+      return;
+    }
+    const submitted = this.graphSignature(nodes);
+    this.jotaiStore.set(this.isModelRunningBaseAtom, true);
+    this.setModelStatus("Predicting time groups...");
+    try {
+      const api = new ModelApi();
+      const result = await api.predictTimeGroups(documentName, nodes);
+      if (this.graphSignature(nodes) !== submitted) {
+        throw new Error(
+          "The symbols changed during prediction. No groups were added; please run again.",
+        );
+      }
+      const allowed = new Set(nodes.map((node) => node.id));
+      const summary = this.timeGroupStore.addPredictedGroups(
+        result.groups.map((group) => group.filter((id) => allowed.has(id))),
+      );
+      this.setModelStatus(
+        `Created ${summary.createdGroups} predicted time group(s) from ` +
+          `${result.groups.length} predictions` +
+          (summary.skippedNoteheads > 0
+            ? `; ${summary.skippedNoteheads} already grouped notehead(s) were left unchanged`
+            : "") +
+          ".",
+      );
+    } catch (e) {
+      console.error(e);
+      this.setModelStatus("The time-group prediction failed: " + String(e));
+    } finally {
+      this.jotaiStore.set(this.isModelRunningBaseAtom, false);
+    }
+  }
+
+  public clearPredictedSymbols(): void {
+    if (this.protectTimeGroupsFromRecognition(null)) return;
+    const removedCount = this.removePredictedSymbolNodes(null);
 
     if (removedCount === 0) {
-      this.jotaiStore.set(
-        this.yolo26StatusBaseAtom,
-        "No predicted symbols to clear.",
-      );
+      this.setModelStatus("No predicted symbols to clear.");
       return;
     }
 
     this.selectionStore.clearSelection();
-    const message = `Removed ${removedCount} predicted symbols.`;
-    this.jotaiStore.set(this.yolo26StatusBaseAtom, message);
+    this.setModelStatus(`Removed ${removedCount} predicted symbols.`);
   }
 
-  private removeDuplicateYolo26PredictionNodes(
-    options: Yolo26DetectionOptions = DEFAULT_YOLO26_DETECTION_OPTIONS,
-    region: DOMRect | null = null,
-  ): number {
-    const predictionNodes = this.notationGraphStore.nodes
+  /** Replacement and clearing remove predicted nodes; grouped ones are kept. */
+  private protectTimeGroupsFromRecognition(region: DOMRect | null): boolean {
+    const protectedNodes = this.notationGraphStore.nodes.filter(
+      (node) =>
+        this.isPredictedSymbolNode(node) &&
+        hasTimeGroupData(node) &&
+        (region === null || this.nodeBelongsToRegion(node, region)),
+    );
+    if (protectedNodes.length === 0) return false;
+    const message =
+      `Symbol detection left the document unchanged: ${protectedNodes.length} ` +
+      `predicted symbol(s) have time-group annotations. ` +
+      `Run detection in an ungrouped area, or remove the affected group ` +
+      `memberships before replacing or clearing those symbols.`;
+    this.setModelStatus(message);
+    window.alert(message);
+    return true;
+  }
+
+  /**
+   * Prevents requests for a model family that is disabled in this build.
+   * Returns true when the caller must stop.
+   */
+  private notifyInferenceUnavailable(
+    enabled: boolean,
+    unavailableMessage: string,
+  ): boolean {
+    if (enabled) return false;
+    this.setModelStatus(unavailableMessage);
+    window.alert(unavailableMessage);
+    return true;
+  }
+
+  private removePredictedSymbolNodes(region: DOMRect | null): number {
+    const predictionNodeIds = this.notationGraphStore.nodes
       .filter(
         (node) =>
-          this.isYolo26PredictionNode(node) &&
+          this.isPredictedSymbolNode(node) &&
           (region === null || this.nodeBelongsToRegion(node, region)),
       )
-      .sort(
-        (a, b) =>
-          this.getPredictionConfidence(b) - this.getPredictionConfidence(a),
-      );
-    const keepNodes: Node[] = [];
-    const removeNodeIds: number[] = [];
-
-    for (const candidate of predictionNodes) {
-      const duplicate = keepNodes.some((kept) =>
-        this.areDuplicatePredictionNodes(candidate, kept, options),
-      );
-      if (duplicate) {
-        removeNodeIds.push(candidate.id);
-      } else {
-        keepNodes.push(candidate);
-      }
-    }
-
-    for (const nodeId of removeNodeIds) {
-      if (this.notationGraphStore.hasNode(nodeId)) {
-        this.notationGraphStore.removeNodeWithLinks(nodeId);
-      }
-    }
-
-    if (removeNodeIds.length === 0) {
-      return 0;
-    }
-
-    this.selectionStore.clearSelection();
-    return removeNodeIds.length;
-  }
-
-  private removeYolo26PredictionNodes(
-    sources?: readonly SymbolDetectionSource[],
-    region: DOMRect | null = null,
-  ): number {
-    const sourceSet = sources === undefined ? null : new Set(sources);
-    const predictionNodeIds = this.notationGraphStore.nodes
-      .filter((node) => {
-        if (!this.isYolo26PredictionNode(node)) {
-          return false;
-        }
-        if (region !== null && !this.nodeBelongsToRegion(node, region)) {
-          return false;
-        }
-        if (sourceSet === null) {
-          return true;
-        }
-        const source = this.getPredictionSource(node);
-        return source === null || sourceSet.has(source);
-      })
       .map((node) => node.id);
 
     for (const nodeId of predictionNodeIds) {
@@ -751,73 +882,40 @@ export class MainMenuController implements IController {
     return predictionNodeIds.length;
   }
 
-  private insertYolo26Predictions(predictions: Yolo26Prediction[]): number {
+  private insertSymbolPredictions(
+    predictions: readonly SymbolPrediction[],
+    modelKey: string,
+  ): number {
     const insertedNodeIds: number[] = [];
 
     for (const prediction of predictions) {
+      const data: Node["data"] = {
+        symbol_detector_prediction: { type: "str", value: "true" },
+        symbol_detector_model_key: { type: "str", value: modelKey },
+      };
+      if (
+        typeof prediction.confidence === "number" &&
+        Number.isFinite(prediction.confidence)
+      ) {
+        data["symbol_detector_confidence"] = {
+          type: "float",
+          value: prediction.confidence.toFixed(6),
+        };
+      }
       const node: Node = {
         id: this.notationGraphStore.getFreeId(),
         className: prediction.className,
-        top: prediction.top,
-        left: prediction.left,
-        width: prediction.width,
-        height: prediction.height,
+        top: Math.round(prediction.top),
+        left: Math.round(prediction.left),
+        width: Math.max(1, Math.round(prediction.width)),
+        height: Math.max(1, Math.round(prediction.height)),
         syntaxInlinks: [],
         syntaxOutlinks: [],
         precedenceInlinks: [],
         precedenceOutlinks: [],
         decodedMask: null,
         textTranscription: null,
-        data: {
-          symbol_detector_prediction: {
-            type: "str",
-            value: "true",
-          },
-          symbol_detector_source: {
-            type: "str",
-            value: prediction.source,
-          },
-          symbol_detector_model_key: {
-            type: "str",
-            value: prediction.modelKey,
-          },
-          symbol_detector_model_label: {
-            type: "str",
-            value: prediction.modelLabel,
-          },
-          symbol_detector_backend: {
-            type: "str",
-            value: prediction.backend,
-          },
-          symbol_detector_confidence: {
-            type: "float",
-            value: prediction.confidence.toFixed(6),
-          },
-          symbol_detector_class_id: {
-            type: "int",
-            value: String(prediction.classId),
-          },
-          symbol_detector_raw_class: {
-            type: "str",
-            value: prediction.rawClassName,
-          },
-          yolo26_combined: {
-            type: "str",
-            value: "true",
-          },
-          yolo26_combined_confidence: {
-            type: "float",
-            value: prediction.confidence.toFixed(6),
-          },
-          yolo26_combined_class_id: {
-            type: "int",
-            value: String(prediction.classId),
-          },
-          yolo26_combined_raw_class: {
-            type: "str",
-            value: prediction.rawClassName,
-          },
-        },
+        data,
         polygon: null,
       };
 
@@ -833,171 +931,103 @@ export class MainMenuController implements IController {
     return insertedNodeIds.length;
   }
 
-  private hasSimilarExistingNode(prediction: Yolo26Prediction): boolean {
-    const predictedBox = this.predictionToBox(prediction);
-
-    return this.notationGraphStore.nodes.some((node) => {
-      if (node.className !== prediction.className) {
-        return false;
-      }
-      const existingBox = this.nodeToBox(node);
-      return (
-        this.computeIou(predictedBox, existingBox) >= 0.7 &&
-        this.computeAreaRatio(predictedBox, existingBox) >= 0.7
-      );
-    });
-  }
-
-  private countYolo26PredictionNodes(): number {
+  private countPredictedSymbolNodes(): number {
     return this.notationGraphStore.nodes.filter((node) =>
-      this.isYolo26PredictionNode(node),
+      this.isPredictedSymbolNode(node),
     ).length;
   }
 
-  private getRecognitionRegion(
-    options: SymbolDetectionRunOptions,
-  ): DOMRect | null {
-    const { roiLeft, roiTop, roiWidth, roiHeight } = options;
-    if (
-      roiLeft === undefined ||
-      roiTop === undefined ||
-      roiWidth === undefined ||
-      roiHeight === undefined
-    ) {
-      return null;
-    }
-    if (
-      !Number.isFinite(roiLeft) ||
-      !Number.isFinite(roiTop) ||
-      !Number.isFinite(roiWidth) ||
-      !Number.isFinite(roiHeight) ||
-      roiWidth <= 0 ||
-      roiHeight <= 0
-    ) {
-      return null;
-    }
-    return new DOMRect(roiLeft, roiTop, roiWidth, roiHeight);
-  }
-
-  private isYolo26PredictionNode(node: Node): boolean {
+  /**
+   * Nodes inserted by the symbol detector carry the DataItem
+   * symbol_detector_prediction = "true". Pages annotated with earlier
+   * versions of the tool may carry yolo26_combined = "true" instead.
+   */
+  private isPredictedSymbolNode(node: Node): boolean {
     return (
       node.data["symbol_detector_prediction"]?.value === "true" ||
       node.data["yolo26_combined"]?.value === "true"
     );
   }
 
-  private buildDefaultSymbolDetectionRunOptions(): SymbolDetectionRunOptions {
+  /** The nodes sent to a relation model: the whole page or one region. */
+  private nodesForModel(region: DOMRect | null): ModelNode[] {
+    return this.notationGraphStore.nodes
+      .filter(
+        (node) =>
+          node.width > 0 &&
+          node.height > 0 &&
+          (region === null || this.nodeBelongsToRegion(node, region)),
+      )
+      .map((node) => ({
+        id: node.id,
+        className: node.className,
+        left: node.left,
+        top: node.top,
+        width: node.width,
+        height: node.height,
+      }));
+  }
+
+  private graphSignature(nodes: readonly ModelNode[]): string {
+    return JSON.stringify(
+      nodes.map((node) => {
+        if (!this.notationGraphStore.hasNode(node.id)) return [node.id];
+        const current = this.notationGraphStore.getNode(node.id);
+        return [
+          current.id,
+          current.className,
+          current.left,
+          current.top,
+          current.width,
+          current.height,
+        ];
+      }),
+    );
+  }
+
+  private pageSize(): { width: number; height: number } {
     return {
-      ...DEFAULT_YOLO26_DETECTION_OPTIONS,
-      largeModelKey: DEFAULT_LARGE_DETECTION_MODEL_KEY,
-      smallModelKey: DEFAULT_SMALL_DETECTION_MODEL_KEY,
-      runLarge: true,
-      runSmall: true,
-      deduplicate: true,
+      width: this.jotaiStore.get(this.backgroundImageStore.widthAtom),
+      height: this.jotaiStore.get(this.backgroundImageStore.heightAtom),
     };
   }
 
-  private getRunSources(
-    options: Pick<SymbolDetectionRunOptions, "runLarge" | "runSmall">,
-  ): SymbolDetectionSource[] {
-    const sources: SymbolDetectionSource[] = [];
-    if (options.runLarge) {
-      sources.push("large");
-    }
-    if (options.runSmall) {
-      sources.push("small");
-    }
-    return sources;
+  /** Intersect a region with the page; null when they do not overlap. */
+  private clipRegionToPage(region: DOMRect): DOMRect | null {
+    const page = this.pageSize();
+    const left = Math.max(0, Math.floor(region.left));
+    const top = Math.max(0, Math.floor(region.top));
+    const right = Math.min(page.width, Math.ceil(region.right));
+    const bottom = Math.min(page.height, Math.ceil(region.bottom));
+    if (right <= left || bottom <= top) return null;
+    return new DOMRect(left, top, right - left, bottom - top);
   }
 
-  private formatSources(sources: readonly SymbolDetectionSource[]): string {
-    if (sources.length === 2) {
-      return "large and small";
-    }
-    return sources[0] ?? "selected";
+  private toPageRegion(region: DOMRect): PageRegion {
+    return {
+      left: region.left,
+      top: region.top,
+      width: region.width,
+      height: region.height,
+    };
   }
 
-  private getPredictionSource(node: Node): SymbolDetectionSource | null {
-    const source = node.data["symbol_detector_source"]?.value;
-    if (source === "large" || source === "small") {
-      return source;
-    }
-    return null;
-  }
-
-  private getPredictionConfidence(node: Node): number {
-    const value =
-      node.data["symbol_detector_confidence"]?.value ??
-      node.data["yolo26_combined_confidence"]?.value ??
-      "0";
-    const confidence = Number(value);
-    return Number.isFinite(confidence) ? confidence : 0;
-  }
-
-  private areDuplicatePredictionNodes(
-    candidate: Node,
-    kept: Node,
-    options: Yolo26DetectionOptions,
+  /** A node belongs to a region when at least half of its box lies inside. */
+  private nodeBelongsToRegion(
+    node: Pick<Node, "left" | "top" | "width" | "height">,
+    region: DOMRect,
   ): boolean {
-    const sameClass = candidate.className === kept.className;
-    const iouThreshold = sameClass ? options.sameClassIou : options.xclassIou;
-    const areaThreshold = sameClass
-      ? options.sameClassAreaRatio
-      : options.xclassAreaRatio;
-    const candidateBox = this.nodeToBox(candidate);
-    const keptBox = this.nodeToBox(kept);
-    return (
-      this.computeIou(candidateBox, keptBox) >= iouThreshold &&
-      this.computeAreaRatio(candidateBox, keptBox) >= areaThreshold
-    );
-  }
-
-  private predictionToBox(prediction: Yolo26Prediction): DOMRect {
-    return new DOMRect(
-      prediction.left,
-      prediction.top,
-      prediction.width,
-      prediction.height,
-    );
-  }
-
-  private nodeToBox(node: Node): DOMRect {
-    return new DOMRect(node.left, node.top, node.width, node.height);
-  }
-
-  private nodeBelongsToRegion(node: Node, region: DOMRect): boolean {
-    const nodeBox = this.nodeToBox(node);
-    const nodeArea = nodeBox.width * nodeBox.height;
+    const nodeArea = node.width * node.height;
     if (nodeArea <= 0) {
       return false;
     }
-    return (
-      this.computeIntersectionArea(nodeBox, region) / nodeArea >=
-      MainMenuController.REGION_REPLACE_MIN_COVERAGE
-    );
-  }
-
-  private computeIntersectionArea(a: DOMRect, b: DOMRect): number {
-    const left = Math.max(a.left, b.left);
-    const top = Math.max(a.top, b.top);
-    const right = Math.min(a.right, b.right);
-    const bottom = Math.min(a.bottom, b.bottom);
-    return Math.max(0, right - left) * Math.max(0, bottom - top);
-  }
-
-  private computeIou(a: DOMRect, b: DOMRect): number {
-    const left = Math.max(a.left, b.left);
-    const top = Math.max(a.top, b.top);
-    const right = Math.min(a.right, b.right);
-    const bottom = Math.min(a.bottom, b.bottom);
+    const left = Math.max(node.left, region.left);
+    const top = Math.max(node.top, region.top);
+    const right = Math.min(node.left + node.width, region.right);
+    const bottom = Math.min(node.top + node.height, region.bottom);
     const intersection = Math.max(0, right - left) * Math.max(0, bottom - top);
-    const union = a.width * a.height + b.width * b.height - intersection;
-    return intersection / Math.max(union, 1e-6);
-  }
-
-  private computeAreaRatio(a: DOMRect, b: DOMRect): number {
-    const aArea = a.width * a.height;
-    const bArea = b.width * b.height;
-    return Math.min(aArea, bArea) / Math.max(aArea, bArea, 1e-6);
+    return (
+      intersection / nodeArea >= MainMenuController.REGION_REPLACE_MIN_COVERAGE
+    );
   }
 }

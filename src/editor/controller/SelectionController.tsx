@@ -133,9 +133,15 @@ export class SelectionController implements IController {
       return;
     }
 
-    // Ctrl/Cmd + drag is reserved for the quick-rectangle node creation gesture
-    // (QuickRectNodeController), so don't start a selection sweep here.
-    if (e.ctrlKey || e.metaKey) return;
+    // Ctrl/Cmd + drag is reserved for quick-rectangle creation in Pointer
+    // mode. Do not swallow the modifier in Syntax/Precedence mode: those link
+    // tools intentionally use Ctrl/Cmd + click/drag to select their targets.
+    if (
+      (e.ctrlKey || e.metaKey) &&
+      this.toolbeltController.currentTool === EditorTool.Pointer
+    ) {
+      return;
+    }
 
     const highlightedNode = this.highlighter.highlightedNode;
 

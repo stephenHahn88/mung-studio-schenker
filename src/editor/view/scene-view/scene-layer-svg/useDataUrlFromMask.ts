@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Node } from "../../../../mung/Node";
 import { SignalAtomCollection } from "../../../model/SignalAtomCollection";
 import { getDefaultStore, useAtomValue } from "jotai";
-import { classNameToHue } from "../../../../mung/classNameToHue";
+import { hexColorToRgb } from "../../../../mung/classNameToColor";
 
 /**
  * Web worker that converts masks to data URLs in the background
@@ -30,7 +30,10 @@ maskConvertingWorker.onmessage = (e: MessageEvent<[number, string]>) => {
  * Converts a decoded mask of a node into a data base64 URL that contains
  * that mask. Uses caching to prevent re-computations with each re-render.
  */
-export function useDataUrlFromMask(node: Node): string | undefined {
+export function useDataUrlFromMask(
+  node: Node,
+  color: string,
+): string | undefined {
   // Data url is "data:image/png;base64,iVBORw0KGgoA...",
   // It does not need to be released or anything. It's not an object URL.
   // Use it like a magic string that can be given to "src" or "href" atributes
@@ -44,10 +47,13 @@ export function useDataUrlFromMask(node: Node): string | undefined {
   useEffect(() => {
     // only if there is a mask
     if (node.decodedMask) {
-      const hue = classNameToHue(node.className);
-      maskConvertingWorker.postMessage([node.id, hue, node.decodedMask]);
+      maskConvertingWorker.postMessage([
+        node.id,
+        hexColorToRgb(color),
+        node.decodedMask,
+      ]);
     }
-  }, [node.decodedMask, node.className]);
+  }, [node.decodedMask, node.className, color]);
 
   // return undefined if no mask is set
   if (!node.decodedMask) return undefined;

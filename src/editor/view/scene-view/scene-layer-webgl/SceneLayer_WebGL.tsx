@@ -8,6 +8,7 @@ import {
   SyntaxLinkGeometryDrawable,
 } from "./GLLinkRenderer";
 import { GlobalMaskTexture, MaskAtlasRenderer } from "./GLNodeMaskRenderer";
+import { useAtomValue } from "jotai";
 
 /**
  * Scene layer, rendered via WebGL
@@ -19,7 +20,12 @@ export function SceneLayer_WebGL() {
     classVisibilityStore,
     editorStateStore,
     zoomController,
+    classCatalogStore,
   } = useContext(EditorContext);
+  const classNames = useAtomValue(classCatalogStore.allClassNamesAtom);
+  const colorOverrides = useAtomValue(
+    classCatalogStore.classColorOverridesAtom,
+  );
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const glRef = useRef<GLRenderer | null>(null);
@@ -49,6 +55,8 @@ export function SceneLayer_WebGL() {
     const masks = new MaskAtlasRenderer(
       notationGraphStore,
       classVisibilityStore,
+      classNames,
+      colorOverrides,
     );
     glRef.current.addDrawable(masks);
 
@@ -130,6 +138,7 @@ export function SceneLayer_WebGL() {
     classVisibilityStore.onChange.subscribe(onGraphUpdate);
     editorStateStore.displayPrecedenceLinksChangeEvent.subscribe(onGraphUpdate);
     editorStateStore.displaySyntaxLinksChangeEvent.subscribe(onGraphUpdate);
+    editorStateStore.hideAllEdgesChangeEvent.subscribe(onGraphUpdate);
 
     // Cleanup
     return () => {
@@ -144,13 +153,14 @@ export function SceneLayer_WebGL() {
         onGraphUpdate,
       );
       editorStateStore.displaySyntaxLinksChangeEvent.unsubscribe(onGraphUpdate);
+      editorStateStore.hideAllEdgesChangeEvent.unsubscribe(onGraphUpdate);
       syntaxLinks.unsubscribeEvents();
       precedenceLinks.unsubscribeEvents();
       //maskDrawable.unsubscribeEvents();
       masks.unsubscribeEvents();
       resizeObserver.disconnect();
     };
-  }, []);
+  }, [classNames, colorOverrides]);
 
   return (
     <canvas

@@ -1,0 +1,313 @@
+{
+ "description": "Ignore regions of the symbol evaluation: boxes [left, top, right, bottom] (page pixels, clipped to the page) of the MuNG nodes whose class is empty, \"unknown\" or \"unclassified\"; they are the excluded nodes of label_policy_log.json and are not symbols.",
+ "pages": {
+  "berg_three_orchestral_pieces_praeludium_no_1_graph001": [
+   {
+    "node_id": 133,
+    "class_name": "unclassified",
+    "box": [
+     2168.0,
+     540.0,
+     2186.0,
+     556.0
+    ]
+   },
+   {
+    "node_id": 151,
+    "class_name": "unclassified",
+    "box": [
+     3330.0,
+     603.0,
+     3342.0,
+     636.0
+    ]
+   },
+   {
+    "node_id": 358,
+    "class_name": "unclassified",
+    "box": [
+     2053.0,
+     528.0,
+     2070.0,
+     558.0
+    ]
+   },
+   {
+    "node_id": 681,
+    "class_name": "unclassified",
+    "box": [
+     802.0,
+     889.0,
+     818.0,
+     899.0
+    ]
+   },
+   {
+    "node_id": 776,
+    "class_name": "unclassified",
+    "box": [
+     751.0,
+     1376.0,
+     790.0,
+     1412.0
+    ]
+   }
+  ],
+  "berg_three_orchestral_pieces_praeludium_no_1_graph002": [
+   {
+    "node_id": 6,
+    "class_name": "unclassified",
+    "box": [
+     643.0,
+     504.0,
+     660.0,
+     531.0
+    ]
+   }
+  ],
+  "berg_three_orchestral_pieces_praeludium_no_1_graph003": [
+   {
+    "node_id": 74,
+    "class_name": "unclassified",
+    "box": [
+     1700.0,
+     1188.0,
+     1751.0,
+     1219.0
+    ]
+   },
+   {
+    "node_id": 94,
+    "class_name": "unclassified",
+    "box": [
+     2036.0,
+     510.0,
+     2071.0,
+     576.0
+    ]
+   },
+   {
+    "node_id": 146,
+    "class_name": "unclassified",
+    "box": [
+     2238.0,
+     1163.0,
+     2286.0,
+     1196.0
+    ]
+   },
+   {
+    "node_id": 246,
+    "class_name": "unclassified",
+    "box": [
+     2339.0,
+     374.0,
+     2365.0,
+     436.0
+    ]
+   },
+   {
+    "node_id": 288,
+    "class_name": "unclassified",
+    "box": [
+     2676.0,
+     1200.0,
+     2734.0,
+     1224.0
+    ]
+   },
+   {
+    "node_id": 343,
+    "class_name": "unclassified",
+    "box": [
+     2831.0,
+     1195.0,
+     2883.0,
+     1223.0
+    ]
+   },
+   {
+    "node_id": 631,
+    "class_name": "unclassified",
+    "box": [
+     2427.0,
+     1088.0,
+     2738.0,
+     1145.0
+    ]
+   }
+  ],
+  "monteverdi_lamento_della_ninfa002": [
+   {
+    "node_id": 243,
+    "class_name": "unclassified",
+    "box": [
+     658.0,
+     826.0,
+     678.0,
+     888.0
+    ]
+   },
+   {
+    "node_id": 244,
+    "class_name": "unclassified",
+    "box": [
+     909.0,
+     827.0,
+     929.0,
+     889.0
+    ]
+   },
+   {
+    "node_id": 245,
+    "class_name": "unclassified",
+    "box": [
+     1218.0,
+     824.0,
+     1238.0,
+     881.0
+    ]
+   },
+   {
+    "node_id": 246,
+    "class_name": "unclassified",
+    "box": [
+     1459.0,
+     823.0,
+     1482.0,
+     880.0
+    ]
+   },
+   {
+    "node_id": 247,
+    "class_name": "unclassified",
+    "box": [
+     1706.0,
+     825.0,
+     1731.0,
+     878.0
+    ]
+   }
+  ],
+  "rachmaninov_the_bells_second_mvmt_001": [
+   {
+    "node_id": 819,
+    "class_name": "unKnown",
+    "box": [
+     201.0,
+     3342.0,
+     660.0,
+     3475.0
+    ]
+   }
+  ],
+  "schubert_einsamkeit_graphs004": [
+   {
+    "node_id": 1,
+    "class_name": "unclassified",
+    "box": [
+     1461.0,
+     398.0,
+     1509.0,
+     446.0
+    ]
+   },
+   {
+    "node_id": 10,
+    "class_name": "unclassified",
+    "box": [
+     2066.0,
+     388.0,
+     2098.0,
+     432.0
+    ]
+   },
+   {
+    "node_id": 330,
+    "class_name": "unclassified",
+    "box": [
+     1095.0,
+     762.0,
+     1187.0,
+     778.0
+    ]
+   },
+   {
+    "node_id": 387,
+    "class_name": "unclassified",
+    "box": [
+     3834.0,
+     369.0,
+     3885.0,
+     417.0
+    ]
+   },
+   {
+    "node_id": 924,
+    "class_name": "unclassified",
+    "box": [
+     3889.0,
+     1281.0,
+     3928.0,
+     1317.0
+    ]
+   },
+   {
+    "node_id": 948,
+    "class_name": "unclassified",
+    "box": [
+     253.0,
+     3105.0,
+     271.0,
+     3140.0
+    ]
+   }
+  ],
+  "sean_cmajfantasy_3_19b": [
+   {
+    "node_id": 83,
+    "class_name": "unclassified",
+    "box": [
+     2125.0,
+     606.0,
+     2132.0,
+     647.0
+    ]
+   }
+  ],
+  "sean_wanderer_fantasy_2nd_mvt_001": [
+   {
+    "node_id": 219,
+    "class_name": "unknown",
+    "box": [
+     883.0,
+     2092.0,
+     1139.0,
+     2172.0
+    ]
+   },
+   {
+    "node_id": 776,
+    "class_name": "unknown",
+    "box": [
+     1472.0,
+     2049.0,
+     2070.0,
+     2110.0
+    ]
+   }
+  ],
+  "wtcii_f_sharp_fugue_p1": [
+   {
+    "node_id": 967,
+    "class_name": "unclassified",
+    "box": [
+     1351.0,
+     637.0,
+     1368.0,
+     674.0
+    ]
+   }
+  ]
+ }
+}

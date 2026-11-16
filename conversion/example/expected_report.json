@@ -1,0 +1,1334 @@
+{
+  "document": "Bach Fugue in Bb minor WTC 2 Overview001",
+  "notes": [
+    {
+      "id": 20,
+      "class_name": "noteheadBlack",
+      "time": 0,
+      "pitch": "Db5",
+      "voice": "IT",
+      "depth": 1,
+      "staff": "treble",
+      "ursatz": false,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": null,
+      "written_accidental": null,
+      "complete": true
+    },
+    {
+      "id": 26,
+      "class_name": "noteheadHalf",
+      "time": 0,
+      "pitch": "F5",
+      "voice": "T",
+      "depth": 3,
+      "staff": "treble",
+      "ursatz": true,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": 5,
+      "written_accidental": null,
+      "complete": true
+    },
+    {
+      "id": 27,
+      "class_name": "noteheadBlack",
+      "time": 2,
+      "pitch": "F5",
+      "voice": "T",
+      "depth": 3,
+      "staff": "treble",
+      "ursatz": false,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": null,
+      "written_accidental": null,
+      "complete": true
+    },
+    {
+      "id": 28,
+      "class_name": "noteheadBlack",
+      "time": 4,
+      "pitch": "F5",
+      "voice": "T",
+      "depth": 3,
+      "staff": "treble",
+      "ursatz": false,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": null,
+      "written_accidental": null,
+      "complete": true
+    },
+    {
+      "id": 29,
+      "class_name": "noteheadBlack",
+      "time": 7,
+      "pitch": "F5",
+      "voice": "T",
+      "depth": 3,
+      "staff": "treble",
+      "ursatz": false,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": null,
+      "written_accidental": null,
+      "complete": true
+    },
+    {
+      "id": 32,
+      "class_name": "noteheadBlack",
+      "time": 10,
+      "pitch": "Eb5",
+      "voice": "T",
+      "depth": 3,
+      "staff": "treble",
+      "ursatz": false,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": null,
+      "written_accidental": null,
+      "complete": true
+    },
+    {
+      "id": 37,
+      "class_name": "noteheadBlack",
+      "time": 1,
+      "pitch": "Eb5",
+      "voice": "T",
+      "depth": 0,
+      "staff": "treble",
+      "ursatz": false,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": null,
+      "written_accidental": null,
+      "complete": true
+    },
+    {
+      "id": 38,
+      "class_name": "noteheadHalf",
+      "time": 9,
+      "pitch": "Eb5",
+      "voice": "T",
+      "depth": 3,
+      "staff": "treble",
+      "ursatz": true,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": 4,
+      "written_accidental": null,
+      "complete": true
+    },
+    {
+      "id": 39,
+      "class_name": "noteheadBlack",
+      "time": 5,
+      "pitch": "Eb5",
+      "voice": "T",
+      "depth": 2,
+      "staff": "treble",
+      "ursatz": false,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": null,
+      "written_accidental": null,
+      "complete": true
+    },
+    {
+      "id": 40,
+      "class_name": "noteheadBlack",
+      "time": 3,
+      "pitch": "Eb5",
+      "voice": "T",
+      "depth": 0,
+      "staff": "treble",
+      "ursatz": false,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": null,
+      "written_accidental": null,
+      "complete": true
+    },
+    {
+      "id": 44,
+      "class_name": "noteheadBlack",
+      "time": 7,
+      "pitch": "D5",
+      "voice": "IT",
+      "depth": 2,
+      "staff": "treble",
+      "ursatz": false,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": null,
+      "written_accidental": "natural",
+      "complete": true
+    },
+    {
+      "id": 49,
+      "class_name": "noteheadBlack",
+      "time": 4,
+      "pitch": "Db5",
+      "voice": "IT",
+      "depth": 0,
+      "staff": "treble",
+      "ursatz": false,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": null,
+      "written_accidental": null,
+      "complete": true
+    },
+    {
+      "id": 52,
+      "class_name": "noteheadHalf",
+      "time": 12,
+      "pitch": "C5",
+      "voice": "T",
+      "depth": 3,
+      "staff": "treble",
+      "ursatz": true,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": 2,
+      "written_accidental": null,
+      "complete": true
+    },
+    {
+      "id": 54,
+      "class_name": "noteheadBlack",
+      "time": 10,
+      "pitch": "C5",
+      "voice": "IT",
+      "depth": 0,
+      "staff": "treble",
+      "ursatz": false,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": null,
+      "written_accidental": null,
+      "complete": true
+    },
+    {
+      "id": 55,
+      "class_name": "noteheadHalf",
+      "time": 13,
+      "pitch": "Bb4",
+      "voice": "T",
+      "depth": 3,
+      "staff": "treble",
+      "ursatz": true,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": 1,
+      "written_accidental": null,
+      "complete": true
+    },
+    {
+      "id": 57,
+      "class_name": "noteheadBlack",
+      "time": 5,
+      "pitch": "C5",
+      "voice": "IT",
+      "depth": 0,
+      "staff": "treble",
+      "ursatz": false,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": null,
+      "written_accidental": "natural",
+      "complete": true
+    },
+    {
+      "id": 61,
+      "class_name": "noteheadBlack",
+      "time": 9,
+      "pitch": "Bb4",
+      "voice": "IT",
+      "depth": 0,
+      "staff": "treble",
+      "ursatz": false,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": null,
+      "written_accidental": null,
+      "complete": true
+    },
+    {
+      "id": 62,
+      "class_name": "noteheadBlack",
+      "time": 7,
+      "pitch": "Ab4",
+      "voice": "IB",
+      "depth": 0,
+      "staff": "treble",
+      "ursatz": false,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": null,
+      "written_accidental": null,
+      "complete": true
+    },
+    {
+      "id": 65,
+      "class_name": "noteheadBlack",
+      "time": 12,
+      "pitch": "A4",
+      "voice": "IB",
+      "depth": 1,
+      "staff": "treble",
+      "ursatz": false,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": null,
+      "written_accidental": "natural",
+      "complete": true
+    },
+    {
+      "id": 68,
+      "class_name": "noteheadBlack",
+      "time": 10,
+      "pitch": "A4",
+      "voice": "IB",
+      "depth": 1,
+      "staff": "treble",
+      "ursatz": false,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": null,
+      "written_accidental": "natural",
+      "complete": true
+    },
+    {
+      "id": 69,
+      "class_name": "noteheadBlack",
+      "time": 8,
+      "pitch": "Ab4",
+      "voice": "IB",
+      "depth": 0,
+      "staff": "treble",
+      "ursatz": false,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": null,
+      "written_accidental": null,
+      "complete": true
+    },
+    {
+      "id": 70,
+      "class_name": "noteheadBlack",
+      "time": 5,
+      "pitch": "Ab4",
+      "voice": "IB",
+      "depth": 0,
+      "staff": "treble",
+      "ursatz": false,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": null,
+      "written_accidental": "flat",
+      "complete": true
+    },
+    {
+      "id": 73,
+      "class_name": "noteheadBlack",
+      "time": 9,
+      "pitch": "G4",
+      "voice": "IB",
+      "depth": 1,
+      "staff": "treble",
+      "ursatz": false,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": null,
+      "written_accidental": "natural",
+      "complete": true
+    },
+    {
+      "id": 76,
+      "class_name": "noteheadBlack",
+      "time": 6,
+      "pitch": "Gb4",
+      "voice": "IB",
+      "depth": 0,
+      "staff": "treble",
+      "ursatz": false,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": null,
+      "written_accidental": "flat",
+      "complete": true
+    },
+    {
+      "id": 78,
+      "class_name": "noteheadBlack",
+      "time": 7,
+      "pitch": "F4",
+      "voice": null,
+      "depth": 1,
+      "staff": "treble",
+      "ursatz": false,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": null,
+      "written_accidental": null,
+      "complete": false
+    },
+    {
+      "id": 88,
+      "class_name": "noteheadHalf",
+      "time": 10,
+      "pitch": "F3",
+      "voice": "B",
+      "depth": 3,
+      "staff": "bass",
+      "ursatz": true,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": 5,
+      "written_accidental": null,
+      "complete": true
+    },
+    {
+      "id": 91,
+      "class_name": "noteheadBlack",
+      "time": 9,
+      "pitch": "Eb3",
+      "voice": "B",
+      "depth": 3,
+      "staff": "bass",
+      "ursatz": false,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": 4,
+      "written_accidental": null,
+      "complete": true
+    },
+    {
+      "id": 94,
+      "class_name": "noteheadBlack",
+      "time": 8,
+      "pitch": "D3",
+      "voice": "B",
+      "depth": 3,
+      "staff": "bass",
+      "ursatz": false,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": null,
+      "written_accidental": "natural",
+      "complete": true
+    },
+    {
+      "id": 95,
+      "class_name": "noteheadBlack",
+      "time": 2,
+      "pitch": "Db3",
+      "voice": "B",
+      "depth": 3,
+      "staff": "bass",
+      "ursatz": false,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": 3,
+      "written_accidental": null,
+      "complete": true
+    },
+    {
+      "id": 98,
+      "class_name": "noteheadBlack",
+      "time": 1,
+      "pitch": "C3",
+      "voice": "B",
+      "depth": 3,
+      "staff": "bass",
+      "ursatz": false,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": null,
+      "written_accidental": null,
+      "complete": true
+    },
+    {
+      "id": 99,
+      "class_name": "noteheadBlack",
+      "time": 3,
+      "pitch": "Cb3",
+      "voice": "B",
+      "depth": 0,
+      "staff": "bass",
+      "ursatz": false,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": null,
+      "written_accidental": "flat",
+      "complete": true
+    },
+    {
+      "id": 100,
+      "class_name": "noteheadHalf",
+      "time": 13,
+      "pitch": "Bb2",
+      "voice": "B",
+      "depth": 3,
+      "staff": "bass",
+      "ursatz": true,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": 1,
+      "written_accidental": null,
+      "complete": true
+    },
+    {
+      "id": 101,
+      "class_name": "noteheadHalf",
+      "time": 0,
+      "pitch": "Bb2",
+      "voice": "B",
+      "depth": 3,
+      "staff": "bass",
+      "ursatz": true,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": 1,
+      "written_accidental": null,
+      "complete": true
+    },
+    {
+      "id": 104,
+      "class_name": "noteheadBlack",
+      "time": 4,
+      "pitch": "Bb2",
+      "voice": "B",
+      "depth": 2,
+      "staff": "bass",
+      "ursatz": false,
+      "flagged": true,
+      "parenthetical": false,
+      "scale_degree": null,
+      "written_accidental": null,
+      "complete": true
+    },
+    {
+      "id": 107,
+      "class_name": "noteheadBlack",
+      "time": 7,
+      "pitch": "Bb2",
+      "voice": "B",
+      "depth": 2,
+      "staff": "bass",
+      "ursatz": false,
+      "flagged": true,
+      "parenthetical": false,
+      "scale_degree": null,
+      "written_accidental": null,
+      "complete": true
+    },
+    {
+      "id": 111,
+      "class_name": "noteheadBlack",
+      "time": 6,
+      "pitch": "A2",
+      "voice": "B",
+      "depth": 0,
+      "staff": "bass",
+      "ursatz": false,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": null,
+      "written_accidental": "natural",
+      "complete": true
+    },
+    {
+      "id": 114,
+      "class_name": "noteheadBlack",
+      "time": 5,
+      "pitch": "Ab2",
+      "voice": "B",
+      "depth": 2,
+      "staff": "bass",
+      "ursatz": false,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": null,
+      "written_accidental": null,
+      "complete": true
+    },
+    {
+      "id": 134,
+      "class_name": "noteheadHalf",
+      "time": 11,
+      "pitch": "Db5",
+      "voice": "T",
+      "depth": 3,
+      "staff": "treble",
+      "ursatz": true,
+      "flagged": false,
+      "parenthetical": false,
+      "scale_degree": 3,
+      "written_accidental": null,
+      "complete": true
+    },
+    {
+      "id": 135,
+      "class_name": "noteheadBlack",
+      "time": 11,
+      "pitch": "Ab4",
+      "voice": "IB",
+      "depth": 1,
+      "staff": "treble",
+      "ursatz": false,
+      "flagged": true,
+      "parenthetical": false,
+      "scale_degree": null,
+      "written_accidental": null,
+      "complete": true
+    }
+  ],
+  "unresolved": [
+    {
+      "code": "no_free_lane",
+      "node_ids": [
+        78
+      ],
+      "message": "Its inner voice is placed in IB, which is already taken at time position 7 by notehead 62; this notehead is not written to the JSON."
+    }
+  ],
+  "warnings": [
+    {
+      "code": "roman_numeral_modifiers",
+      "node_ids": [
+        91,
+        137
+      ],
+      "message": "Symbols linked to this Roman numeral (e.g. figures or accidentals) have no field in the JSON; only the numeral is written."
+    },
+    {
+      "code": "roman_numeral_modifiers",
+      "node_ids": [
+        88,
+        140
+      ],
+      "message": "Symbols linked to this Roman numeral (e.g. figures or accidentals) have no field in the JSON; only the numeral is written."
+    },
+    {
+      "code": "voice_exchange_not_outer",
+      "node_ids": [
+        77,
+        95,
+        44
+      ],
+      "message": "The JSON format stores voice exchanges between the two outer voices only; this one is not written."
+    },
+    {
+      "code": "pitch_check",
+      "node_ids": [
+        62
+      ],
+      "message": "Notehead lies near the boundary between two staff positions."
+    },
+    {
+      "code": "pitch_check",
+      "node_ids": [
+        95
+      ],
+      "message": "Notehead lies near the boundary between two staff positions."
+    },
+    {
+      "code": "pitch_check",
+      "node_ids": [
+        114
+      ],
+      "message": "Notehead lies near the boundary between two staff positions."
+    },
+    {
+      "code": "pitch_check",
+      "node_ids": [
+        134
+      ],
+      "message": "Notehead lies near the boundary between two staff positions."
+    },
+    {
+      "code": "pitch_check",
+      "node_ids": [
+        134
+      ],
+      "message": "An earlier notehead at the same staff position has a different linked accidental."
+    },
+    {
+      "code": "pitch_check",
+      "node_ids": [
+        135
+      ],
+      "message": "Notehead lies near the boundary between two staff positions."
+    },
+    {
+      "code": "pitch_check",
+      "node_ids": [
+        135
+      ],
+      "message": "An earlier notehead at the same staff position has a different linked accidental."
+    }
+  ],
+  "details": {
+    "time_groups": [
+      {
+        "index": 0,
+        "id": "b9588623-58f1-4c98-afc5-ea02797d19be",
+        "members": [
+          20,
+          26,
+          101
+        ]
+      },
+      {
+        "index": 1,
+        "id": "044d752b-5d01-44e5-8b39-f05c2a08aaa8",
+        "members": [
+          37,
+          98
+        ]
+      },
+      {
+        "index": 2,
+        "id": "01f58e6d-6853-4788-bb09-c1ae9f1f2e7d",
+        "members": [
+          27,
+          95
+        ]
+      },
+      {
+        "index": 3,
+        "id": "f1cf8dc7-3941-4068-a4fa-da8ea3be5a08",
+        "members": [
+          40,
+          99
+        ]
+      },
+      {
+        "index": 4,
+        "id": "1ba8cdbc-1c4b-4ba5-be19-b024064fed4a",
+        "members": [
+          28,
+          49,
+          104
+        ]
+      },
+      {
+        "index": 5,
+        "id": "56595c1a-2c4a-4271-ab65-62e4117a7c3a",
+        "members": [
+          39,
+          57,
+          70,
+          114
+        ]
+      },
+      {
+        "index": 6,
+        "id": "a3da93d2-7ecd-4f8b-8c90-151014c51d79",
+        "members": [
+          76,
+          111
+        ]
+      },
+      {
+        "index": 7,
+        "id": "d1f4e179-dd6e-4a14-ac61-e3360ea358d0",
+        "members": [
+          29,
+          44,
+          62,
+          78,
+          107
+        ]
+      },
+      {
+        "index": 8,
+        "id": "75e0d6dd-9b74-49d2-a68b-f3e7b46bc9fc",
+        "members": [
+          69,
+          94
+        ]
+      },
+      {
+        "index": 9,
+        "id": "7aef2ce9-1fc9-4995-997d-f555720af696",
+        "members": [
+          38,
+          61,
+          73,
+          91
+        ]
+      },
+      {
+        "index": 10,
+        "id": "41dc2cd6-d081-4f8b-bb39-368f6fcb3705",
+        "members": [
+          32,
+          54,
+          68,
+          88
+        ]
+      },
+      {
+        "index": 11,
+        "id": "8d351e6c-467b-4509-9ff2-4496b7d2175a",
+        "members": [
+          134,
+          135
+        ]
+      },
+      {
+        "index": 12,
+        "id": "3b7945ea-ff20-4014-acb8-8fa4460fa3b5",
+        "members": [
+          52,
+          65
+        ]
+      },
+      {
+        "index": 13,
+        "id": "c493feb6-0dc9-4e13-8d89-b957096c65d0",
+        "members": [
+          55,
+          100
+        ]
+      }
+    ],
+    "horizontal_tie_breaks": 0,
+    "sequences": [
+      {
+        "index": 0,
+        "notes": [
+          26,
+          37,
+          27,
+          40,
+          49
+        ],
+        "first_mark": 26,
+        "mark": "hollow",
+        "role": "T",
+        "rule": "hollow notehead, upward stem"
+      },
+      {
+        "index": 1,
+        "notes": [
+          20
+        ],
+        "first_mark": null,
+        "mark": null,
+        "role": "inner",
+        "rule": "no hollow notehead or beamed note"
+      },
+      {
+        "index": 2,
+        "notes": [
+          101,
+          98,
+          95,
+          99,
+          104,
+          114,
+          111,
+          107,
+          94,
+          91,
+          88,
+          100
+        ],
+        "first_mark": 101,
+        "mark": "hollow",
+        "role": "B",
+        "rule": "hollow notehead, downward stem"
+      },
+      {
+        "index": 3,
+        "notes": [
+          28,
+          39,
+          44
+        ],
+        "first_mark": 28,
+        "mark": "beamed",
+        "role": "T",
+        "rule": "more often above other sequences",
+        "above": 8,
+        "below": 1
+      },
+      {
+        "index": 4,
+        "notes": [
+          57
+        ],
+        "first_mark": null,
+        "mark": null,
+        "role": "inner",
+        "rule": "no hollow notehead or beamed note"
+      },
+      {
+        "index": 5,
+        "notes": [
+          70,
+          76,
+          78
+        ],
+        "first_mark": null,
+        "mark": null,
+        "role": "inner",
+        "rule": "no hollow notehead or beamed note"
+      },
+      {
+        "index": 6,
+        "notes": [
+          62,
+          69
+        ],
+        "first_mark": null,
+        "mark": null,
+        "role": "inner",
+        "rule": "no hollow notehead or beamed note"
+      },
+      {
+        "index": 7,
+        "notes": [
+          29,
+          38,
+          32,
+          134,
+          52
+        ],
+        "first_mark": 29,
+        "mark": "beamed",
+        "role": "T",
+        "rule": "more often above other sequences",
+        "above": 12,
+        "below": 0
+      },
+      {
+        "index": 8,
+        "notes": [
+          61
+        ],
+        "first_mark": null,
+        "mark": null,
+        "role": "inner",
+        "rule": "no hollow notehead or beamed note"
+      },
+      {
+        "index": 9,
+        "notes": [
+          73,
+          68,
+          135,
+          65
+        ],
+        "first_mark": null,
+        "mark": null,
+        "role": "inner",
+        "rule": "no hollow notehead or beamed note"
+      },
+      {
+        "index": 10,
+        "notes": [
+          54
+        ],
+        "first_mark": null,
+        "mark": null,
+        "role": "inner",
+        "rule": "no hollow notehead or beamed note"
+      },
+      {
+        "index": 11,
+        "notes": [
+          55
+        ],
+        "first_mark": 55,
+        "mark": "hollow",
+        "role": "T",
+        "rule": "hollow notehead, upward stem"
+      }
+    ],
+    "outer_role_conflicts": [
+      {
+        "time": 4,
+        "role": "T",
+        "kept": 28,
+        "moved_to_inner": [
+          49
+        ]
+      },
+      {
+        "time": 7,
+        "role": "T",
+        "kept": 29,
+        "moved_to_inner": [
+          44
+        ]
+      }
+    ],
+    "inner_voices": [
+      {
+        "notes": [
+          49
+        ],
+        "average_position": 0.0859,
+        "preferred": "IT",
+        "order": 2,
+        "lane": "IT",
+        "unplaced": []
+      },
+      {
+        "notes": [
+          20
+        ],
+        "average_position": 0.0798,
+        "preferred": "IT",
+        "order": 1,
+        "lane": "IT",
+        "unplaced": []
+      },
+      {
+        "notes": [
+          44
+        ],
+        "average_position": 0.0775,
+        "preferred": "IT",
+        "order": 0,
+        "lane": "IT",
+        "unplaced": []
+      },
+      {
+        "notes": [
+          57
+        ],
+        "average_position": 0.1189,
+        "preferred": "IT",
+        "order": 4,
+        "lane": "IT",
+        "unplaced": []
+      },
+      {
+        "notes": [
+          70,
+          76,
+          78
+        ],
+        "average_position": 0.2316,
+        "preferred": "IT",
+        "order": 8,
+        "lane": "IB",
+        "unplaced": [
+          78
+        ]
+      },
+      {
+        "notes": [
+          62,
+          69
+        ],
+        "average_position": 0.1811,
+        "preferred": "IT",
+        "order": 6,
+        "lane": "IB",
+        "unplaced": []
+      },
+      {
+        "notes": [
+          61
+        ],
+        "average_position": 0.1568,
+        "preferred": "IT",
+        "order": 5,
+        "lane": "IT",
+        "unplaced": []
+      },
+      {
+        "notes": [
+          73,
+          68,
+          135,
+          65
+        ],
+        "average_position": 0.192,
+        "preferred": "IT",
+        "order": 7,
+        "lane": "IB",
+        "unplaced": []
+      },
+      {
+        "notes": [
+          54
+        ],
+        "average_position": 0.1115,
+        "preferred": "IT",
+        "order": 3,
+        "lane": "IT",
+        "unplaced": []
+      }
+    ],
+    "stems": [
+      {
+        "notehead": 20,
+        "stem": 50,
+        "group": "upper",
+        "length": 2.39,
+        "level": 1,
+        "depth": 1
+      },
+      {
+        "notehead": 26,
+        "stem": 12,
+        "group": "upper",
+        "length": 10.026,
+        "level": 3,
+        "depth": 3
+      },
+      {
+        "notehead": 27,
+        "stem": 19,
+        "group": "upper",
+        "length": 9.351,
+        "level": 3,
+        "depth": 3
+      },
+      {
+        "notehead": 27,
+        "stem": 47,
+        "group": "upper",
+        "length": 2.857,
+        "level": 1,
+        "depth": 1
+      },
+      {
+        "notehead": 28,
+        "stem": 16,
+        "group": "upper",
+        "length": 9.506,
+        "level": 3,
+        "depth": 3
+      },
+      {
+        "notehead": 29,
+        "stem": 15,
+        "group": "upper",
+        "length": 9.61,
+        "level": 3,
+        "depth": 3
+      },
+      {
+        "notehead": 32,
+        "stem": 18,
+        "group": "upper",
+        "length": 9.558,
+        "level": 3,
+        "depth": 3
+      },
+      {
+        "notehead": 38,
+        "stem": 17,
+        "group": "upper",
+        "length": 10.078,
+        "level": 3,
+        "depth": 3
+      },
+      {
+        "notehead": 39,
+        "stem": 23,
+        "group": "upper",
+        "length": 4.468,
+        "level": 2,
+        "depth": 2
+      },
+      {
+        "notehead": 44,
+        "stem": 22,
+        "group": "upper",
+        "length": 5.117,
+        "level": 2,
+        "depth": 2
+      },
+      {
+        "notehead": 52,
+        "stem": 11,
+        "group": "upper",
+        "length": 11.403,
+        "level": 3,
+        "depth": 3
+      },
+      {
+        "notehead": 55,
+        "stem": 13,
+        "group": "upper",
+        "length": 11.818,
+        "level": 3,
+        "depth": 3
+      },
+      {
+        "notehead": 65,
+        "stem": 74,
+        "group": "lower",
+        "length": 2.494,
+        "level": 1,
+        "depth": 1
+      },
+      {
+        "notehead": 68,
+        "stem": 75,
+        "group": "lower",
+        "length": 2.39,
+        "level": 1,
+        "depth": 1
+      },
+      {
+        "notehead": 73,
+        "stem": 79,
+        "group": "lower",
+        "length": 3.169,
+        "level": 1,
+        "depth": 1
+      },
+      {
+        "notehead": 78,
+        "stem": 82,
+        "group": "lower",
+        "length": 2.831,
+        "level": 1,
+        "depth": 1
+      },
+      {
+        "notehead": 88,
+        "stem": 92,
+        "group": "lower",
+        "length": 12.231,
+        "level": 3,
+        "depth": 3
+      },
+      {
+        "notehead": 91,
+        "stem": 96,
+        "group": "lower",
+        "length": 11.462,
+        "level": 3,
+        "depth": 3
+      },
+      {
+        "notehead": 94,
+        "stem": 102,
+        "group": "lower",
+        "length": 10.846,
+        "level": 3,
+        "depth": 3
+      },
+      {
+        "notehead": 95,
+        "stem": 108,
+        "group": "lower",
+        "length": 10.667,
+        "level": 3,
+        "depth": 3
+      },
+      {
+        "notehead": 98,
+        "stem": 106,
+        "group": "lower",
+        "length": 10.487,
+        "level": 3,
+        "depth": 3
+      },
+      {
+        "notehead": 100,
+        "stem": 115,
+        "group": "lower",
+        "length": 10.974,
+        "level": 3,
+        "depth": 3
+      },
+      {
+        "notehead": 101,
+        "stem": 110,
+        "group": "lower",
+        "length": 10.615,
+        "level": 3,
+        "depth": 3
+      },
+      {
+        "notehead": 104,
+        "stem": 113,
+        "group": "lower",
+        "length": 4.179,
+        "level": 2,
+        "depth": 2
+      },
+      {
+        "notehead": 107,
+        "stem": 116,
+        "group": "lower",
+        "length": 4.256,
+        "level": 2,
+        "depth": 2
+      },
+      {
+        "notehead": 114,
+        "stem": 118,
+        "group": "lower",
+        "length": 4.205,
+        "level": 2,
+        "depth": 2
+      },
+      {
+        "notehead": 134,
+        "stem": 14,
+        "group": "upper",
+        "length": 10.338,
+        "level": 3,
+        "depth": 3
+      },
+      {
+        "notehead": 135,
+        "stem": 133,
+        "group": "lower",
+        "length": 2.286,
+        "level": 1,
+        "depth": 1
+      }
+    ],
+    "stem_levels": {
+      "upper": 3,
+      "lower": 3
+    },
+    "level_offsets": {
+      "upper": 0,
+      "lower": 0
+    },
+    "staves": [
+      {
+        "name": "treble",
+        "clef_id": 25,
+        "spacing": 19.25
+      },
+      {
+        "name": "bass",
+        "clef_id": 86,
+        "spacing": 19.5
+      }
+    ]
+  },
+  "summary": {
+    "noteheads": 39,
+    "time_positions": 14,
+    "complete_noteheads": 38,
+    "noteheads_not_in_json": 1,
+    "notes_per_voice": {
+      "T": 12,
+      "IT": 6,
+      "IB": 8,
+      "B": 12
+    },
+    "key": "5f",
+    "warnings": 10
+  }
+}

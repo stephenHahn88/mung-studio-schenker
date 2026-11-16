@@ -1,0 +1,16 @@
+{
+  "description": "Our syntax-link model (Table XII, column 'Ours'), its direction classifier, candidates and selection.",
+  "candidates": {"k_neighbours": 64, "distance": "box gap (0 for touching or overlapping boxes)", "rule": "union of both endpoints' neighbour lists"},
+  "architecture": {"class_embedding": 32, "hidden": 128, "layers": 2, "attention_channels": 4, "dropout": 0.1,
+                   "crop_height": 128, "crop_width": 256, "crop_margin": 0.15, "crop_margin_min_pixels": 8,
+                   "pair_cnn_channels": [16, 32, 64, 128, 128], "cnn_input": "two box masks; page channel empty; features averaged over both mask orders"},
+  "optimizer": {"name": "AdamW", "lr": 0.0008, "weight_decay": 0.0001, "schedule": "cosine", "cosine_T_max": 80, "gradient_clip": 2.0},
+  "training": {"max_epochs": 80, "patience": 12, "patience_min_delta_ap": 0.0001, "seeds": [42, 43], "pages_per_step": 1},
+  "loss": {"label_smoothing": 0.05, "negatives_per_positive": 5, "hard_negative_fraction": 0.5,
+           "lambda_base": 0.25, "lambda_count": 0.15, "lambda_rank": 0.05, "eta": 0.25, "mu": 0.2},
+  "direction_classifier": {"model": "LogisticRegression", "C": 4.0, "solver": "lbfgs", "max_iter": 1500,
+                           "inputs": "one-hot endpoint classes and 15 standardized geometric features", "decision": "probability >= 0.5 means first -> second endpoint"},
+  "selection": {"checkpoint": "maximum validation directed-link average precision",
+                "threshold_grid": [0.01, 0.99, 0.01],
+                "threshold": "maximum pooled validation micro-F1; ties broken by recall, then by the larger threshold"}
+}

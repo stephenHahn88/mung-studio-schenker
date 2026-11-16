@@ -1,0 +1,6 @@
+# inference.py needs both detectors in one environment: the RF-DETR environment plus Ultralytics 8.4.18
+# (tested this way on CPU).
+-r requirements-rfdetr.txt
+ultralytics==8.4.18
+ultralytics-thop==2.1.6
+polars==1.43.2

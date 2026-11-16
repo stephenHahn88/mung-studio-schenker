@@ -11,6 +11,7 @@ import SchoolIcon from "@mui/icons-material/School";
 import LocalLibraryIcon from "@mui/icons-material/LocalLibrary";
 import ElderlyIcon from "@mui/icons-material/Elderly";
 import ErrorIcon from "@mui/icons-material/Error";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
 
 import packageJson from "../../package.json";
 import { JSX } from "react";
@@ -85,6 +86,15 @@ export function HomePage() {
         Learn
       </Typography>
       <Grid container spacing={2} sx={{ flexGrow: 1, mb: 4 }}>
+        <Grid size={12}>
+          <ClickableCard
+            title="Schenkerian Annotation Guide"
+            description="Step-by-step annotation methods, safe workflows, and every keyboard shortcut"
+            icon={<MenuBookIcon />}
+            linkTo="annotation-guide"
+            isHighlighted
+          />
+        </Grid>
         <Grid size={6}>
           <ClickableCard
             title="Annotation Instructions"
@@ -96,8 +106,8 @@ export function HomePage() {
         </Grid>
         <Grid size={4}>
           <ClickableCard
-            title="User Manual"
-            description="Fully leveraging MuNG Studio"
+            title="General MuNG Studio Manual"
+            description="Upstream reference; use the Schenkerian guide above for this project's workflow"
             icon={<SchoolIcon />}
             linkTo="https://github.com/OmniOMR/mung-studio/blob/main/docs/user-manual/user-manual.md"
           />

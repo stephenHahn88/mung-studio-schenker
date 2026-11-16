@@ -18,6 +18,9 @@ export class BackgroundImageStore {
    */
   public readonly imageUrl: string | null;
 
+  /** Aligned scan before ink/staff preprocessing, used for display and raw-page recognition. */
+  public readonly originalImageUrl: string | null;
+
   public readonly isReadyAtom = atom<boolean>(false);
 
   public get isReady(): boolean {
@@ -31,8 +34,13 @@ export class BackgroundImageStore {
   private canvas: OffscreenCanvas | null = null;
   private ctx: OffscreenCanvasRenderingContext2D | null = null;
 
-  constructor(imageUrl: string | null, jotaiStore: JotaiStore) {
+  constructor(
+    imageUrl: string | null,
+    jotaiStore: JotaiStore,
+    originalImageUrl: string | null = null,
+  ) {
     this.imageUrl = imageUrl;
+    this.originalImageUrl = originalImageUrl;
     this.jotaiStore = jotaiStore;
 
     this.fetchImageData();

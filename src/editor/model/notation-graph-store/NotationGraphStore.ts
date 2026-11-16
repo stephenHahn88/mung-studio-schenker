@@ -17,7 +17,13 @@ import { NodeAtom, NodeAtomsView } from "./NodeAtomsView";
 import { LinkAtomsView } from "./LinkAtomsView";
 import { ClassNameCounts, ClassNamesIndex } from "./ClassNamesIndex";
 import { SignalAtomWrapper } from "../SignalAtomWrapper";
-import { ISignal, ISimpleEvent, SignalDispatcher } from "strongly-typed-events";
+import {
+  ISignal,
+  ISimpleEvent,
+  SignalDispatcher,
+  SimpleEventDispatcher,
+} from "strongly-typed-events";
+import { isTimeGroupKey, TimeGroupPatch } from "../../../mung/TimeGroups";
 import { MetadataCollection } from "./MetadataCollection";
 import { MungFileMetadata } from "../../../mung/MungFileMetadata";
 import { MungFile } from "../../../mung/MungFile";
@@ -71,6 +77,36 @@ export class NotationGraphStore {
   /** While true, mutations are NOT re-emitted (used while applying remote ops). */
   private _suppressOps = false;
 
+  private _isApplyingTimeGroupPatches = false;
+  public get isApplyingTimeGroupPatches(): boolean {
+    return this._isApplyingTimeGroupPatches;
+  }
+
+  private _beforeTimeGroupPatches = new SimpleEventDispatcher<{
+    remote: boolean;
+  }>();
+  private _afterTimeGroupPatches = new SimpleEventDispatcher<{
+    remote: boolean;
+  }>();
+  public get onBeforeTimeGroupPatches() {
+    return this._beforeTimeGroupPatches.asEvent();
+  }
+  public get onAfterTimeGroupPatches() {
+    return this._afterTimeGroupPatches.asEvent();
+  }
+
+  /** Ordinary remote node edits do not own the separately patched group fields. */
+  private preserveCurrentTimeGroups(node: Node): Node {
+    if (!this.hasNode(node.id)) return node;
+    const data = { ...node.data };
+    for (const key of Object.keys(data))
+      if (isTimeGroupKey(key)) delete data[key];
+    for (const [key, value] of Object.entries(this.getNode(node.id).data)) {
+      if (isTimeGroupKey(key)) data[key] = { ...value };
+    }
+    return { ...node, data };
+  }
+
   private emitOp(op: any): void {
     if (this.opSink !== null && !this._suppressOps) this.opSink(op);
   }
@@ -85,11 +121,16 @@ export class NotationGraphStore {
     try {
       switch (op?.t) {
         case "insertNode":
-          if (this.hasNode(op.node.id)) this.updateNode(op.node);
+          if (this.hasNode(op.node.id))
+            this.updateNode(this.preserveCurrentTimeGroups(op.node));
           else this.insertNode(op.node);
           break;
         case "updateNode":
-          if (this.hasNode(op.node.id)) this.updateNode(op.node);
+          if (this.hasNode(op.node.id))
+            this.updateNode(this.preserveCurrentTimeGroups(op.node));
+          break;
+        case "patchTimeGroups":
+          this.applyTimeGroupPatches(op.patches);
           break;
         case "removeNode":
         case "removeNodeWithLinks":
@@ -108,7 +149,9 @@ export class NotationGraphStore {
             this.removeLink(op.from, op.to, op.linkType);
           break;
         case "setAll":
-          this.setAllNodes(op.nodes);
+          this.setAllNodes(
+            op.nodes.map((node: Node) => this.preserveCurrentTimeGroups(node)),
+          );
           break;
       }
     } finally {
@@ -175,21 +218,13 @@ export class NotationGraphStore {
 
     // === set up events ===
 
-    this.nodeCollection.onNodeInserted.subscribe(() =>
-      this._onChange.dispatch(),
-    );
-    this.nodeCollection.onNodeRemoved.subscribe(() =>
-      this._onChange.dispatch(),
-    );
+    this.nodeCollection.onNodeInserted.subscribe(() => this.notifyChange());
+    this.nodeCollection.onNodeRemoved.subscribe(() => this.notifyChange());
     this.nodeCollection.onNodeUpdatedOrLinked.subscribe(() =>
-      this._onChange.dispatch(),
+      this.notifyChange(),
     );
-    this.nodeCollection.onLinkInserted.subscribe(() =>
-      this._onChange.dispatch(),
-    );
-    this.nodeCollection.onLinkRemoved.subscribe(() =>
-      this._onChange.dispatch(),
-    );
+    this.nodeCollection.onLinkInserted.subscribe(() => this.notifyChange());
+    this.nodeCollection.onLinkRemoved.subscribe(() => this.notifyChange());
   }
 
   /**
@@ -208,6 +243,10 @@ export class NotationGraphStore {
   ////////////
 
   private _onChange = new SignalDispatcher();
+
+  private notifyChange(): void {
+    if (!this._isApplyingTimeGroupPatches) this._onChange.dispatch();
+  }
 
   /**
    * Fires whenever the notation graph changes in any way,
@@ -311,6 +350,88 @@ export class NotationGraphStore {
   public updateNode(newValue: Node) {
     this.nodeCollection.updateNode(newValue);
     this.emitOp({ t: "updateNode", node: newValue });
+  }
+
+  /** Validate the complete batch before changing anything, then publish one op. */
+  public applyTimeGroupPatches(patches: readonly TimeGroupPatch[]): void {
+    if (!Array.isArray(patches))
+      throw new Error("Time-group patches must be an array.");
+    if (this._isApplyingTimeGroupPatches)
+      throw new Error("Nested time-group patches are not supported.");
+    const merged = new Map<
+      number,
+      Record<string, Node["data"][string] | null>
+    >();
+    for (const patch of patches) {
+      if (
+        !patch ||
+        !Number.isSafeInteger(patch.nodeId) ||
+        patch.nodeId < 0 ||
+        !patch.data ||
+        typeof patch.data !== "object" ||
+        Array.isArray(patch.data)
+      ) {
+        throw new Error("Invalid time-group patch.");
+      }
+      const data = merged.get(patch.nodeId) ?? {};
+      for (const [key, value] of Object.entries(patch.data)) {
+        if (!isTimeGroupKey(key))
+          throw new Error("A time-group patch cannot modify other node data.");
+        if (value === null) {
+          data[key] = null;
+          continue;
+        }
+        const candidate = value as Record<string, unknown>;
+        if (
+          typeof value !== "object" ||
+          typeof candidate.type !== "string" ||
+          typeof candidate.value !== "string"
+        ) {
+          throw new Error("Invalid time-group DataItem.");
+        }
+        data[key] = { type: candidate.type, value: candidate.value };
+      }
+      if (!this.hasNode(patch.nodeId) && !this._suppressOps) {
+        throw new Error(`Cannot group missing node ${patch.nodeId}.`);
+      }
+      merged.set(patch.nodeId, data);
+    }
+    const changed: TimeGroupPatch[] = [];
+    const nodes: Node[] = [];
+    for (const [nodeId, patchData] of merged) {
+      // A remotely deleted member stays deleted; never create a replacement.
+      if (!this.hasNode(nodeId)) continue;
+      const node = this.getNode(nodeId);
+      const data = { ...node.data };
+      const effective: Record<string, Node["data"][string] | null> = {};
+      for (const [key, value] of Object.entries(patchData)) {
+        const old = data[key];
+        if (
+          value === null
+            ? old === undefined
+            : old?.type === value.type && old?.value === value.value
+        )
+          continue;
+        effective[key] = value;
+        if (value === null) delete data[key];
+        else data[key] = { ...value };
+      }
+      if (Object.keys(effective).length === 0) continue;
+      changed.push({ nodeId, data: effective });
+      nodes.push({ ...node, data });
+    }
+    if (nodes.length === 0) return;
+    const event = { remote: this._suppressOps };
+    this._beforeTimeGroupPatches.dispatch(event);
+    this._isApplyingTimeGroupPatches = true;
+    try {
+      for (const node of nodes) this.nodeCollection.updateNode(node);
+      this._onChange.dispatch();
+    } finally {
+      this._isApplyingTimeGroupPatches = false;
+    }
+    this._afterTimeGroupPatches.dispatch(event);
+    this.emitOp({ t: "patchTimeGroups", patches: changed });
   }
 
   /**

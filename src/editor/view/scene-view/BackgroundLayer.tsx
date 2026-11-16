@@ -1,9 +1,17 @@
 import { useContext, useRef } from "react";
 import * as d3 from "d3";
 import { EditorContext } from "../../EditorContext";
+import { useAtomValue } from "jotai";
+import { PageImageMode } from "../../model/EditorStateStore";
 
 export function BackgroundLayer() {
-  const { zoomController, backgroundImageStore } = useContext(EditorContext);
+  const { zoomController, backgroundImageStore, editorStateStore } =
+    useContext(EditorContext);
+  const pageImageMode = useAtomValue(editorStateStore.pageImageModeAtom);
+  const showOriginal = pageImageMode !== PageImageMode.ProcessedWithAnnotations;
+  const displayImageUrl = showOriginal
+    ? (backgroundImageStore.originalImageUrl ?? backgroundImageStore.imageUrl)
+    : backgroundImageStore.imageUrl;
 
   const gRef = useRef<SVGGElement | null>(null);
 
@@ -28,7 +36,7 @@ export function BackgroundLayer() {
         <image
           x="0"
           y="0"
-          href={backgroundImageStore.imageUrl ?? undefined}
+          href={displayImageUrl ?? undefined}
           style={{
             imageRendering: "pixelated",
           }}

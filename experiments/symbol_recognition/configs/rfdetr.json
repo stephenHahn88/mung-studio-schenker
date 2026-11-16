@@ -1,0 +1,98 @@
+{
+ "description": "RF-DETR Medium (rfdetr 1.8.3). Settings not listed are rfdetr 1.8.3 defaults (e.g. weight decay 1e-4, lr_vit_layer_decay 0.8, clip_max_norm 0.1).",
+ "notes": {
+  "batch": "batch 1 with 9 accumulated micro-batches (effective batch 9, Table XI); accumulation correction in symbolrec/patches.py",
+  "input": "each training view (strip or whole page) is resized to a 2048 x 2048 square; no random augmentation",
+  "learning_rates": "rfdetr fine-tuning defaults"
+ },
+ "branch_HandSchA": {
+  "model": {
+   "resolution": 2048,
+   "num_queries": 300,
+   "num_select": 300,
+   "gradient_checkpointing": true,
+   "amp": true
+  },
+  "train": {
+   "batch_size": 1,
+   "grad_accum_steps": 9,
+   "epochs": 120,
+   "lr": 0.0001,
+   "lr_encoder": 0.00015,
+   "lr_scheduler": "cosine",
+   "lr_min_factor": 0.1,
+   "warmup_epochs": 3.0,
+   "multi_scale": false,
+   "square_resize_div_64": true,
+   "aug_config": {},
+   "augmentation_backend": "cpu",
+   "use_ema": false,
+   "amp_dtype": "bf16",
+   "early_stopping": true,
+   "early_stopping_patience": 20,
+   "early_stopping_min_delta": 0.001,
+   "early_stopping_use_ema": false,
+   "eval_interval": 1,
+   "smooth_alpha": 0.0,
+   "skip_best_epochs": 0,
+   "dataset_file": "roboflow",
+   "num_workers": 2,
+   "eval_max_dets": 300,
+   "checkpoint_interval": 10
+  },
+  "classes": "every class with at least one training target (L > 200, at least 90% of the box visible in a strip); classes.json of prepare_rfdetr.py, in category id order",
+  "data": "prepare_rfdetr.py --mode strips: targets L > 200, full-width strips 768/384, visible area >= 90%",
+  "initialization": "init_rfdetr.py --layout branch (seed 0; one initialization for both training seeds of a split)",
+  "checkpoint": "select_rfdetr.py: snapshots every 10 epochs, the last epoch and the best native-validation checkpoint, scored by the L > 200 micro-AP50 of the branch classes on whole validation pages (earlier epoch on ties)",
+  "seeds": [
+   42,
+   43
+  ]
+ },
+ "branch_MUSCIMA++": {
+  "model": {
+   "resolution": 2048,
+   "num_queries": 300,
+   "num_select": 3000,
+   "group_detr": 1,
+   "gradient_checkpointing": true,
+   "amp": true
+  },
+  "train": {
+   "batch_size": 1,
+   "grad_accum_steps": 9,
+   "epochs": 120,
+   "lr": 0.0001,
+   "lr_encoder": 0.00015,
+   "lr_scheduler": "cosine",
+   "lr_min_factor": 0.1,
+   "warmup_epochs": 3.0,
+   "multi_scale": false,
+   "square_resize_div_64": true,
+   "aug_config": {},
+   "augmentation_backend": "cpu",
+   "use_ema": false,
+   "amp_dtype": "bf16",
+   "early_stopping": true,
+   "early_stopping_patience": 20,
+   "early_stopping_min_delta": 0.001,
+   "early_stopping_use_ema": false,
+   "eval_interval": 1,
+   "smooth_alpha": 0.0,
+   "skip_best_epochs": 0,
+   "dataset_file": "roboflow",
+   "num_workers": 2,
+   "eval_max_dets": 3000,
+   "checkpoint_interval": 120
+  },
+  "classes": "every class with at least one training target (L > 200) on whole pages (33 classes on the completeOMR training pages); classes.json of prepare_rfdetr.py",
+  "data": "prepare_rfdetr.py --mode pages: whole pages; targets L > 200",
+  "initialization": "init_rfdetr.py --layout repack --num-queries 300 --num-select 3000 --seed <training seed> (20261027 and 20261104); queries: max(300, ceil(1.25 * max training targets per page / 256) * 256) = 300",
+  "checkpoint": "best native validation mAP50:95 (checkpoint_best_regular.pth)",
+  "prediction": "predict_rfdetr.py --model branch_MUSCIMA++ keeps only boxes with L > 200; only these are passed to the merge",
+  "seeds": [
+   20261027,
+   20261104
+  ]
+ }
+}

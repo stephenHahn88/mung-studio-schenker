@@ -1,7 +1,10 @@
 import { JSX } from "react";
 import { Node } from "../../mung/Node";
 import { Atom, atom, useAtomValue } from "jotai";
-import { ClassVisibilityStore } from "../model/ClassVisibilityStore";
+import {
+  ClassVisibilityStore,
+  DEFAULT_HIDDEN_CLASSES,
+} from "../model/ClassVisibilityStore";
 import { NotationGraphStore } from "../model/notation-graph-store/NotationGraphStore";
 import { JotaiStore } from "../model/JotaiStore";
 import { SignalAtomWrapper } from "../model/SignalAtomWrapper";
@@ -10,6 +13,7 @@ import { EditorTool } from "../model/EditorTool";
 import { ToolbeltController } from "./ToolbeltController";
 import { StaffGeometryStore } from "../model/StaffGeometryStore";
 import { MousePointerController } from "./MousePointerController";
+import { classNameToDisplayName } from "../../mung/classNameToDisplayName";
 
 /**
  * Contains logic and state related to node highlighting.
@@ -47,6 +51,14 @@ export class HighlightController implements IController {
     this.notationGraphStore.onNodeRemoved.subscribe((removedNode) =>
       this.onNodeRemoved(removedNode),
     );
+    this.classVisibilityStore.onChange.subscribe(() => {
+      if (
+        this._highlightedNode !== null &&
+        !this.isHighlightedClassVisible(this._highlightedNode)
+      ) {
+        this.setHighlightedNode(null);
+      }
+    });
     mousePointerController.onScenePointerChange.subscribe((point) =>
       this.onScenePointerChange(point),
     );
@@ -93,7 +105,7 @@ export class HighlightController implements IController {
    */
   public setHighlightedNode(node: Node | null) {
     // skip if no change
-    if (this._highlightedNode?.id === node?.id) return;
+    if (this._highlightedNode === node) return;
 
     // change highlighted node
     this._highlightedNode = node;
@@ -108,12 +120,32 @@ export class HighlightController implements IController {
    * Called whenever a scene node is updated or linked
    */
   private onNodeUpdatedOrLinked(updatedNode: Node) {
-    if (updatedNode.id !== this.highlightedNode?.id) {
+    if (updatedNode.id !== this._highlightedNode?.id) {
       return;
     }
 
-    // update the node value that we hold as "highlighted"
-    this.setHighlightedNode(updatedNode);
+    // The same ID can now have another class, geometry, or link data.
+    this.setHighlightedNode(
+      this.isHighlightedClassVisible(updatedNode) ? updatedNode : null,
+    );
+  }
+
+  private isHighlightedClassVisible(node: Node): boolean {
+    if (this.classVisibilityStore.visibleClasses.has(node.className)) {
+      return true;
+    }
+    if (
+      this.classVisibilityStore.isNoteheadsOnly ||
+      this.classVisibilityStore.isUncertainOnly
+    ) {
+      return false;
+    }
+    // Base visibility is initialized lazily by rendered class atoms. An
+    // uninitialized class still follows the normal default visibility.
+    return (
+      !this.classVisibilityStore.hiddenClasses.has(node.className) &&
+      !DEFAULT_HIDDEN_CLASSES.has(node.className)
+    );
   }
 
   /**
@@ -246,7 +278,7 @@ export class HighlightController implements IController {
             textShadow: "1px 1px 2px rgba(0, 0, 0, 0.4)",
           }}
         >
-          {highlightedNode.className}
+          {classNameToDisplayName(highlightedNode.className)}
         </text>
         {isStaffPositionNode && (
           <path

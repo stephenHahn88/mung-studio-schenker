@@ -6,6 +6,7 @@ import {
   ListItem,
   ListItemButton,
   MenuButton,
+  Button,
   Stack,
   Tooltip,
   Typography,
@@ -15,21 +16,54 @@ import UnfoldLessDoubleIcon from "@mui/icons-material/UnfoldLessDouble";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import CircleIcon from "@mui/icons-material/Circle";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import { classNameToUnicode } from "../../../mung/classNameToUnicode";
+import { classNameToDisplayName } from "../../../mung/classNameToDisplayName";
+import { UNCERTAIN_CLASS_NAME } from "../../../mung/ontology/mungClasses";
 import { VisibilityPresetsMenu } from "./VisibilityPresetsMenu";
 import { useContext } from "react";
 import { EditorContext } from "../../EditorContext";
 
 export function NodesAccordionPanel() {
-  const { notationGraphStore, classVisibilityStore } =
+  const { notationGraphStore, classVisibilityStore, selectionStore } =
     useContext(EditorContext);
 
   const classNames = useAtomValue(notationGraphStore.classNamesAtom);
   const classNameCounts = useAtomValue(notationGraphStore.classNameCountsAtom);
+  const [isUncertainOnly, setIsUncertainOnly] = useAtom(
+    classVisibilityStore.isUncertainOnlyAtom,
+  );
 
   return (
     <>
       <Stack direction="row" spacing={1}>
+        <Tooltip
+          arrow
+          title={
+            isUncertainOnly
+              ? "Restore the previous class visibility"
+              : "Hide other classes for uncertainty review"
+          }
+          placement="top"
+        >
+          <Button
+            size="sm"
+            variant={isUncertainOnly ? "solid" : "soft"}
+            color="warning"
+            startDecorator={<HelpOutlineIcon />}
+            aria-pressed={isUncertainOnly}
+            disabled={
+              !isUncertainOnly &&
+              (classNameCounts[UNCERTAIN_CLASS_NAME] || 0) === 0
+            }
+            onClick={() => {
+              if (!isUncertainOnly) selectionStore.clearSelection();
+              setIsUncertainOnly(!isUncertainOnly);
+            }}
+          >
+            Uncertain only ({classNameCounts[UNCERTAIN_CLASS_NAME] || 0})
+          </Button>
+        </Tooltip>
         <Tooltip arrow title="Show all classes" placement="top">
           <IconButton
             size="sm"
@@ -167,7 +201,9 @@ function ClassNameRow(props: ClassNameRowProps) {
               {classNameToUnicode(props.className)}
             </span>
           </Typography>
-          <Typography level="title-sm">{props.className}</Typography>
+          <Typography level="title-sm">
+            {classNameToDisplayName(props.className)}
+          </Typography>
           <Typography level="body-sm">{props.nodeCount}</Typography>
         </ListItemButton>
       </ListItem>

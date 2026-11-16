@@ -5,6 +5,16 @@
 
 import { MungClass } from "./MungClass";
 
+/**
+ * Standard MuNG class used as a temporary "needs review" label when an
+ * annotator can locate a symbol but cannot determine its final class yet.
+ *
+ * Keep the persisted value as `unclassified`: it is already part of the MuNG
+ * ontology and validation grammar. The UI presents it as "Uncertain" so its
+ * intended annotation workflow is clear.
+ */
+export const UNCERTAIN_CLASS_NAME = "unclassified";
+
 interface MungClassDefinition {
   /**
    * Unicode-string-encoded icon
@@ -126,7 +136,7 @@ const DEFINITIONS: { [className: string]: MungClassDefinition } = {
   // barlineReverseFinal: { uc: "\u{E033}" },
   barlineHeavy: { uc: "\u{E034}", mpp: true },
   // barlineHeavyHeavy: { uc: "\u{E035}" },
-  // barlineDashed: { uc: "\u{E036}" },
+  barlineDashed: { uc: "\u{E036}" },
   // barlineDotted: { uc: "\u{E037}", mpp: true },
   // barlineShort: { uc: "\u{E038}" },
   // barlineTick: { uc: "\u{E039}" },
@@ -831,6 +841,16 @@ const DEFINITIONS: { [className: string]: MungClassDefinition } = {
     mpp: false,
     notSmufl: true,
   },
+  beamStructuralPartialLeftDashed: {
+    uc: "\u{E1F0}\u{E1F7}\u{E1F0}\u{E1F7}",
+    mpp: false,
+    notSmufl: true,
+  },
+  beamStructuralPartialMiddleDashed: {
+    uc: "\u{E1F2}\u{E1F7}\u{E1F2}\u{E1F7}",
+    mpp: false,
+    notSmufl: true,
+  },
   beamStructuralBridgeUp: { uc: "\u{2229}", mpp: false, notSmufl: true },
   beamStructuralBridgeDown: { uc: "\u{222A}", mpp: false, notSmufl: true },
 
@@ -839,6 +859,11 @@ const DEFINITIONS: { [className: string]: MungClassDefinition } = {
   beamStructuralUnfoldingUp: { uc: "\u{2572}", mpp: false, notSmufl: true },
   voiceExchangeDown: { uc: "\u{2571}", mpp: false, notSmufl: true },
   voiceExchangeUp: { uc: "\u{2572}", mpp: false, notSmufl: true },
+  voiceExchangeUpDashed: {
+    uc: "\u{2572}\u{2572}",
+    mpp: false,
+    notSmufl: true,
+  },
 
   // Implied
   parensImpliedLeft: { uc: "(", mpp: false, notSmufl: true },
@@ -853,10 +878,18 @@ const DEFINITIONS: { [className: string]: MungClassDefinition } = {
   characterExclamation: { uc: "!", mpp: false, notSmufl: true },
   characterHyphen: { uc: "\u{E090}", mpp: false, notSmufl: true },
   characterEqual: { uc: "\u{E08F}", mpp: false, notSmufl: true },
+  characterApostrophe: { uc: "'", mpp: false, notSmufl: true },
+  characterForwardSlash: { uc: "/", mpp: false, notSmufl: true },
   braceAnalytical: { uc: "\u{007B}", mpp: false, notSmufl: true },
 
   // Barlines
   barlineStructuralDotted: { uc: "\u{250A}", mpp: false, notSmufl: true },
+  DoubleBarline: {
+    uc: "\u{E031}",
+    mpp: false,
+    notSmufl: true,
+    smuflEquivalents: ["barlineDouble"],
+  },
   barlineStructuralDottedPartial: {
     uc: "\u{2502}",
     mpp: false,
@@ -865,6 +898,25 @@ const DEFINITIONS: { [className: string]: MungClassDefinition } = {
 
   // Harmonic Analysis
   keyAnalysis: { uc: "Gm:", mpp: false, notSmufl: true, transcribable: true },
+  // Key labels with the key in the class name: M = major, m = minor,
+  // f = flat (for example keyAnalysisBfM = B-flat major).
+  keyAnalysisAM: { uc: "A:", mpp: false, notSmufl: true },
+  keyAnalysisAm: { uc: "a:", mpp: false, notSmufl: true },
+  keyAnalysisBM: { uc: "B:", mpp: false, notSmufl: true },
+  keyAnalysisBm: { uc: "b:", mpp: false, notSmufl: true },
+  keyAnalysisBfM: { uc: "B\u{266D}:", mpp: false, notSmufl: true },
+  keyAnalysisBfm: { uc: "b\u{266D}:", mpp: false, notSmufl: true },
+  keyAnalysisCM: { uc: "C:", mpp: false, notSmufl: true },
+  keyAnalysisDM: { uc: "D:", mpp: false, notSmufl: true },
+  keyAnalysisDm: { uc: "d:", mpp: false, notSmufl: true },
+  keyAnalysisDfM: { uc: "D\u{266D}:", mpp: false, notSmufl: true },
+  keyAnalysisEM: { uc: "E:", mpp: false, notSmufl: true },
+  keyAnalysisEm: { uc: "e:", mpp: false, notSmufl: true },
+  keyAnalysisEfM: { uc: "E\u{266D}:", mpp: false, notSmufl: true },
+  keyAnalysisFM: { uc: "F:", mpp: false, notSmufl: true },
+  keyAnalysisFm: { uc: "f:", mpp: false, notSmufl: true },
+  keyAnalysisGM: { uc: "G:", mpp: false, notSmufl: true },
+  keyAnalysisGm: { uc: "g:", mpp: false, notSmufl: true },
 
   analyticalI: { uc: "\u{2160}", mpp: false, notSmufl: true },
   analyticalII: { uc: "\u{2161}", mpp: false, notSmufl: true },
@@ -887,14 +939,23 @@ const DEFINITIONS: { [className: string]: MungClassDefinition } = {
 
   secondaryHarmonyArrowRight: { uc: "\u{21BA}", mpp: false, notSmufl: true },
   secondaryHarmonyArrowLeft: { uc: "\u{21BB}", mpp: false, notSmufl: true },
+  secondaryHarmony: { uc: "V/", mpp: false, notSmufl: true },
+  analysisPivot: { uc: "piv", mpp: false, notSmufl: true },
 
   motiveBracket: { uc: "\u{23B4}", mpp: false, notSmufl: true },
   tonicizationBar: { uc: "---", mpp: false, notSmufl: true },
+  motiveBox: { uc: "\u{25AD}", mpp: false, notSmufl: true },
+
+  // Form
+  formAntecedent: { uc: "ant", mpp: false, notSmufl: true },
+  formConsequent: { uc: "cons", mpp: false, notSmufl: true },
 
   // Miscellaneous
   circleEmphasis: { uc: "\u{25EF}", mpp: false, notSmufl: true },
   circleMeasureNumber: { uc: "\u{25CB}", mpp: false, notSmufl: true },
   analysisInterruption: { uc: "''", mpp: false, notSmufl: true },
+  misalignment: { uc: "\u{2260}", mpp: false, notSmufl: true },
+  otherAnalytical: { uc: "?", mpp: false, notSmufl: true },
 };
 
 ////////////////////////////////////////////////////////////////////////////////

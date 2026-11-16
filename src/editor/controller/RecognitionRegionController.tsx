@@ -5,11 +5,28 @@ import { JotaiStore } from "../model/JotaiStore";
 import { ZoomController } from "./ZoomController";
 import { ToolbeltController } from "./ToolbeltController";
 import { EditorTool } from "../model/EditorTool";
-import { MainMenuController } from "./MainMenuController";
-import { SymbolDetectionRunOptions } from "./Yolo26DetectionApi";
+import {
+  MainMenuController,
+  MODEL_ACTION_LABELS,
+  ModelAction,
+  ModelRunOptions,
+} from "./MainMenuController";
+import {
+  RELATION_INFERENCE_ENABLED,
+  RELATION_INFERENCE_UNAVAILABLE_MESSAGE,
+  SYMBOL_INFERENCE_ENABLED,
+  SYMBOL_INFERENCE_UNAVAILABLE_MESSAGE,
+} from "../../utils/featureFlags";
+
+interface PendingRegionRun {
+  readonly action: ModelAction;
+  readonly documentName: string;
+  readonly options: ModelRunOptions;
+}
 
 /**
- * Handles the temporary drag-to-run recognition area tool.
+ * Handles the temporary drag-to-run area tool: the annotator drags a
+ * rectangle on the page and the chosen model action runs on that region.
  */
 export class RecognitionRegionController implements IController {
   public readonly controllerName = "RecognitionRegionController";
@@ -49,38 +66,52 @@ export class RecognitionRegionController implements IController {
   }
 
   private regionRectangle: SVGRectElement | null = null;
-  private pendingOptions: SymbolDetectionRunOptions | null = null;
+  private pending: PendingRegionRun | null = null;
   private isDragging = false;
   private dragStartX = 0;
   private dragStartY = 0;
   private dragEndX = 0;
   private dragEndY = 0;
 
-  public startRegionSelection(options: SymbolDetectionRunOptions): void {
-    if (!this.jotaiStore.get(this.mainMenuController.canRunYolo26CombinedAtom)) {
-      this.mainMenuController.setYolo26Status(
-        "Recognition is not ready for the current page.",
+  public startRegionSelection(
+    action: ModelAction,
+    documentName: string,
+    options: ModelRunOptions = {},
+  ): void {
+    const enabled =
+      action === "symbols"
+        ? SYMBOL_INFERENCE_ENABLED
+        : RELATION_INFERENCE_ENABLED;
+    if (!enabled) {
+      const message =
+        action === "symbols"
+          ? SYMBOL_INFERENCE_UNAVAILABLE_MESSAGE
+          : RELATION_INFERENCE_UNAVAILABLE_MESSAGE;
+      this.mainMenuController.setModelStatus(message);
+      window.alert(message);
+      return;
+    }
+    if (!this.jotaiStore.get(this.mainMenuController.canRunModelsAtom)) {
+      this.mainMenuController.setModelStatus(
+        "Models cannot run on the current page right now.",
       );
       return;
     }
 
-    this.pendingOptions = {
-      ...options,
-      deduplicate: true,
-    };
+    this.pending = { action, documentName, options };
     this.isDragging = false;
     this.hideRegionRectangle();
     this.jotaiStore.set(this.isRegionSelectionActiveBaseAtom, true);
     this.toolbeltController.setCurrentTool(EditorTool.RecognitionRegion);
-    this.mainMenuController.setYolo26Status(
-      "Drag a recognition area on the page, or press Escape to cancel.",
+    this.mainMenuController.setModelStatus(
+      `Drag an area on the page for ${MODEL_ACTION_LABELS[action]}, or press Escape to cancel.`,
     );
   }
 
   public cancelRegionSelection(): void {
     this.stopRegionSelection({
       returnToPointer: true,
-      status: "Region recognition canceled.",
+      status: "Area selection canceled.",
     });
   }
 
@@ -88,7 +119,7 @@ export class RecognitionRegionController implements IController {
     if (this.jotaiStore.get(this.isRegionSelectionActiveBaseAtom)) {
       this.stopRegionSelection({
         returnToPointer: false,
-        status: "Region recognition canceled.",
+        status: "Area selection canceled.",
       });
       return;
     }
@@ -131,36 +162,37 @@ export class RecognitionRegionController implements IController {
     this.dragEndX = point.x;
     this.dragEndY = point.y;
     const region = this.getNormalizedRegion();
-    const options = this.pendingOptions;
+    const pending = this.pending;
 
     this.stopRegionSelection({ returnToPointer: true, status: null });
 
-    if (options === null) {
+    if (pending === null) {
       return;
     }
 
     if (region.width < 8 || region.height < 8) {
-      this.mainMenuController.setYolo26Status(
-        "Recognition area is too small.",
-      );
+      this.mainMenuController.setModelStatus("The selected area is too small.");
       return;
     }
 
-    void this.mainMenuController.runYolo26Combined({
-      ...options,
-      roiLeft: Math.round(region.x),
-      roiTop: Math.round(region.y),
-      roiWidth: Math.max(1, Math.round(region.width)),
-      roiHeight: Math.max(1, Math.round(region.height)),
-      deduplicate: true,
-    });
+    void this.mainMenuController.runModel(
+      pending.action,
+      pending.documentName,
+      new DOMRect(
+        Math.round(region.x),
+        Math.round(region.y),
+        Math.max(1, Math.round(region.width)),
+        Math.max(1, Math.round(region.height)),
+      ),
+      pending.options,
+    );
   }
 
   private stopRegionSelection(options: {
     readonly returnToPointer: boolean;
     readonly status: string | null;
   }): void {
-    this.pendingOptions = null;
+    this.pending = null;
     this.isDragging = false;
     this.hideRegionRectangle();
     this.jotaiStore.set(this.isRegionSelectionActiveBaseAtom, false);
@@ -171,11 +203,14 @@ export class RecognitionRegionController implements IController {
       this.toolbeltController.setCurrentTool(EditorTool.Pointer);
     }
     if (options.status !== null) {
-      this.mainMenuController.setYolo26Status(options.status);
+      this.mainMenuController.setModelStatus(options.status);
     }
   }
 
-  private getScenePoint(e: MouseEvent): { readonly x: number; readonly y: number } {
+  private getScenePoint(e: MouseEvent): {
+    readonly x: number;
+    readonly y: number;
+  } {
     const transform = this.zoomController.currentTransform;
     return {
       x: transform.invertX(e.offsetX),

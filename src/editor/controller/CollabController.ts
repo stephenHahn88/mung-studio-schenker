@@ -28,12 +28,22 @@ export interface Peer {
 
 // Stable, distinct colors assigned round-robin to joiners.
 const PALETTE = [
-  "#e5484d", "#0091ff", "#30a46c", "#f76b15", "#8e4ec6",
-  "#e93d82", "#12a594", "#ffb224", "#5b5bd6", "#e54666",
+  "#e5484d",
+  "#0091ff",
+  "#30a46c",
+  "#f76b15",
+  "#8e4ec6",
+  "#e93d82",
+  "#12a594",
+  "#ffb224",
+  "#5b5bd6",
+  "#e54666",
 ];
 
 function randomId(): string {
-  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+  return (
+    Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4)
+  );
 }
 
 /**
@@ -56,6 +66,9 @@ export class CollabController {
   // throttled node-update coalescing (drags fire many updateNode ops)
   private pendingUpdates = new Map<number, any>();
   private updateFlushTimer: ReturnType<typeof setTimeout> | null = null;
+  private postQueue: Promise<void> = Promise.resolve();
+  private lastSeenSeq = 0;
+  private pendingServerOps = new Map<number, any>();
 
   private localCursor: { x: number; y: number } | null = null;
   private presenceSendScheduled = false;
@@ -100,6 +113,8 @@ export class CollabController {
 
   /** Tear down (on editor unmount). */
   public stop(): void {
+    // Submit already accepted edits before detaching the document.
+    this.flushUpdates();
     this.stopped = true;
     if (this.notationGraphStore.opSink) this.notationGraphStore.opSink = null;
     this.abort?.abort();
@@ -143,14 +158,32 @@ export class CollabController {
 
   private postOp(op: any): void {
     if (this.stopped) return;
-    fetch(this.url("collab-op"), {
-      method: "POST",
-      headers: {
-        Authorization: "Bearer " + this.config.token,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ clientId: this.clientId, op }),
-    }).catch(() => {});
+    // Freeze this operation now and serialize submissions. A group batch must
+    // arrive between the preceding/following drag ops, never be coalesced away.
+    const body = JSON.stringify({ clientId: this.clientId, op });
+    this.postQueue = this.postQueue
+      .then(async () => {
+        const response = await fetch(this.url("collab-op"), {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer " + this.config.token,
+            "Content-Type": "application/json",
+          },
+          body,
+        });
+        if (!response.ok)
+          throw new Error(
+            `Collaboration operation failed (${response.status}).`,
+          );
+      })
+      .catch((error) => {
+        // Persistence is still handled by autosave. Do not hide a failed relay
+        // or log its request body/authentication headers.
+        console.warn(
+          "Could not synchronize an edit; check the saved document before continuing collaboration.",
+          error,
+        );
+      });
   }
 
   private schedulePresence(): void {
@@ -219,16 +252,51 @@ export class CollabController {
 
   private handleEvent(ev: any): void {
     if (ev.type === "init") {
-      for (const entry of ev.oplog ?? []) {
-        if (entry.clientId !== this.clientId)
-          this.notationGraphStore.applyRemoteOp(entry.op);
+      // Snapshot logs may have a compacted prefix. On reconnect, replay only
+      // entries newer than this editor's watermark, including our group acks.
+      const entries = [...(ev.oplog ?? [])].sort((a, b) => a.seq - b.seq);
+      for (const entry of entries) {
+        if (!Number.isSafeInteger(entry.seq) || entry.seq <= this.lastSeenSeq)
+          continue;
+        this.applyServerOperation(entry);
+        this.lastSeenSeq = entry.seq;
       }
+      if (Number.isSafeInteger(ev.seq)) {
+        this.lastSeenSeq = Math.max(this.lastSeenSeq, ev.seq);
+      }
+      for (const seq of this.pendingServerOps.keys()) {
+        if (seq <= this.lastSeenSeq) this.pendingServerOps.delete(seq);
+      }
+      this.drainServerOperations();
       this.setPeers(ev.users ?? []);
     } else if (ev.type === "op") {
-      if (ev.clientId !== this.clientId)
-        this.notationGraphStore.applyRemoteOp(ev.op);
+      if (!Number.isSafeInteger(ev.seq) || ev.seq <= this.lastSeenSeq) return;
+      this.pendingServerOps.set(ev.seq, ev);
+      this.drainServerOperations();
     } else if (ev.type === "presence") {
       this.setPeers(ev.users ?? []);
+    }
+  }
+
+  private drainServerOperations(): void {
+    // The backend allocates seq under a lock but broadcasts after releasing
+    // it, so two requests can reach SSE subscribers in the opposite order.
+    while (this.pendingServerOps.has(this.lastSeenSeq + 1)) {
+      const seq = this.lastSeenSeq + 1;
+      const entry = this.pendingServerOps.get(seq);
+      this.applyServerOperation(entry);
+      this.pendingServerOps.delete(seq);
+      this.lastSeenSeq = seq;
+    }
+  }
+
+  private applyServerOperation(entry: any): void {
+    // Group edits are optimistic locally, then replayed in the server's total
+    // order. Ignoring our own acknowledgement would let concurrent same-field
+    // writes settle differently on the two clients. Remote application emits
+    // no echo and does not add a local group undo item.
+    if (entry.op?.t === "patchTimeGroups" || entry.clientId !== this.clientId) {
+      this.notationGraphStore.applyRemoteOp(entry.op);
     }
   }
 

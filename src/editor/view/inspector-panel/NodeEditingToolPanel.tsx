@@ -63,6 +63,8 @@ function FocusableClassNameInput(props: {
     nodeEditingController.classNameAtom,
   );
   const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const { classCatalogStore } = useContext(EditorContext);
+  const classNameOptions = useAtomValue(classCatalogStore.allClassNamesAtom);
 
   useEffect(() => {
     const focuser = () => {
@@ -82,6 +84,7 @@ function FocusableClassNameInput(props: {
     <div ref={wrapperRef}>
       <ClassNameInput
         value={className}
+        options={classNameOptions}
         onChange={(newValue: string) => setClassName(newValue)}
         sx={{ mt: 1 }}
       />

@@ -1,6 +1,7 @@
 import { useContext, useState } from "react";
 import { useAtomValue } from "jotai";
 import { EditorContext } from "../../EditorContext";
+import { UNCERTAIN_CLASS_NAME } from "../../../mung/ontology/mungClasses";
 
 /**
  * Transparent, click-through overlay that draws every collaborator's live
@@ -11,9 +12,16 @@ import { EditorContext } from "../../EditorContext";
  * the viewport), so screen coordinates here match the d3 zoom transform.
  */
 export function CollabOverlay() {
-  const { collabController, zoomController, notationGraphStore } =
-    useContext(EditorContext);
+  const {
+    collabController,
+    zoomController,
+    notationGraphStore,
+    classVisibilityStore,
+  } = useContext(EditorContext);
   const peers = useAtomValue(collabController!.peersAtom);
+  const isUncertainOnly = useAtomValue(
+    classVisibilityStore.isUncertainOnlyAtom,
+  );
 
   // re-render whenever the view is panned/zoomed
   const [tick, setTick] = useState(0);
@@ -44,6 +52,9 @@ export function CollabOverlay() {
         for (const nodeId of peer.selection ?? []) {
           if (!notationGraphStore.hasNode(nodeId)) continue;
           const n = notationGraphStore.getNode(nodeId);
+          if (isUncertainOnly && n.className !== UNCERTAIN_CLASS_NAME) {
+            continue;
+          }
           const [x0, y0] = toScreen(n.left, n.top);
           const [x1, y1] = toScreen(n.left + n.width, n.top + n.height);
           els.push(

@@ -1,0 +1,4 @@
+# Python backend of MuNG Studio (server.py), tested with Python 3.10.12.
+# The model actions additionally need the packages listed with the
+# experiment code in experiments/ (see docs/model-actions.md).
+Pillow==12.2.0

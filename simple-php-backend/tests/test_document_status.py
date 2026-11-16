@@ -36,6 +36,9 @@ class DocumentStatusTest(unittest.TestCase):
     def test_pending_review_is_a_supported_status(self) -> None:
         self.assertIn("pending-review", server.DOCUMENT_STATUSES)
 
+    def test_changes_requested_is_a_supported_status(self) -> None:
+        self.assertIn("changes-requested", server.DOCUMENT_STATUSES)
+
     def test_set_pending_review_only_writes_status_metadata(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             doc_dir = Path(tmp) / "score-page"
@@ -79,6 +82,32 @@ class DocumentStatusTest(unittest.TestCase):
             self.assertEqual(responses, [({"error": "Invalid status."}, 400)])
             self.assertEqual(status_path.read_text(encoding="utf-8"), original)
 
+    def test_set_changes_requested_only_writes_status_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            doc_dir = Path(tmp) / "score-page"
+            doc_dir.mkdir()
+            mung_path = doc_dir / "mung.xml"
+            mung_contents = "<mung-document>reviewed annotation</mung-document>"
+            mung_path.write_text(mung_contents, encoding="utf-8")
+            handler, responses = self._handler(
+                {"status": "changes-requested", "annotator": "Alice"}
+            )
+
+            with (
+                mock.patch.object(server, "DOCUMENTS_PATH", tmp),
+                mock.patch.object(server, "log_to_file"),
+            ):
+                handler._action_set_doc_status({"document": ["score-page"]})
+
+            self.assertEqual(responses[0][1], 200)
+            self.assertEqual(responses[0][0]["status"], "changes-requested")
+            self.assertEqual(mung_path.read_text(encoding="utf-8"), mung_contents)
+            status_data = json.loads(
+                (doc_dir / "status.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(status_data["status"], "changes-requested")
+            self.assertEqual(status_data["annotator"], "Alice")
+
     def test_read_pending_review_does_not_rewrite_status_file(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             doc_dir = Path(tmp) / "score-page"
@@ -91,8 +120,11 @@ class DocumentStatusTest(unittest.TestCase):
             with mock.patch.object(server, "DOCUMENTS_PATH", tmp):
                 result = handler._read_doc_status("score-page")
 
+            # A legacy single-status file is read as the recognition stage.
+            self.assertEqual(result["status"], "pending-review")
             self.assertEqual(
-                result, {"status": "pending-review", "annotator": "Alice"}
+                result["stages"]["recognition"],
+                {"status": "pending-review", "annotator": "Alice"},
             )
             self.assertEqual(status_path.read_text(encoding="utf-8"), original)
 

@@ -1,6 +1,6 @@
 import { useAtomValue } from "jotai";
 import { svgPathFromMungPolygon } from "../../../../mung/svgPathFromMungPolygon";
-import { classNameToHue } from "../../../../mung/classNameToHue";
+import { classNameToColor } from "../../../../mung/classNameToColor";
 import { NodeDisplayMode } from "../../../model/EditorStateStore";
 import { useDataUrlFromMask } from "./useDataUrlFromMask";
 import { useContext } from "react";
@@ -12,23 +12,36 @@ export interface SvgNodeProps {
 }
 
 export function SvgNode(props: SvgNodeProps) {
-  const { notationGraphStore, selectionStore, classVisibilityStore } =
-    useContext(EditorContext);
+  const {
+    notationGraphStore,
+    selectionStore,
+    classVisibilityStore,
+    classCatalogStore,
+  } = useContext(EditorContext);
 
   const node = useAtomValue(notationGraphStore.getNodeAtom(props.nodeId));
 
   const isSelected = useAtomValue(
     selectionStore.getIsNodeSelectedAtom(props.nodeId),
   );
+  const isUncertainOnly = useAtomValue(
+    classVisibilityStore.isUncertainOnlyAtom,
+  );
+  const isNoteheadsOnly = useAtomValue(
+    classVisibilityStore.isNoteheadsOnlyAtom,
+  );
   const isVisible =
     useAtomValue(classVisibilityStore.getIsClassVisibleAtom(node.className)) ||
-    isSelected; // must be visible if is selected
+    (isSelected && !isUncertainOnly && !isNoteheadsOnly); // strict focus views also hide selected nodes
 
   // decide on how to display
-  const hue = classNameToHue(node.className);
+  const colorOverrides = useAtomValue(
+    classCatalogStore.classColorOverridesAtom,
+  );
+  const color = classNameToColor(node.className, colorOverrides);
 
   // data URL that displays the mask
-  const maskDataUrl = useDataUrlFromMask(node);
+  const maskDataUrl = useDataUrlFromMask(node, color);
 
   // decide on what to display
   const displayPolygon =
@@ -49,8 +62,8 @@ export function SvgNode(props: SvgNodeProps) {
       {displayPolygon && (
         <path
           d={svgPathFromMungPolygon(node)}
-          fill={`hsla(${hue}, 100%, 50%, 0.2)`}
-          stroke={isSelected ? "white" : `hsla(${hue}, 100%, 50%, 1.0)`}
+          fill={`${color}33`}
+          stroke={isSelected ? "white" : color}
           strokeWidth={isSelected ? "var(--scene-screen-pixel)" : "0"}
         />
       )}
@@ -75,7 +88,7 @@ export function SvgNode(props: SvgNodeProps) {
             width={node.width}
             height={node.height}
             fill="none"
-            stroke={isSelected ? "white" : `hsla(${hue}, 100%, 50%, 1.0)`}
+            stroke={isSelected ? "white" : color}
             strokeWidth={isSelected ? "var(--scene-screen-pixel)" : "0"}
           />
         </>
@@ -88,8 +101,8 @@ export function SvgNode(props: SvgNodeProps) {
           y={node.top}
           width={node.width}
           height={node.height}
-          fill={`hsla(${hue}, 100%, 50%, 0.2)`}
-          stroke={isSelected ? "white" : `hsla(${hue}, 100%, 50%, 1.0)`}
+          fill={`${color}33`}
+          stroke={isSelected ? "white" : color}
           strokeWidth={isSelected ? "var(--scene-screen-pixel)" : "0"}
         />
       )}

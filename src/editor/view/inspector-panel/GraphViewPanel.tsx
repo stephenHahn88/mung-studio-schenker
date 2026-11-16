@@ -17,7 +17,11 @@ import {
 } from "../../../mung/linkAppearance";
 import { SelectionStore } from "../../model/SelectionStore";
 import { LinkType } from "../../../mung/LinkType";
-import { classNameToHue } from "../../../mung/classNameToHue";
+import {
+  classNameToColor,
+  ClassColorOverrides,
+} from "../../../mung/classNameToColor";
+import { classNameToDisplayName } from "../../../mung/classNameToDisplayName";
 
 export function GraphViewPanel() {
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -103,11 +107,15 @@ interface ChartLink {
  * Returns true if the SVG element should be visible.
  */
 function useD3Simulation(svgRef: RefObject<SVGSVGElement | null>): boolean {
-  const { selectionStore, notationGraphStore } = useContext(EditorContext);
+  const { selectionStore, notationGraphStore, classCatalogStore } =
+    useContext(EditorContext);
 
   const previousNodesRef = useRef<ChartNode[]>([]);
 
   const selectedNodes = useAtomValue(selectionStore.selectedNodesAtom);
+  const colorOverrides = useAtomValue(
+    classCatalogStore.classColorOverridesAtom,
+  );
 
   useEffect(() => {
     if (svgRef.current === null) return;
@@ -122,6 +130,7 @@ function useD3Simulation(svgRef: RefObject<SVGSVGElement | null>): boolean {
       previousNodesRef.current,
       notationGraphStore,
       selectionStore,
+      colorOverrides,
     );
     previousNodesRef.current = nodes;
 
@@ -130,7 +139,7 @@ function useD3Simulation(svgRef: RefObject<SVGSVGElement | null>): boolean {
     return () => {
       simulation.stop();
     };
-  }, [selectedNodes]);
+  }, [selectedNodes, colorOverrides]);
 
   // should the SVG element be visible?
   return selectedNodes.length > 0;
@@ -143,6 +152,7 @@ function buildChartGraph(
   previousNodes: ChartNode[],
   notationGraphStore: NotationGraphStore,
   selectionStore: SelectionStore,
+  colorOverrides: ClassColorOverrides,
 ): [nodes: ChartNode[], links: ChartLink[]] {
   // build up links
   const selectedNodeIds = new Set<number>(selectionStore.selectedNodeIds);
@@ -170,7 +180,6 @@ function buildChartGraph(
   // build up nodes
   const nodes: ChartNode[] = [...partiallySelectedNodeIds].sort().map((id) => {
     const node = notationGraphStore.getNode(id);
-    const hue = classNameToHue(node.className);
     const previousNode = previousNodesById.get(id);
     const previousDynamics =
       previousNode === undefined
@@ -183,8 +192,8 @@ function buildChartGraph(
           };
     return {
       id: id,
-      title: node.className,
-      color: `hsl(${hue}, 100%, 40%)`,
+      title: classNameToDisplayName(node.className),
+      color: classNameToColor(node.className, colorOverrides),
       radius: 5,
       isFullySelected: selectedNodeIds.has(id),
       ...previousDynamics,

@@ -12,8 +12,10 @@
     "build": "npm run clean && parcel build --public-url ./",
     "clean": "rimraf .parcel-cache dist",
     "serve": "http-server dist",
+    "test": "tsx --test \"src/**/*.test.ts\" \"src/**/*.test.tsx\"",
+    "test-backend": "python3 -m unittest discover -s simple-php-backend/tests",
     "start-local": "./start_local.sh",
-    "start-yolo26-backend": "python3 simple-php-backend/server.py --port 8080 --documents documents",
+    "start-backend": "python3 simple-php-backend/server.py --port 8080 --documents documents",
     "lint": "eslint src/**/*.tsx",
     "prettier-check": "prettier src pyodide/*.ts --check",
     "prettier-write": "prettier src pyodide/*.ts --write",
@@ -54,6 +56,7 @@
     "react-router-dom": "^6.23.0",
     "react-scan": "^0.1.3",
     "strongly-typed-events": "^3.0.11",
-    "tinykeys": "^3.0.0"
+    "tinykeys": "^3.0.0",
+    "tsx": "^4.19.3"
   }
 }

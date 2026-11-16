@@ -31,8 +31,8 @@ export function SvgLink(props: SvgLinkProps) {
   // global display options
   const isDisplayed = useAtomValue(
     linkWithNodes.type === LinkType.Syntax
-      ? editorStateStore.displaySyntaxLinksAtom
-      : editorStateStore.displayPrecedenceLinksAtom,
+      ? editorStateStore.effectiveDisplaySyntaxLinksAtom
+      : editorStateStore.effectiveDisplayPrecedenceLinksAtom,
   );
 
   // class visibility
@@ -45,6 +45,12 @@ export function SvgLink(props: SvgLinkProps) {
     classVisibilityStore.getIsClassVisibleAtom(linkWithNodes.toNode.className),
   );
   const isVisible = isFromClassVisible && isToClassVisible;
+  const isUncertainOnly = useAtomValue(
+    classVisibilityStore.isUncertainOnlyAtom,
+  );
+  const isNoteheadsOnly = useAtomValue(
+    classVisibilityStore.isNoteheadsOnlyAtom,
+  );
 
   // handle node selection
   const isSelected = useAtomValue(
@@ -70,7 +76,7 @@ export function SvgLink(props: SvgLinkProps) {
   }
 
   // hide link if terminal nodes are not visible and the link is not selected
-  if (!isVisible && !isSelected) {
+  if (!isVisible && (!isSelected || isUncertainOnly || isNoteheadsOnly)) {
     return null;
   }
 

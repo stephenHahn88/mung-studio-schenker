@@ -2,16 +2,15 @@
 node_modules
 .parcel-cache
 dist
-# build-output + ALL deploy-swap staging/backup copies (dist_new, dist_old, dist_old2,
-# dist_edge, dist_collab, dist_fix, ...) — large, never commit
 dist_*
 dist.*
-# pyodide package bundles are large build artifacts (never commit)
+# pyodide package bundles are large build artifacts
 *.pyodide-packages
 .mypy_cache
+.venv
+.venv-*/
 logs
 __pycache__
-simple-php-backend/__pycache__
 
 # editors
 .idea
@@ -24,15 +23,37 @@ simple-php-backend/__pycache__
 .env
 .env.production
 
-# local release data
+# downloaded symbol-detection checkpoints; the models listed below are kept in the repository
 models/**
 !models/
 !models/README.md
+# syntax-link models of the held-out split (small files, kept in the repository)
+!models/syntax_links/
+!models/syntax_links/pair_cnn/
+!models/syntax_links/pair_cnn/handscha/
+!models/syntax_links/pair_cnn/handscha/heldout_seed42.pth
+!models/syntax_links/incidence/
+!models/syntax_links/incidence/handscha/
+!models/syntax_links/incidence/handscha/heldout/
+!models/syntax_links/incidence/handscha/heldout/seed_42/
+!models/syntax_links/incidence/handscha/heldout/seed_42/categories.json
+!models/syntax_links/incidence/handscha/heldout/seed_42/direction.pkl
+!models/syntax_links/incidence/handscha/heldout/seed_42/incidence.pt
+!models/syntax_links/incidence/handscha/heldout/seed_42/model.json
+!models/syntax_links/incidence/handscha/heldout/seed_42/pair_cnn.pth
+# time-group and precedence-link models of the held-out split (small files, kept in the repository)
+!models/temporal_relations/
+!models/temporal_relations/hgb/
+!models/temporal_relations/hgb/time_groups_heldout_rachmaninov_seed42.joblib
+!models/temporal_relations/hgb/precedence_heldout_rachmaninov_seed43.joblib
+# outputs of the training and inference commands
+experiments/*/out/
+experiments/*/pred/
+experiments/*/runs/
+experiments/*/work/
 documents/*
 !documents/.gitkeep
 !documents/README.md
-# one-off local data backups (kept on disk, never committed)
-documents_backup_*
 
-# secrets (real per-annotator tokens — never commit; use users.example.json as template)
+# real user tokens (use users.example.json as the template)
 simple-php-backend/users.json

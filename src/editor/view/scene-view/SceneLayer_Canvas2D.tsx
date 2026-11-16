@@ -1,15 +1,27 @@
 import { useCallback, useContext, useEffect, useRef } from "react";
 import { Node } from "../../../mung/Node";
-import { classNameToHue } from "../../../mung/classNameToHue";
+import {
+  classNameToColor,
+  ClassColorOverrides,
+} from "../../../mung/classNameToColor";
 import { EditorContext } from "../../EditorContext";
 import { SelectionNodeChangeMetadata } from "../../model/SelectionStore";
+import { useAtomValue } from "jotai";
 
 /**
  * Scene layer, rendered via canvas 2D
  */
 export function SceneLayer_Canvas2D() {
-  const { notationGraphStore, selectionStore, zoomController } =
-    useContext(EditorContext);
+  const {
+    notationGraphStore,
+    selectionStore,
+    zoomController,
+    classVisibilityStore,
+    classCatalogStore,
+  } = useContext(EditorContext);
+  const colorOverrides = useAtomValue(
+    classCatalogStore.classColorOverridesAtom,
+  );
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const canvasContextRef = useRef<CanvasRenderingContext2D | null>(null);
@@ -18,9 +30,16 @@ export function SceneLayer_Canvas2D() {
     const ctx = canvasContextRef.current;
     if (ctx === null) return;
 
-    const nodes = notationGraphStore.nodes;
-    renderToCanvas(nodes, ctx, zoomController.currentTransform);
-  }, []);
+    const nodes = notationGraphStore.nodes.filter((node) =>
+      classVisibilityStore.visibleClasses.has(node.className),
+    );
+    renderToCanvas(nodes, ctx, zoomController.currentTransform, colorOverrides);
+  }, [
+    classVisibilityStore,
+    notationGraphStore,
+    zoomController,
+    colorOverrides,
+  ]);
 
   useEffect(() => {
     if (canvasRef.current === null) return;
@@ -29,6 +48,7 @@ export function SceneLayer_Canvas2D() {
     const onZoom = (transform: d3.ZoomTransform) => draw();
     const onSelectionChange = (meta: SelectionNodeChangeMetadata) => draw();
     const onGraphChange = () => draw();
+    const onClassVisibilityChange = () => draw();
 
     // also draw immediately when mounted
     draw();
@@ -36,12 +56,20 @@ export function SceneLayer_Canvas2D() {
     zoomController.onTransformChange.subscribe(onZoom);
     selectionStore.onNodesChange.subscribe(onSelectionChange);
     notationGraphStore.onChange.subscribe(onGraphChange);
+    classVisibilityStore.onChange.subscribe(onClassVisibilityChange);
     return () => {
       zoomController.onTransformChange.unsubscribe(onZoom);
       selectionStore.onNodesChange.unsubscribe(onSelectionChange);
       notationGraphStore.onChange.unsubscribe(onGraphChange);
+      classVisibilityStore.onChange.unsubscribe(onClassVisibilityChange);
     };
-  }, []);
+  }, [
+    classVisibilityStore,
+    draw,
+    notationGraphStore,
+    selectionStore,
+    zoomController,
+  ]);
 
   return (
     <canvas
@@ -62,6 +90,7 @@ function renderToCanvas(
   nodes: readonly Node[],
   ctx: CanvasRenderingContext2D,
   t: d3.ZoomTransform,
+  colorOverrides: ClassColorOverrides,
 ) {
   // resize canvas frame buffer if necessary
   if (ctx.canvas.width != ctx.canvas.clientWidth) {
@@ -83,9 +112,7 @@ function renderToCanvas(
 
   // render nodes
   for (const node of nodes) {
-    const hue = classNameToHue(node.className);
-    const lightness = 50;
-    ctx.fillStyle = `hsla(${hue}, 100%, ${lightness}%, 0.2)`;
+    ctx.fillStyle = `${classNameToColor(node.className, colorOverrides)}33`;
 
     // bbox
     ctx.fillRect(node.left, node.top, node.width, node.height);

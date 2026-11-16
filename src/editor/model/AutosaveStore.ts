@@ -26,6 +26,13 @@ export class AutosaveStore {
    * Reference to the notation graph
    */
   private readonly notationGraphStore: NotationGraphStore;
+  private currentRevision = 0;
+  private saveInFlight = false;
+
+  /** Capture immediately before serializing a manual save. */
+  public get revision(): number {
+    return this.currentRevision;
+  }
 
   constructor(
     notationGraphStore: NotationGraphStore,
@@ -49,6 +56,7 @@ export class AutosaveStore {
    * Call this method to notify the autosave system to schedule a new save
    */
   public setDirty() {
+    this.currentRevision++;
     this.scheduleAutosave();
     this.jotaiStore.set(this.isDirtyBaseAtom, true);
   }
@@ -57,7 +65,11 @@ export class AutosaveStore {
    * Resets the state back to clean, unscheduling any planned autosaves.
    * Call this after someone manually saves changes.
    */
-  public setClean() {
+  public setClean(savedRevision: number = this.currentRevision) {
+    if (savedRevision !== this.currentRevision) {
+      this.scheduleAutosave();
+      return;
+    }
     this.cancelScheduledAutosave();
     this.jotaiStore.set(this.isDirtyBaseAtom, false);
     this.jotaiStore.set(this.hasProblemsBaseAtom, false);
@@ -67,9 +79,14 @@ export class AutosaveStore {
    * This method is called when autosaving fires
    */
   private async triggerAutosave() {
+    this.autosaveTimeoutId = null;
+    if (this.saveInFlight || this.saveCallback === null || !this.isDirty)
+      return;
+    const savedRevision = this.currentRevision;
+    this.saveInFlight = true;
     try {
       // run the saving procedure
-      await this.saveCallback?.();
+      await this.saveCallback();
     } catch (e) {
       // if there's an error, retry in some time
       // and return since we have not succeeded in saving
@@ -77,10 +94,12 @@ export class AutosaveStore {
       console.error("Autosave failed, retrying:", e);
       this.jotaiStore.set(this.hasProblemsBaseAtom, true);
       return;
+    } finally {
+      this.saveInFlight = false;
     }
 
-    // the saving succeeded, we are saved now
-    this.setClean();
+    this.jotaiStore.set(this.hasProblemsBaseAtom, false);
+    this.setClean(savedRevision);
   }
 
   //////////////

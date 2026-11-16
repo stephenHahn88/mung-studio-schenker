@@ -1,0 +1,10 @@
+{
+ "description": "Merge rule of Section V-A (symbolrec/merge.py).",
+ "score_floor": 0.001,
+ "rf_min_score": 0.2,
+ "branch_nms_iou": 0.5,
+ "fragment_min_side": 400,
+ "fragment_coverage": 0.8,
+ "fragment_max_area_ratio": 0.8,
+ "nms_iou": 0.5
+}

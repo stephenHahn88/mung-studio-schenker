@@ -7,6 +7,7 @@ import { EditorContext } from "../../../EditorContext";
 import { IController } from "../../../controller/IController";
 import { NodeTool } from "../../../model/NodeTool";
 import { createKeybindingsHandler, KeyBindingMap } from "tinykeys";
+import { TimeGroupsOverlay } from "./TimeGroupsOverlay";
 
 export function ForegroundLayer() {
   const {
@@ -179,6 +180,7 @@ export function ForegroundLayer() {
       >
         {/* This <g> element is what the zoom ctrl applies transform to */}
         <g>
+          <TimeGroupsOverlay />
           {controllers
             .filter((c) => c.renderSVG)
             .map((c) => {

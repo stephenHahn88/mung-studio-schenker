@@ -1,5 +1,11 @@
 # Simple PHP backend
 
+> **Note:** This page documents the original PHP backend (`index.php`) of MuNG
+> Studio, which supports the basic document actions only. The Schenkerian
+> annotation used the Python backend `server.py`, which implements the same
+> actions plus workflow stages, custom classes, review comments,
+> collaboration and the model actions; see [python-backend.md](python-backend.md).
+
 MuNG studio is intended to be easy to install and use. It can run completely client-side, requiring only a static web server for hosting its assets file. However in practise, manually uploading and downloading files to the browser is tedious. For this reason, MuNG Studio also provides a simple PHP backend, that can be used for simple annotation endevaours and can be hosted on any plain PHP web hosting.
 
 This simple backend is implemented in the `simple-php-backend` folder in the root of this repository.
@@ -213,30 +219,14 @@ Request has no body, response contains all documents on the server:
         {
             "name": "foobar",
             "hasImage": true,
-            "modifiedAt": "2024-10-07T14:23:54Z",
-            "status": "pending-review",
-            "annotator": "John Doe"
+            "modifiedAt": "2024-10-07T14:23:54Z"
         }
     ]
 }
 ```
 
-`status` is one of `not-started`, `in-progress`, `pending-review`, or `done`.
-If a document does not yet have a status file, the API reports `not-started`
-without creating or modifying any files.
-
-
-### `/?action=set-doc-status&document=docname` Set document status
-
-```bash
-curl -v -X POST -H "Authorization: Bearer 123456789" \
-    -H "Content-Type: application/json" \
-    -d '{"status":"pending-review","annotator":"John Doe"}' \
-    "localhost:8080/?action=set-doc-status&document=docname"
-```
-
-The JSON body must contain a supported `status`; `annotator` may be empty.
-Status metadata is stored separately from the document's MuNG annotation.
+The Python backend adds the workflow `stages` of each document to this list
+and provides `set-doc-status`; see [python-backend.md](python-backend.md).
 
 
 ### `/?action=get-document-mung&document=docname` Get document MuNG file

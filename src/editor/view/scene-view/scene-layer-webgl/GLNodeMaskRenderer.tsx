@@ -15,6 +15,11 @@ import { NodeUpdateMetadata } from "../../../model/notation-graph-store/NodeColl
 import { GeometryBuffer } from "./GeometryEngine";
 import { ClassVisibilityStore } from "../../../model/ClassVisibilityStore";
 import { MUNG_CLASS_NAMES } from "../../../../mung/ontology/mungClasses";
+import {
+  classNameToColor,
+  ClassColorOverrides,
+  hexColorToRgb,
+} from "../../../../mung/classNameToColor";
 
 const SHADER_COMMON = `#version 300 es
 `;
@@ -1628,17 +1633,20 @@ class MaskColorMap {
   private data: Uint8Array;
   private classNameToColorIndex: Map<string, number> = new Map();
 
-  public constructor() {
-    const classNames = MUNG_CLASS_NAMES;
+  public constructor(
+    classNames: readonly string[] = MUNG_CLASS_NAMES,
+    colorOverrides: ClassColorOverrides = {},
+  ) {
     this.data = new Uint8Array((1 + classNames.length) * 3);
     this.data[0] = 255; //red color - placeholder
     classNames.forEach((className, index) => {
       const offset = (1 + index) * 3;
-      const hue = classNameToHue(className);
-      const hslColor = d3.hsl(hue, 1, 0.5).rgb();
-      this.data[offset + 0] = hslColor.r;
-      this.data[offset + 1] = hslColor.g;
-      this.data[offset + 2] = hslColor.b;
+      const [red, green, blue] = hexColorToRgb(
+        classNameToColor(className, colorOverrides),
+      );
+      this.data[offset + 0] = red;
+      this.data[offset + 1] = green;
+      this.data[offset + 2] = blue;
       this.classNameToColorIndex.set(className, 1 + index);
     });
   }
@@ -1690,10 +1698,12 @@ export class MaskAtlasRenderer implements GLDrawable {
   public constructor(
     notationGraph: NotationGraphStore,
     classVisibilityStore: ClassVisibilityStore,
+    classNames: readonly string[] = MUNG_CLASS_NAMES,
+    colorOverrides: ClassColorOverrides = {},
   ) {
     this.notationGraph = notationGraph;
     this.classVisibilityStore = classVisibilityStore;
-    this.colorMapData = new MaskColorMap();
+    this.colorMapData = new MaskColorMap(classNames, colorOverrides);
 
     this.notationGraph.onNodeInserted.subscribe(
       (this.nodeInsertedSubscription = this.onNodeInserted.bind(this)),

@@ -1,0 +1,85 @@
+{
+ "description": "YOLOv8L branch (Table XI, left column). Ultralytics 8.4.18 training arguments as used; data/project/device are set by train_yolo.py.",
+ "train_arguments": {
+  "imgsz": 1216,
+  "epochs": 120,
+  "batch": 8,
+  "nbs": 16,
+  "optimizer": "AdamW",
+  "lr0": 0.0003,
+  "lrf": 0.1,
+  "cos_lr": true,
+  "momentum": 0.9,
+  "weight_decay": 0.0005,
+  "warmup_epochs": 3.0,
+  "warmup_momentum": 0.8,
+  "warmup_bias_lr": 0.0,
+  "freeze": 0,
+  "amp": true,
+  "deterministic": true,
+  "max_det": 3000,
+  "fraction": 1.0,
+  "cache": false,
+  "rect": false,
+  "close_mosaic": 0,
+  "mosaic": 0.0,
+  "mixup": 0.0,
+  "cutmix": 0.0,
+  "copy_paste": 0.0,
+  "degrees": 0.0,
+  "translate": 0.0,
+  "scale": 0.0,
+  "shear": 0.0,
+  "perspective": 0.0,
+  "flipud": 0.0,
+  "fliplr": 0.0,
+  "hsv_h": 0.0,
+  "hsv_s": 0.0,
+  "hsv_v": 0.15,
+  "save": true,
+  "save_period": -1,
+  "plots": false,
+  "val": true
+ },
+ "notes": {
+  "batch": "8 tiles per step; nbs 16 makes Ultralytics accumulate gradients over 2 steps (effective batch 16, Table XI)",
+  "augmentation": "no geometric, mosaic, flip or colour augmentation; brightness (HSV value) jitter 0.15 is on",
+  "early_stopping": "patience counts epochs without an improvement of at least 0.001 in validation-tile mAP50:95",
+  "checkpoint": "best.pt: highest validation-tile mAP50:95 (latest epoch on ties)",
+  "loss_precision": "float32 detection criterion with mixed-precision forward (symbolrec/patches.py)"
+ },
+ "datasets": {
+  "HandSchA": {
+   "patience": 15,
+   "workers": 2,
+   "initialization": "init_yolo.py: COCO YOLOv8L, 128-class head",
+   "tiles": "prepare_yolo.py --dataset HandSchA (sampler seed 20261021 for every run)",
+   "seeds": {
+    "first": 20261021,
+    "second": 20261104
+   },
+   "second_seed_dataloader_rank": 20261104,
+   "prediction_page_coordinates": "float32"
+  },
+  "MUSCIMA++": {
+   "patience": 20,
+   "workers": 4,
+   "initialization": "official COCO yolov8l.pt (Ultralytics builds the 73-class head)",
+   "tiles": "prepare_yolo.py --dataset MUSCIMA++ (sampler seed = training seed)",
+   "seeds": {
+    "first": 20261027,
+    "second": 20261104
+   },
+   "second_seed_dataloader_rank": 20261104,
+   "prediction_page_coordinates": "float64"
+  }
+ },
+ "inference": {
+  "tile": 1216,
+  "stride": 960,
+  "conf": 0.001,
+  "within_tile_nms_iou": 0.7,
+  "max_det_per_tile": 3000,
+  "interior_edge_margin": 128
+ }
+}
